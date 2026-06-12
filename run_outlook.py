@@ -26,9 +26,8 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
+from outlook import ptcg_api, tcgcsv_api
 from outlook.pricecharting import fetch_trend
-from outlook.ptcg_api import (best_market_usd, fetch_cards_for_set,
-                              fetch_sets, tcgplayer_url)
 from outlook.report import ranking_markdown, scenario_markdown
 from outlook.scoring import score_card
 
@@ -49,24 +48,32 @@ def main() -> int:
                     help="preço market máximo US$ (default 1000 — acima já está precificado)")
     ap.add_argument("--trend", action="store_true",
                     help="busca tendência no PriceCharting pro top-N (lento, ~2s/carta)")
+    ap.add_argument("--source", choices=["tcgcsv", "ptcg"], default="tcgcsv",
+                    help="tcgcsv (default; dumps diários TCGPlayer, estável) "
+                         "ou ptcg (pokemontcg.io ao vivo, oscila)")
     args = ap.parse_args()
 
-    print(f"Eras: {args.eras}")
-    sets_meta = fetch_sets(args.eras)
+    api = tcgcsv_api if args.source == "tcgcsv" else ptcg_api
+    print(f"Fonte: {args.source} | Eras: {args.eras}")
+    sets_meta = api.fetch_sets(args.eras)
     print(f"{len(sets_meta)} sets encontrados; baixando cartas (pode levar ~1-2 min)...")
 
     scored, skipped_no_price = [], 0
     for i, s in enumerate(sets_meta, 1):
+        if args.source == "tcgcsv":
+            cards = tcgcsv_api.fetch_cards_with_prices(s["id"])
+        else:
+            cards = ptcg_api.fetch_cards_for_set(s["id"])
         n_set = 0
-        for card in fetch_cards_for_set(s["id"]):
-            usd = best_market_usd(card)
+        for card in cards:
+            usd = api.best_market_usd(card)
             if usd is None:
                 skipped_no_price += 1
                 continue
             if not (args.min_price <= usd <= args.max_price):
                 continue
             sc = score_card(card, s, usd)
-            sc.tcg_url = tcgplayer_url(card)
+            sc.tcg_url = api.tcgplayer_url(card)
             scored.append(sc)
             n_set += 1
         print(f"  [{i}/{len(sets_meta)}] {s['name']}: {n_set} cartas no universo")
@@ -84,7 +91,7 @@ def main() -> int:
 
     md = (f"# Cenário Pokémon TCG + score de longo prazo — "
           f"{datetime.now():%Y-%m-%d}\n\n"
-          + scenario_markdown(scored, sets_meta, skipped_no_price)
+          + scenario_markdown(scored, sets_meta, skipped_no_price, args.source)
           + "\n\n" + ranking_markdown(scored, args.top))
     OUT_DIR.mkdir(exist_ok=True)
     out = OUT_DIR / f"outlook_{datetime.now():%Y%m%d_%H%M%S}.md"

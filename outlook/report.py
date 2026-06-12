@@ -20,7 +20,7 @@ def _md_escape(text: str) -> str:
 
 
 def scenario_markdown(cards: list[ScoredCard], sets_meta: list[dict],
-                      skipped_no_price: int) -> str:
+                      skipped_no_price: int, source: str = "tcgcsv") -> str:
     by_series: dict[str, list[ScoredCard]] = defaultdict(list)
     for c in cards:
         by_series[c.series].append(c)
@@ -44,9 +44,11 @@ def scenario_markdown(cards: list[ScoredCard], sets_meta: list[dict],
             f"${median(prices):.2f} | {_md_escape(top.name)} "
             f"({top.set_name} {top.number}) ${top.market_usd:.2f} |")
     lines.append("")
-    lines.append(f"Cartas sem preço TCGPlayer na API (fora da análise): "
-                 f"{skipped_no_price}. Fonte: pokemontcg.io (preços market "
-                 f"TCGPlayer do dia).")
+    src_label = ("tcgcsv.com (dump diário do TCGPlayer)" if source == "tcgcsv"
+                 else "pokemontcg.io (ao vivo)")
+    lines.append(f"Cartas sem preço TCGPlayer na fonte (fora da análise): "
+                 f"{skipped_no_price}. Fonte: {src_label} — preços market "
+                 f"TCGPlayer.")
     return "\n".join(lines)
 
 

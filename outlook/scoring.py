@@ -26,6 +26,8 @@ from .notorious import match_notorious
 
 # Sets com reprint contínuo/forte — supply não encolhe com a idade como o
 # normal. Teto do componente SUPPLY rebaixado (cap 12) + flag na tabela.
+# IDs = pokemontcg.io; NAME_PARTS = match por substring no nome do set
+# (cobre a fonte tcgcsv, cujos ids são groupIds numéricos do TCGPlayer).
 HEAVY_REPRINT_SET_IDS = {
     "sv3pt5",    # 151
     "sv4pt5",    # Paldean Fates
@@ -35,6 +37,15 @@ HEAVY_REPRINT_SET_IDS = {
     "swsh12pt5", # Crown Zenith
     "cel25",     # Celebrations
 }
+HEAVY_REPRINT_NAME_PARTS = (
+    "151", "Paldean Fates", "Prismatic Evolutions", "Champion's Path",
+    "Shining Fates", "Crown Zenith", "Celebrations",
+)
+
+
+def is_heavy_reprint(set_id: str, set_name: str) -> bool:
+    return (set_id in HEAVY_REPRINT_SET_IDS
+            or any(part in set_name for part in HEAVY_REPRINT_NAME_PARTS))
 
 
 def rarity_points(rarity: str) -> int:
@@ -125,7 +136,7 @@ def score_card(card: dict, set_meta: dict, market_usd: float,
                today: date | None = None) -> ScoredCard:
     today = today or date.today()
     release = date.fromisoformat(set_meta["releaseDate"].replace("/", "-"))
-    heavy = set_meta["id"] in HEAVY_REPRINT_SET_IDS
+    heavy = is_heavy_reprint(set_meta["id"], set_meta.get("name", ""))
     hit = match_notorious(card.get("name", ""))
     sc = ScoredCard(
         card_id=card.get("id", ""),
@@ -142,10 +153,16 @@ def score_card(card: dict, set_meta: dict, market_usd: float,
     )
     sc.pts_character = 25 if hit else 8
     sc.pts_rarity = rarity_points(sc.rarity)
+    # TCGPlayer marca alt-arts no NOME ("... (Alternate Art Secret)") — é o
+    # tier que historicamente mais valoriza; promove ao máximo do componente.
+    if "alternate" in sc.name.lower():
+        sc.pts_rarity = 25
+        sc.notes.append("alt-art (detectada pelo nome TCGPlayer)")
     sc.pts_supply = supply_points(release, today, heavy)
     sc.pts_price = price_points(market_usd)
     if heavy:
         sc.notes.append("reprint forte — supply não encolhe como o normal")
-    if sc.series == "Sword & Shield" and sc.pts_rarity in (12, 14):
+    if (sc.series == "Sword & Shield" and sc.pts_rarity in (12, 14)
+            and "alternate" not in sc.name.lower()):
         sc.notes.append("era SWSH: alt-art não distinguível pela raridade da API")
     return sc
