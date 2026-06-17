@@ -52,6 +52,15 @@ def test_score_card_full_and_notorious():
     assert sc.pts_character == 25
 
 
+def test_score_card_trainer_now_scores_appeal():
+    # Marnie SIR: treinador antes caía em 8; agora tier S = 25 no Personagem.
+    sc = score_card(_card(name="Marnie", rarity="Special Illustration Rare"),
+                    _set(), market_usd=80.0, today=TODAY)
+    assert sc.notorious == "Marnie"
+    assert sc.pts_character == 25
+    assert sc.score == 25 + 25 + 18 + 25   # 93
+
+
 def test_score_card_non_notorious_bulk():
     sc = score_card(_card(name="Tinkatuff", rarity="Common"),
                     _set(), market_usd=6.0, today=TODAY)

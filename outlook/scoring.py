@@ -7,7 +7,10 @@ o que tem mais características historicamente associadas a valorização.
 Quem decide capital é o operador.
 
 Componentes:
-  1. PERSONAGEM  (0-25) — Pokémon notório (lista curada) tem demanda perene.
+  1. PERSONAGEM  (0-25) — apelo/demanda perene do personagem (Pokémon OU
+       treinador), por tier curado: S=25, A=18, B=12, fora da lista=8.
+       Inclui treinadores (Marnie, Lillie, Iono...): SIR/full-art de treinadora
+       valoriza tanto quanto de Pokémon e antes ficava de fora (caía em 8).
   2. RARIDADE    (0-25) — alt-art/SIR > IR > gold/secret > ultra > resto.
        Limitação conhecida: na era SWSH o pokemontcg.io não distingue
        "alt art" de ultra/secret comum pela raridade — alt arts SWSH ficam
@@ -22,7 +25,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 
-from .notorious import match_notorious
+from .notorious import match_notorious, tier_points
 
 # Sets com reprint contínuo/forte — supply não encolhe com a idade como o
 # normal. Teto do componente SUPPLY rebaixado (cap 12) + flag na tabela.
@@ -151,7 +154,7 @@ def score_card(card: dict, set_meta: dict, market_usd: float,
         notorious=hit,
         heavy_reprint=heavy,
     )
-    sc.pts_character = 25 if hit else 8
+    sc.pts_character = tier_points(hit)
     sc.pts_rarity = rarity_points(sc.rarity)
     # TCGPlayer marca alt-arts no NOME ("... (Alternate Art Secret)") — é o
     # tier que historicamente mais valoriza; promove ao máximo do componente.

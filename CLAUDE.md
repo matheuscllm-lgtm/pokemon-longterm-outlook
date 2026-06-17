@@ -44,7 +44,7 @@ resultado = tabela no chat, nunca arquivo por padrão). O `.md` em `outputs/`
 
 | Componente | O que mede | Como pontua |
 |---|---|---|
-| **Personagem** | demanda perene do Pokémon | notório (lista curada ~55: Charizard, Umbreon, Pikachu...) = 25; resto = 8 |
+| **Personagem** | apelo perene do personagem (Pokémon **ou treinador**) | tier curado de apelo: **S** (ícone de liquidez: Charizard, Umbreon, Pikachu...) = 25 · **A** (fan-favorite forte) = 18 · **B** (segunda onda) = 12 · fora da lista = 8. Inclui **treinadores** (Marnie, Lillie, Cynthia, Iono, Acerola, N...) — SIR/full-art de treinadora valoriza tanto quanto de Pokémon e antes caía em 8 |
 | **Raridade** | tier colecionável | SIR/alt-art 25 · IR 20 · TG/Character 16 · gold/secret/shiny 14 · ultra/VMAX 12 · resto ≤10 |
 | **Supply** | oferta encolhendo | ≥36 meses = 25 · 24-36m = 22 · 18-24m = 18 · 12-18m = 12 · 6-12m = 7 · <6m = 3; set com **reprint forte** trava em 12 |
 | **Preço** | espaço pra crescer com liquidez | $40-120 = 25 · $15-40 = 20 · >$300 = 12 (já precificado) · <$5 = 5 (sem liquidez) |
@@ -72,7 +72,7 @@ nota veio e pode discordar de qualquer parcela.
 run_outlook.py           CLI: baixa catálogo → score → cenário + ranking
 outlook/ptcg_api.py      cliente pokemontcg.io (sets, cartas, preços TCGPlayer)
 outlook/scoring.py       os 4 componentes do score + lista de sets com reprint forte
-outlook/notorious.py     lista curada de ~55 Pokémon notórios (portada do integrado)
+outlook/notorious.py     personagens notórios em tiers de apelo S/A/B (Pokémon + treinadores)
 outlook/pricecharting.py tendência best-effort (páginas públicas; nunca inventa)
 outlook/report.py        cenário por era + tabela top-N em markdown
 tests/                   testes dos componentes do score
