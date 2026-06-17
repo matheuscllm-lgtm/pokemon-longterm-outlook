@@ -121,6 +121,67 @@ def fetch_cards_with_prices(group_id: str) -> list[dict]:
     return cards
 
 
+# Tipos de produto selado reconhecidos (1ª regra que casar vence). Lotes
+# (case/display/multipacks) ficam de fora: são N unidades e distorcem o preço.
+SEALED_TYPES = [
+    ("Booster Box", ("booster box",)),
+    ("Booster Bundle", ("booster bundle",)),
+    ("Elite Trainer Box", ("elite trainer",)),
+    ("Booster Pack", ("booster pack",)),
+    ("Mini Tin", ("mini tin",)),
+    ("Build & Battle", ("build & battle", "build and battle")),
+    ("Collection", ("collection",)),
+    ("Tin", ("tin",)),
+]
+_SEALED_EXCLUDE = ("case", "display", "[set of", "-pack", " pack of", "lot")
+
+
+def _sealed_type(name: str) -> Optional[str]:
+    low = name.lower()
+    if any(k in low for k in _SEALED_EXCLUDE):
+        return None
+    for label, keys in SEALED_TYPES:
+        if any(k in low for k in keys):
+            return label
+    return None
+
+
+def fetch_sealed_with_prices(group_id: str) -> list[dict]:
+    """Produtos SELADOS do set com preço market (USD) e tipo classificado.
+
+    Espelha fetch_cards_with_prices, mas pega o que NÃO é carta avulsa (sem
+    extendedData.Rarity) e casa um tipo de SKU conhecido (ETB/Box/Bundle/Tin...).
+    Devolve dicts no formato que outlook.sealed espera: id/name/product_type +
+    _market_usd + _url.
+    """
+    prods = _get_json(f"{BASE}/{group_id}/products")["results"]
+    prices = _get_json(f"{BASE}/{group_id}/prices")["results"]
+    best_by_pid: dict[int, float] = {}
+    for p in prices:
+        if "reverse" in (p.get("subTypeName") or "").lower():
+            continue
+        m = p.get("marketPrice")
+        if isinstance(m, (int, float)) and m > 0:
+            pid = p["productId"]
+            best_by_pid[pid] = max(best_by_pid.get(pid, 0.0), float(m))
+    out: list[dict] = []
+    for prod in prods:
+        ext = {e["name"]: e.get("value") for e in (prod.get("extendedData") or [])}
+        if ext.get("Rarity"):
+            continue  # é carta avulsa, não selado
+        ptype = _sealed_type(prod.get("name", ""))
+        if ptype is None:
+            continue
+        out.append({
+            "id": str(prod["productId"]),
+            "name": prod.get("name", ""),
+            "product_type": ptype,
+            "_market_usd": best_by_pid.get(prod["productId"]),
+            "_url": prod.get("url") or "",
+        })
+    return out
+
+
 def best_market_usd(card: dict) -> Optional[float]:
     return card.get("_market_usd")
 

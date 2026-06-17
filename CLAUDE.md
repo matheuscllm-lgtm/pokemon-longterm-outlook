@@ -30,7 +30,14 @@ cd C:\Users\mathe\pokemon-longterm-outlook
 .venv\Scripts\python.exe run_outlook.py                # SV + SWSH + ME, top 50
 .venv\Scripts\python.exe run_outlook.py --trend        # + setas de tendência (lento)
 .venv\Scripts\python.exe run_outlook.py --top 30 --min-price 20
+.venv\Scripts\python.exe run_outlook.py --sealed       # + ranking de selados (ETB/Box/Bundle/Tin)
+.venv\Scripts\python.exe -m outlook.history            # resumo da série histórica (maiores altas/quedas)
+.venv\Scripts\python.exe -m outlook.validate           # calibração do score + backtest (quando houver história)
 ```
+
+Cada run salva um snapshot diário em `data/snapshots/` (use `--no-snapshot`
+para pular). É essa memória que destrava tendência real e o backtest — a
+ferramenta só "lembra" do mercado a partir do 2º dia rodado.
 
 Precisa da `POKEMONTCG_API_KEY` (User env var — já está configurada nesta
 máquina; key grátis em dev.pokemontcg.io). Sem a key roda também, só mais
@@ -45,7 +52,7 @@ resultado = tabela no chat, nunca arquivo por padrão). O `.md` em `outputs/`
 | Componente | O que mede | Como pontua |
 |---|---|---|
 | **Personagem** | demanda perene do Pokémon | notório (lista curada ~55: Charizard, Umbreon, Pikachu...) = 25; resto = 8 |
-| **Raridade** | tier colecionável | SIR/alt-art 25 · IR 20 · TG/Character 16 · gold/secret/shiny 14 · ultra/VMAX 12 · resto ≤10 |
+| **Raridade** | tier colecionável | SIR/alt-art 25 · IR 20 · TG/Character/**Mega Attack** 16 · gold/secret/shiny/**Mega Hyper** 14 · ultra/VMAX 12 · resto ≤10 |
 | **Supply** | oferta encolhendo | ≥36 meses = 25 · 24-36m = 22 · 18-24m = 18 · 12-18m = 12 · 6-12m = 7 · <6m = 3; set com **reprint forte** trava em 12 |
 | **Preço** | espaço pra crescer com liquidez | $40-120 = 25 · $15-40 = 20 · >$300 = 12 (já precificado) · <$5 = 5 (sem liquidez) |
 
@@ -69,13 +76,17 @@ nota veio e pode discordar de qualquer parcela.
 ## Arquitetura
 
 ```
-run_outlook.py           CLI: baixa catálogo → score → cenário + ranking
-outlook/ptcg_api.py      cliente pokemontcg.io (sets, cartas, preços TCGPlayer)
-outlook/scoring.py       os 4 componentes do score + lista de sets com reprint forte
+run_outlook.py           CLI: baixa catálogo → score → cenário + ranking (+ --sealed, snapshot)
+outlook/tcgcsv_api.py    fonte DEFAULT: dumps diários TCGPlayer (cartas + selados)
+outlook/ptcg_api.py      cliente pokemontcg.io (sets, cartas, preços TCGPlayer) — fonte alternativa
+outlook/scoring.py       os 4 componentes do score + detecção de set especial (reprint forte)
+outlook/sealed.py        score de SELADO (ETB/Box/Bundle/Tin): Tipo + Idade + MSRP + Reimpressão
 outlook/notorious.py     lista curada de ~55 Pokémon notórios (portada do integrado)
 outlook/pricecharting.py tendência best-effort (páginas públicas; nunca inventa)
+outlook/history.py       persiste snapshots diários (data/snapshots/) → série histórica própria
+outlook/validate.py      calibração transversal do score + backtest longitudinal (usa history)
 outlook/report.py        cenário por era + tabela top-N em markdown
-tests/                   testes dos componentes do score
+tests/                   testes de scoring, sealed, history e validate
 ```
 
 Rodar os testes:

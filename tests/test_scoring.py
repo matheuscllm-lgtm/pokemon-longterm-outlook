@@ -1,8 +1,9 @@
 """Testes do score de longo prazo — componentes e invariantes."""
 from datetime import date
 
-from outlook.scoring import (HEAVY_REPRINT_SET_IDS, price_points,
-                             rarity_points, score_card, supply_points)
+from outlook.scoring import (HEAVY_REPRINT_SET_IDS, is_heavy_reprint,
+                             price_points, rarity_points, score_card,
+                             supply_points)
 
 TODAY = date(2026, 6, 12)
 
@@ -68,3 +69,35 @@ def test_heavy_reprint_flagged():
     assert sc.pts_supply == 12
     assert any("reprint" in n for n in sc.notes)
     assert "sv3pt5" in HEAVY_REPRINT_SET_IDS
+
+
+def test_rarity_mega_era_tiers():
+    # bug corrigido: "Mega Attack Rare" não pode cair no default (3 = comum)
+    assert rarity_points("Mega Attack Rare") == 16
+    assert rarity_points("Mega Attack Rare") > rarity_points("Double Rare")
+    # "Mega Hyper Rare" continua no tier gold via "hyper"
+    assert rarity_points("Mega Hyper Rare") == 14
+    # SIR da era Mega segue no topo
+    assert rarity_points("Special Illustration Rare") == 25
+
+
+def test_special_set_detected_as_heavy_reprint():
+    # sets especiais (sem número no prefixo) → oferta não encolhe
+    assert is_heavy_reprint("24541", "ME: Ascended Heroes")
+    assert is_heavy_reprint("999", "SV: Prismatic Evolutions")
+    assert is_heavy_reprint("999", "SWSH: Crown Zenith")
+    # mains numerados NÃO são reprint forte por este critério
+    assert not is_heavy_reprint("24380", "ME01: Mega Evolution")
+    assert not is_heavy_reprint("999", "SV05: Temporal Forces")
+    assert not is_heavy_reprint("999", "SWSH09: Brilliant Stars")
+
+
+def test_ascended_heroes_supply_capped_when_old():
+    # AH é especial → mesmo envelhecendo, supply trava em 12 (não credita
+    # "oferta encolhendo" a um set impresso em massa)
+    ah = _set(set_id="24541", release="2026/01/30", series="Mega Evolution")
+    ah["name"] = "ME: Ascended Heroes"
+    sc = score_card(_card(name="Pikachu ex"), ah, market_usd=100.0,
+                    today=date(2029, 1, 30))  # 3 anos depois
+    assert sc.heavy_reprint
+    assert sc.pts_supply == 12

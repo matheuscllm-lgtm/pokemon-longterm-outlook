@@ -26,7 +26,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-from outlook import ptcg_api, tcgcsv_api
+from outlook import history, ptcg_api, sealed, tcgcsv_api
 from outlook.pricecharting import fetch_trend
 from outlook.report import ranking_markdown, scenario_markdown
 from outlook.scoring import score_card
@@ -51,6 +51,11 @@ def main() -> int:
     ap.add_argument("--source", choices=["tcgcsv", "ptcg"], default="tcgcsv",
                     help="tcgcsv (default; dumps diários TCGPlayer, estável) "
                          "ou ptcg (pokemontcg.io ao vivo, oscila)")
+    ap.add_argument("--sealed", action="store_true",
+                    help="também ranqueia produtos selados (ETB/Box/Bundle/Tin) "
+                         "— só na fonte tcgcsv")
+    ap.add_argument("--no-snapshot", action="store_true",
+                    help="não salvar o snapshot diário deste run (history.py)")
     args = ap.parse_args()
 
     api = tcgcsv_api if args.source == "tcgcsv" else ptcg_api
@@ -89,10 +94,34 @@ def main() -> int:
             c.trend = fetch_trend(c.name, c.set_name, c.number)
             time.sleep(1.5)
 
+    # Snapshot diário: a memória que destrava tendência real + backtest (#1).
+    if not args.no_snapshot:
+        snap = history.save_snapshot(scored, source=args.source)
+        print(f"Snapshot salvo: {snap.name} "
+              f"({len(history.list_snapshots())} dia(s) de história acumulada)")
+
+    # Produtos selados (ETB/Box/Bundle/Tin) — score próprio (#5), opcional.
+    sealed_scored = []
+    if args.sealed:
+        if args.source != "tcgcsv":
+            print("--sealed só está disponível na fonte tcgcsv; pulando selados.")
+        else:
+            for s in sets_meta:
+                for prod in tcgcsv_api.fetch_sealed_with_prices(s["id"]):
+                    usd = prod.get("_market_usd")
+                    if usd is None or usd < args.min_price:
+                        continue
+                    sc = sealed.score_sealed(prod, s, usd)
+                    sc.tcg_url = prod.get("_url", "")
+                    sealed_scored.append(sc)
+            print(f"Selados no universo: {len(sealed_scored)}")
+
     md = (f"# Cenário Pokémon TCG + score de longo prazo — "
           f"{datetime.now():%Y-%m-%d}\n\n"
           + scenario_markdown(scored, sets_meta, skipped_no_price, args.source)
           + "\n\n" + ranking_markdown(scored, args.top))
+    if sealed_scored:
+        md += "\n\n" + sealed.sealed_ranking_markdown(sealed_scored, args.top)
     OUT_DIR.mkdir(exist_ok=True)
     out = OUT_DIR / f"outlook_{datetime.now():%Y%m%d_%H%M%S}.md"
     out.write_text(md, encoding="utf-8")
