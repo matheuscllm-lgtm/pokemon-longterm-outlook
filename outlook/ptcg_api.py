@@ -97,6 +97,26 @@ def best_market_usd(card: dict) -> Optional[float]:
     return max(candidates) if candidates else None
 
 
+def cardmarket_trend_pct(card: dict) -> Optional[float]:
+    """Tendência realizada de curto prazo via CardMarket (avg7 vs avg30), em %.
+
+    Ground truth ROBUSTO pra calibração: vem direto da pokemontcg.io (médias de
+    venda dos últimos 7 e 30 dias), sem scraping. É a variação que o mercado de
+    fato fez no último mês — curto prazo (mesma ressalva de sempre), mas real e
+    disponível pra quase toda carta premium. None se faltar dado ou avg30<=0.
+
+    Obs.: o nível de preço do CardMarket (EUR) difere do TCGPlayer (USD) usado
+    no componente Preço, mas a VARIAÇÃO % é relativa — mede o mesmo movimento.
+    """
+    prices = (card.get("cardmarket") or {}).get("prices") or {}
+    a7, a30 = prices.get("avg7"), prices.get("avg30")
+    if not isinstance(a7, (int, float)) or not isinstance(a30, (int, float)):
+        return None
+    if a30 <= 0:
+        return None
+    return (a7 - a30) / a30 * 100
+
+
 def tcgplayer_url(card: dict) -> str:
     url = (card.get("tcgplayer") or {}).get("url")
     if url:

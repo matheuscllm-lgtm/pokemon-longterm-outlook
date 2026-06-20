@@ -1,0 +1,2818 @@
+[
+  {
+    "card": {
+      "id": "zsv10pt5-172",
+      "name": "Zekrom ex",
+      "number": "172",
+      "rarity": "Black White Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 546.52,
+    "trend_pct": 49.826150608472865
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-92",
+      "name": "Lilligant",
+      "number": "92",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 51.99,
+    "trend_pct": -9.673726388093872
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-113",
+      "name": "Tynamo",
+      "number": "113",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 18.74,
+    "trend_pct": 2.5500910746812324
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-115",
+      "name": "Eelektross",
+      "number": "115",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 33.15,
+    "trend_pct": 4.3591979075850045
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-96",
+      "name": "Amoonguss",
+      "number": "96",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 47.14,
+    "trend_pct": 0.07137758743754309
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-105",
+      "name": "Seismitoad",
+      "number": "105",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 237.69,
+    "trend_pct": -1.3756287855456355
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-88",
+      "name": "Servine",
+      "number": "88",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 16.73,
+    "trend_pct": 6.313645621181255
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-97",
+      "name": "Darumaka",
+      "number": "97",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 15.02,
+    "trend_pct": -0.8403361344537785
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-108",
+      "name": "Alomomola",
+      "number": "108",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 27.47,
+    "trend_pct": 10.819009100101114
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-112",
+      "name": "Emolga",
+      "number": "112",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 21.8,
+    "trend_pct": -5.701754385964907
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-114",
+      "name": "Eelektrik",
+      "number": "114",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 21.66,
+    "trend_pct": 7.826694619147443
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-87",
+      "name": "Snivy",
+      "number": "87",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 32.17,
+    "trend_pct": 4.4985250737463085
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-94",
+      "name": "Karrablast",
+      "number": "94",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 21.34,
+    "trend_pct": -3.2751091703056847
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-100",
+      "name": "Volcarona",
+      "number": "100",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 61.97,
+    "trend_pct": 2.891654465592969
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-109",
+      "name": "Cubchoo",
+      "number": "109",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 20.75,
+    "trend_pct": 0.9118541033434816
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-91",
+      "name": "Petilil",
+      "number": "91",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 34.75,
+    "trend_pct": 2.6479750778816187
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-104",
+      "name": "Palpitoad",
+      "number": "104",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 18.32,
+    "trend_pct": -13.08108108108109
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-106",
+      "name": "Tirtouga",
+      "number": "106",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 36.92,
+    "trend_pct": -2.3169601482854496
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-95",
+      "name": "Foongus",
+      "number": "95",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 20.09,
+    "trend_pct": 4.517133956386293
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-89",
+      "name": "Pansage",
+      "number": "89",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 31.4,
+    "trend_pct": 5.1987767584097835
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-116",
+      "name": "Munna",
+      "number": "116",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 20.73,
+    "trend_pct": -1.9662921348314562
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-118",
+      "name": "Solosis",
+      "number": "118",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 32.38,
+    "trend_pct": 0.5565862708719899
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-125",
+      "name": "Timburr",
+      "number": "125",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 19.71,
+    "trend_pct": -3.31034482758621
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-127",
+      "name": "Conkeldurr",
+      "number": "127",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 39.93,
+    "trend_pct": 3.146374829001374
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-129",
+      "name": "Dwebble",
+      "number": "129",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 62.22,
+    "trend_pct": -1.1111111111111138
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-134",
+      "name": "Scolipede",
+      "number": "134",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 30.47,
+    "trend_pct": 0.8849557522123837
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-135",
+      "name": "Sandile",
+      "number": "135",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 19.84,
+    "trend_pct": -2.9126213592232966
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-131",
+      "name": "Landorus",
+      "number": "131",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 29.99,
+    "trend_pct": -2.7938850817079475
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-138",
+      "name": "Escavalier",
+      "number": "138",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 18.74,
+    "trend_pct": 0.936329588014978
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-148",
+      "name": "Pidove",
+      "number": "148",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 29.37,
+    "trend_pct": 3.159041394335522
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-137",
+      "name": "Krookodile",
+      "number": "137",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 60.27,
+    "trend_pct": 3.184386235233698
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-144",
+      "name": "Cobalion",
+      "number": "144",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 33.68,
+    "trend_pct": 6.433084434233205
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-147",
+      "name": "Haxorus",
+      "number": "147",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 75.66,
+    "trend_pct": -3.425167535368571
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-141",
+      "name": "Klinklang",
+      "number": "141",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 30.66,
+    "trend_pct": -0.3080082135523548
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-145",
+      "name": "Axew",
+      "number": "145",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 21.25,
+    "trend_pct": -2.3002421307505996
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-146",
+      "name": "Fraxure",
+      "number": "146",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 25.94,
+    "trend_pct": -5.357142857142849
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-150",
+      "name": "Unfezant",
+      "number": "150",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 33.25,
+    "trend_pct": -4.745042492917847
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-153",
+      "name": "Cinccino",
+      "number": "153",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 31.9,
+    "trend_pct": 0.43604651162791064
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-152",
+      "name": "Minccino",
+      "number": "152",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 24.87,
+    "trend_pct": 2.5445292620865163
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-151",
+      "name": "Audino",
+      "number": "151",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 41.03,
+    "trend_pct": 3.988603988603993
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-165",
+      "name": "Kyurem ex",
+      "number": "165",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 82.26,
+    "trend_pct": -0.14126787921597278
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-164",
+      "name": "Serperior ex",
+      "number": "164",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 56.98,
+    "trend_pct": -5.267653758542125
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-166",
+      "name": "Zekrom ex",
+      "number": "166",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 271.53,
+    "trend_pct": 1.6952220077220093
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-167",
+      "name": "Meloetta ex",
+      "number": "167",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 43.54,
+    "trend_pct": 25.739184562713962
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-168",
+      "name": "Excadrill ex",
+      "number": "168",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 25.03,
+    "trend_pct": -2.372713791398915
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-169",
+      "name": "Genesect ex",
+      "number": "169",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 47.62,
+    "trend_pct": -0.912032950867909
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-170",
+      "name": "N's Plan",
+      "number": "170",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 74.11,
+    "trend_pct": -4.800936768149892
+  },
+  {
+    "card": {
+      "id": "zsv10pt5-171",
+      "name": "Victini",
+      "number": "171",
+      "rarity": "Rare"
+    },
+    "set_meta": {
+      "id": "zsv10pt5",
+      "name": "Black Bolt",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 576.63,
+    "trend_pct": 0.5008000948260528
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-98",
+      "name": "Emboar",
+      "number": "98",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 46.4,
+    "trend_pct": 0.9848173984406994
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-100",
+      "name": "Simisear",
+      "number": "100",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 16.77,
+    "trend_pct": 5.457227138643069
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-102",
+      "name": "Lampent",
+      "number": "102",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 16.06,
+    "trend_pct": -2.3188405797101472
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-107",
+      "name": "Samurott",
+      "number": "107",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 50.87,
+    "trend_pct": -3.5860655737704943
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-109",
+      "name": "Ducklett",
+      "number": "109",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 32.78,
+    "trend_pct": 2.9585798816568047
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-113",
+      "name": "Vanilluxe",
+      "number": "113",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 45.03,
+    "trend_pct": -8.404907975460128
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-115",
+      "name": "Zebstrika",
+      "number": "115",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 29.7,
+    "trend_pct": 5.353466026080984
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-87",
+      "name": "Sewaddle",
+      "number": "87",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 18.37,
+    "trend_pct": 2.4657534246575423
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-89",
+      "name": "Leavanny",
+      "number": "89",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 42.01,
+    "trend_pct": 4.1697147037308
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-91",
+      "name": "Deerling",
+      "number": "91",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 20.72,
+    "trend_pct": -3.53063343717551
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-105",
+      "name": "Oshawott",
+      "number": "105",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 92.73,
+    "trend_pct": -7.892690513219276
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-95",
+      "name": "Virizion",
+      "number": "95",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 31.78,
+    "trend_pct": -7.488050982474757
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-116",
+      "name": "Joltik",
+      "number": "116",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 39.11,
+    "trend_pct": -2.9258098223615585
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-129",
+      "name": "Gigalith",
+      "number": "129",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 18.42,
+    "trend_pct": 13.804945054945053
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-125",
+      "name": "Gothorita",
+      "number": "125",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 18.47,
+    "trend_pct": 1.8126888217522674
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-94",
+      "name": "Accelgor",
+      "number": "94",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 15.22,
+    "trend_pct": 10.04514672686231
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-103",
+      "name": "Chandelure",
+      "number": "103",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 70.36,
+    "trend_pct": -0.4110612855007585
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-106",
+      "name": "Dewott",
+      "number": "106",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 21.02,
+    "trend_pct": -2.643678160919525
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-101",
+      "name": "Litwick",
+      "number": "101",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 26.27,
+    "trend_pct": -1.6326530612244792
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-111",
+      "name": "Vanillite",
+      "number": "111",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 16.77,
+    "trend_pct": 2.8831562974203395
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-92",
+      "name": "Sawsbuck",
+      "number": "92",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 42.03,
+    "trend_pct": 0.3765060240963909
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-117",
+      "name": "Galvantula",
+      "number": "117",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 20.48,
+    "trend_pct": -1.7225747960108748
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-123",
+      "name": "Cofagrigus",
+      "number": "123",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 25.2,
+    "trend_pct": -5.213270142180096
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-96",
+      "name": "Tepig",
+      "number": "96",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 34.18,
+    "trend_pct": -6.828938471940499
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-124",
+      "name": "Gothita",
+      "number": "124",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 24.39,
+    "trend_pct": 0.5006257822277741
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-135",
+      "name": "Terrakion",
+      "number": "135",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 28.77,
+    "trend_pct": 2.3637557452396547
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-136",
+      "name": "Purrloin",
+      "number": "136",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 20.43,
+    "trend_pct": 0.6666666666666643
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-137",
+      "name": "Liepard",
+      "number": "137",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 49.37,
+    "trend_pct": 9.434822242479491
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-138",
+      "name": "Scraggy",
+      "number": "138",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 22.84,
+    "trend_pct": -2.0833333333333286
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-139",
+      "name": "Scrafty",
+      "number": "139",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 24.67,
+    "trend_pct": 2.3809523809523876
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-140",
+      "name": "Trubbish",
+      "number": "140",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 18.33,
+    "trend_pct": -5.380333951762524
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-142",
+      "name": "Zorua",
+      "number": "142",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 53.28,
+    "trend_pct": -4.498480243161085
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-151",
+      "name": "Druddigon",
+      "number": "151",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 29.13,
+    "trend_pct": -2.034261241970016
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-143",
+      "name": "Zoroark",
+      "number": "143",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 81.7,
+    "trend_pct": -0.428427419354843
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-155",
+      "name": "Herdier",
+      "number": "155",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 18.24,
+    "trend_pct": -0.319488817891367
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-154",
+      "name": "Lillipup",
+      "number": "154",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 36.99,
+    "trend_pct": -8.221993833504632
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-156",
+      "name": "Stoutland",
+      "number": "156",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 36.24,
+    "trend_pct": 10.03663003663003
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-149",
+      "name": "Ferrothorn",
+      "number": "149",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 16.45,
+    "trend_pct": 1.039697542533076
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-141",
+      "name": "Garbodor",
+      "number": "141",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 22.87,
+    "trend_pct": 2.0629750271444025
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-146",
+      "name": "Deino",
+      "number": "146",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 17.07,
+    "trend_pct": -7.943925233644866
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-165",
+      "name": "Whimsicott ex",
+      "number": "165",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 29.22,
+    "trend_pct": -9.933774834437092
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-164",
+      "name": "Hilda",
+      "number": "164",
+      "rarity": "Ultra Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 15.41,
+    "trend_pct": 4.070796460176982
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-167",
+      "name": "Keldeo ex",
+      "number": "167",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 77.06,
+    "trend_pct": -2.37768632830361
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-166",
+      "name": "Reshiram ex",
+      "number": "166",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 212.35,
+    "trend_pct": -0.4907812707255665
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-169",
+      "name": "Hydreigon ex",
+      "number": "169",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 85.72,
+    "trend_pct": 2.614162806088692
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-168",
+      "name": "Jellicent ex",
+      "number": "168",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 30.43,
+    "trend_pct": -6.806930693069302
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-170",
+      "name": "Bouffalant ex",
+      "number": "170",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 17.93,
+    "trend_pct": 0.9933774834437109
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-171",
+      "name": "Hilda",
+      "number": "171",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 65.33,
+    "trend_pct": -1.9871598899419096
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-173",
+      "name": "Reshiram ex",
+      "number": "173",
+      "rarity": "Black White Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 480.15,
+    "trend_pct": -7.49813875988229
+  },
+  {
+    "card": {
+      "id": "rsv10pt5-172",
+      "name": "Victini",
+      "number": "172",
+      "rarity": "Rare"
+    },
+    "set_meta": {
+      "id": "rsv10pt5",
+      "name": "White Flare",
+      "releaseDate": "2025/07/18",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 468.16,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv10-184",
+      "name": "Cynthia's Roserade",
+      "number": "184",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 17.58,
+    "trend_pct": -3.466465712132623
+  },
+  {
+    "card": {
+      "id": "sv10-185",
+      "name": "Shaymin",
+      "number": "185",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 15.1,
+    "trend_pct": -4.268292682926825
+  },
+  {
+    "card": {
+      "id": "sv10-190",
+      "name": "Ethan's Typhlosion",
+      "number": "190",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 35.62,
+    "trend_pct": -1.4192558496356003
+  },
+  {
+    "card": {
+      "id": "sv10-191",
+      "name": "Team Rocket's Houndoom",
+      "number": "191",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 18.15,
+    "trend_pct": -4.615384615384616
+  },
+  {
+    "card": {
+      "id": "sv10-193",
+      "name": "Misty's Psyduck",
+      "number": "193",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 83.72,
+    "trend_pct": -20.42200452147701
+  },
+  {
+    "card": {
+      "id": "sv10-194",
+      "name": "Misty's Lapras",
+      "number": "194",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 44.71,
+    "trend_pct": -5.2854122621564485
+  },
+  {
+    "card": {
+      "id": "sv10-203",
+      "name": "Team Rocket's Meowth",
+      "number": "203",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 33.9,
+    "trend_pct": -6.255212677231025
+  },
+  {
+    "card": {
+      "id": "sv10-213",
+      "name": "Team Rocket's Mewtwo ex",
+      "number": "213",
+      "rarity": "Ultra Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 23.57,
+    "trend_pct": -5.585683297180049
+  },
+  {
+    "card": {
+      "id": "sv10-228",
+      "name": "Yanmega ex",
+      "number": "228",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 26.65,
+    "trend_pct": 3.5022552401167433
+  },
+  {
+    "card": {
+      "id": "sv10-229",
+      "name": "Team Rocket's Moltres ex",
+      "number": "229",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 123.79,
+    "trend_pct": 16.54379108189733
+  },
+  {
+    "card": {
+      "id": "sv10-230",
+      "name": "Ethan's Ho-Oh ex",
+      "number": "230",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 198.04,
+    "trend_pct": 10.57770245376169
+  },
+  {
+    "card": {
+      "id": "sv10-231",
+      "name": "Team Rocket's Mewtwo ex",
+      "number": "231",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 568.39,
+    "trend_pct": -13.419007770472216
+  },
+  {
+    "card": {
+      "id": "sv10-232",
+      "name": "Cynthia's Garchomp ex",
+      "number": "232",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 292.4,
+    "trend_pct": 3.064918349288072
+  },
+  {
+    "card": {
+      "id": "sv10-233",
+      "name": "Team Rocket's Nidoking ex",
+      "number": "233",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 132.06,
+    "trend_pct": -18.84694176177933
+  },
+  {
+    "card": {
+      "id": "sv10-234",
+      "name": "Team Rocket's Crobat ex",
+      "number": "234",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 80.98,
+    "trend_pct": 5.182101977107185
+  },
+  {
+    "card": {
+      "id": "sv10-235",
+      "name": "Arven's Mabosstiff ex",
+      "number": "235",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 34.33,
+    "trend_pct": -9.506531204644428
+  },
+  {
+    "card": {
+      "id": "sv10-236",
+      "name": "Ethan's Adventure",
+      "number": "236",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 49.16,
+    "trend_pct": -6.579419146647547
+  },
+  {
+    "card": {
+      "id": "sv10-237",
+      "name": "Team Rocket's Ariana",
+      "number": "237",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 28.34,
+    "trend_pct": 3.055848261327704
+  },
+  {
+    "card": {
+      "id": "sv10-238",
+      "name": "Team Rocket's Giovanni",
+      "number": "238",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 34.94,
+    "trend_pct": -0.5271249725455787
+  },
+  {
+    "card": {
+      "id": "sv10-239",
+      "name": "Ethan's Ho-Oh ex",
+      "number": "239",
+      "rarity": "Hyper Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 29.57,
+    "trend_pct": -10.011061946902649
+  },
+  {
+    "card": {
+      "id": "sv10-240",
+      "name": "Team Rocket's Mewtwo ex",
+      "number": "240",
+      "rarity": "Hyper Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 72.48,
+    "trend_pct": -10.846196251378176
+  },
+  {
+    "card": {
+      "id": "sv10-241",
+      "name": "Cynthia's Garchomp ex",
+      "number": "241",
+      "rarity": "Hyper Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 34.75,
+    "trend_pct": -6.336009174311928
+  },
+  {
+    "card": {
+      "id": "sv10-242",
+      "name": "Team Rocket's Crobat ex",
+      "number": "242",
+      "rarity": "Hyper Rare"
+    },
+    "set_meta": {
+      "id": "sv10",
+      "name": "Destined Rivals",
+      "releaseDate": "2025/05/30",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 18.03,
+    "trend_pct": 0.9953785993601179
+  },
+  {
+    "card": {
+      "id": "sv9-161",
+      "name": "Articuno",
+      "number": "161",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv9",
+      "name": "Journey Together",
+      "releaseDate": "2025/03/28",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 27.56,
+    "trend_pct": -11.642094560244038
+  },
+  {
+    "card": {
+      "id": "sv9-162",
+      "name": "Wailord",
+      "number": "162",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv9",
+      "name": "Journey Together",
+      "releaseDate": "2025/03/28",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 19.94,
+    "trend_pct": -6.026365348399236
+  },
+  {
+    "card": {
+      "id": "sv9-167",
+      "name": "N's Reshiram",
+      "number": "167",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv9",
+      "name": "Journey Together",
+      "releaseDate": "2025/03/28",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 20.69,
+    "trend_pct": -0.16268980477224043
+  },
+  {
+    "card": {
+      "id": "sv9-182",
+      "name": "Volcanion ex",
+      "number": "182",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv9",
+      "name": "Journey Together",
+      "releaseDate": "2025/03/28",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 21.86,
+    "trend_pct": -6.61045531197301
+  },
+  {
+    "card": {
+      "id": "sv9-183",
+      "name": "Iono's Bellibolt ex",
+      "number": "183",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv9",
+      "name": "Journey Together",
+      "releaseDate": "2025/03/28",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 46.24,
+    "trend_pct": 0.6322711178553364
+  },
+  {
+    "card": {
+      "id": "sv9-184",
+      "name": "Lillie's Clefairy ex",
+      "number": "184",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv9",
+      "name": "Journey Together",
+      "releaseDate": "2025/03/28",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 127.71,
+    "trend_pct": 2.524162522285833
+  },
+  {
+    "card": {
+      "id": "sv9-185",
+      "name": "N's Zoroark ex",
+      "number": "185",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv9",
+      "name": "Journey Together",
+      "releaseDate": "2025/03/28",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 52.5,
+    "trend_pct": 1.018141429100328
+  },
+  {
+    "card": {
+      "id": "sv9-186",
+      "name": "Hop's Zacian ex",
+      "number": "186",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv9",
+      "name": "Journey Together",
+      "releaseDate": "2025/03/28",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 38.55,
+    "trend_pct": -11.811023622047237
+  },
+  {
+    "card": {
+      "id": "sv9-187",
+      "name": "Salamence ex",
+      "number": "187",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv9",
+      "name": "Journey Together",
+      "releaseDate": "2025/03/28",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 71.85,
+    "trend_pct": -6.617534162444335
+  },
+  {
+    "card": {
+      "id": "sv9-188",
+      "name": "Iono's Bellibolt ex",
+      "number": "188",
+      "rarity": "Hyper Rare"
+    },
+    "set_meta": {
+      "id": "sv9",
+      "name": "Journey Together",
+      "releaseDate": "2025/03/28",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 19.85,
+    "trend_pct": -6.306787814003205
+  },
+  {
+    "card": {
+      "id": "sv9-189",
+      "name": "N's Zoroark ex",
+      "number": "189",
+      "rarity": "Hyper Rare"
+    },
+    "set_meta": {
+      "id": "sv9",
+      "name": "Journey Together",
+      "releaseDate": "2025/03/28",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 17.87,
+    "trend_pct": -2.0705882352941236
+  },
+  {
+    "card": {
+      "id": "sv8pt5-144",
+      "name": "Leafeon ex",
+      "number": "144",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 326.74,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-145",
+      "name": "Teal Mask Ogerpon ex",
+      "number": "145",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 24.58,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-147",
+      "name": "Ceruledge ex",
+      "number": "147",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 99.57,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-146",
+      "name": "Flareon ex",
+      "number": "146",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 210.73,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-151",
+      "name": "Palafin ex",
+      "number": "151",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 47.82,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-153",
+      "name": "Jolteon ex",
+      "number": "153",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 205.41,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-148",
+      "name": "Hearthflame Mask Ogerpon ex",
+      "number": "148",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 20.15,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-150",
+      "name": "Glaceon ex",
+      "number": "150",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 302.97,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-152",
+      "name": "Wellspring Mask Ogerpon ex",
+      "number": "152",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 18.41,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-149",
+      "name": "Vaporeon ex",
+      "number": "149",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 304.67,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-154",
+      "name": "Iron Hands ex",
+      "number": "154",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 37.6,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-155",
+      "name": "Espeon ex",
+      "number": "155",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 322.77,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-157",
+      "name": "Iron Valiant ex",
+      "number": "157",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 76.55,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-156",
+      "name": "Sylveon ex",
+      "number": "156",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 531.5,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-158",
+      "name": "Iron Crown ex",
+      "number": "158",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 37.96,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-159",
+      "name": "Sandy Shocks ex",
+      "number": "159",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 28.12,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-160",
+      "name": "Cornerstone Mask Ogerpon ex",
+      "number": "160",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 17.49,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-162",
+      "name": "Roaring Moon ex",
+      "number": "162",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 177.64,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-163",
+      "name": "Pecharunt ex",
+      "number": "163",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 33.91,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-164",
+      "name": "Gholdengo ex",
+      "number": "164",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 54.45,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-165",
+      "name": "Dragapult ex",
+      "number": "165",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 138.24,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-166",
+      "name": "Raging Bolt ex",
+      "number": "166",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 72.76,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-167",
+      "name": "Eevee ex",
+      "number": "167",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 190.2,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-168",
+      "name": "Bloodmoon Ursaluna ex",
+      "number": "168",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 82.16,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-169",
+      "name": "Terapagos ex",
+      "number": "169",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 39.61,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-170",
+      "name": "Amarys",
+      "number": "170",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 16.03,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-171",
+      "name": "Crispin",
+      "number": "171",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 42.27,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-174",
+      "name": "Kieran",
+      "number": "174",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 20.56,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-172",
+      "name": "Drayton",
+      "number": "172",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 17.51,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-173",
+      "name": "Janine's Secret Art",
+      "number": "173",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 27.08,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-175",
+      "name": "Lacey",
+      "number": "175",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 28.81,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8pt5-179",
+      "name": "Pikachu ex",
+      "number": "179",
+      "rarity": "Hyper Rare"
+    },
+    "set_meta": {
+      "id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "releaseDate": "2025/01/17",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 71.66,
+    "trend_pct": null
+  },
+  {
+    "card": {
+      "id": "sv8-197",
+      "name": "Ceruledge",
+      "number": "197",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8",
+      "name": "Surging Sparks",
+      "releaseDate": "2024/11/08",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 25.45,
+    "trend_pct": -12.401263823064774
+  },
+  {
+    "card": {
+      "id": "sv8-203",
+      "name": "Latios",
+      "number": "203",
+      "rarity": "Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8",
+      "name": "Surging Sparks",
+      "releaseDate": "2024/11/08",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 38.75,
+    "trend_pct": -22.20766459220439
+  },
+  {
+    "card": {
+      "id": "sv8-219",
+      "name": "Pikachu ex",
+      "number": "219",
+      "rarity": "Ultra Rare"
+    },
+    "set_meta": {
+      "id": "sv8",
+      "name": "Surging Sparks",
+      "releaseDate": "2024/11/08",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 33.77,
+    "trend_pct": -13.389830508474573
+  },
+  {
+    "card": {
+      "id": "sv8-236",
+      "name": "Durant ex",
+      "number": "236",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8",
+      "name": "Surging Sparks",
+      "releaseDate": "2024/11/08",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 37.65,
+    "trend_pct": -8.859566446748346
+  },
+  {
+    "card": {
+      "id": "sv8-237",
+      "name": "Milotic ex",
+      "number": "237",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8",
+      "name": "Surging Sparks",
+      "releaseDate": "2024/11/08",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 144.72,
+    "trend_pct": -7.301796604582165
+  },
+  {
+    "card": {
+      "id": "sv8-238",
+      "name": "Pikachu ex",
+      "number": "238",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8",
+      "name": "Surging Sparks",
+      "releaseDate": "2024/11/08",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 371.73,
+    "trend_pct": 9.188239054010866
+  },
+  {
+    "card": {
+      "id": "sv8-239",
+      "name": "Latias ex",
+      "number": "239",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8",
+      "name": "Surging Sparks",
+      "releaseDate": "2024/11/08",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 193.17,
+    "trend_pct": -2.45227811063117
+  },
+  {
+    "card": {
+      "id": "sv8-240",
+      "name": "Hydreigon ex",
+      "number": "240",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8",
+      "name": "Surging Sparks",
+      "releaseDate": "2024/11/08",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 43.5,
+    "trend_pct": 1.1582117211026175
+  },
+  {
+    "card": {
+      "id": "sv8-242",
+      "name": "Alolan Exeggutor ex",
+      "number": "242",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8",
+      "name": "Surging Sparks",
+      "releaseDate": "2024/11/08",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 35.31,
+    "trend_pct": 8.69324473975637
+  },
+  {
+    "card": {
+      "id": "sv8-245",
+      "name": "Jasmine's Gaze",
+      "number": "245",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8",
+      "name": "Surging Sparks",
+      "releaseDate": "2024/11/08",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 23.76,
+    "trend_pct": 4.643678160919547
+  },
+  {
+    "card": {
+      "id": "sv8-246",
+      "name": "Lisia's Appeal",
+      "number": "246",
+      "rarity": "Special Illustration Rare"
+    },
+    "set_meta": {
+      "id": "sv8",
+      "name": "Surging Sparks",
+      "releaseDate": "2024/11/08",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 32.24,
+    "trend_pct": -1.0614345448697275
+  },
+  {
+    "card": {
+      "id": "sv8-247",
+      "name": "Pikachu ex",
+      "number": "247",
+      "rarity": "Hyper Rare"
+    },
+    "set_meta": {
+      "id": "sv8",
+      "name": "Surging Sparks",
+      "releaseDate": "2024/11/08",
+      "series": "Scarlet & Violet"
+    },
+    "market_usd": 97.43,
+    "trend_pct": -0.317341795781224
+  }
+]

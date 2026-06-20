@@ -66,16 +66,46 @@ nota veio e pode discordar de qualquer parcela.
 5. **Quem decide capital é o operador.** Score alto = "olhe primeiro".
    Não existe coluna "COMPRAR" de propósito.
 
+## Avaliação e calibração — fechando o loop (ASI-Evolve)
+
+O score sempre foi uma heurística de pesos curados à mão. Pra falar em
+"precisão" é preciso uma **função de fitness**: medir se o score ordena as
+cartas como o mercado de fato se moveu. É o que `outlook/evaluate.py` faz — e o
+que o ASI-Evolve maximizaria.
+
+- **Ground truth honesto:** tendência realizada do **CardMarket** (`avg7` vs
+  `avg30`) lida direto da pokemontcg.io — por carta, sem scraping. É curto
+  prazo (não prova valorização de longo prazo); mede a **consistência da
+  ordenação**, não verdade.
+- **Métrica:** correlação de posto (**Spearman**) entre o score (e cada
+  componente) e a variação realizada. O tool é um ranking → posto importa mais
+  que preço absoluto.
+- **Rodar:** `python run_evaluate.py --eras "Scarlet & Violet" --max-sets 6`
+  (entrega = tabela no chat). `--dump experiments/longterm_score/dataset.json`
+  grava o dataset do experimento.
+- **Guardrail:** abaixo de N=10 cartas com tendência válida, o relatório
+  **recusa recalibrar** (amostra insuficiente — não fitar ruído).
+- **Experimento ASI-Evolve:** `experiments/longterm_score/` traz o evaluator no
+  contrato do framework (`{"score","metrics"}`), a política **evolvível**
+  (`initial_program.py` = só os pesos) e o dataset. Regra: evoluir os PESOS,
+  manter FIXA a curadoria humana (tiers em `notorious.py`); ganhos portam de
+  volta pro `scoring.py`.
+- ⚠️ `pricecharting.py` (o `--trend` do run principal) ficou **sem dados**: o
+  PriceCharting passou a renderizar as vendas via JS. Use a calibração acima.
+
 ## Arquitetura
 
 ```
 run_outlook.py           CLI: baixa catálogo → score → cenário + ranking
-outlook/ptcg_api.py      cliente pokemontcg.io (sets, cartas, preços TCGPlayer)
+run_evaluate.py          CLI: calibração — score × tendência realizada (CardMarket)
+outlook/ptcg_api.py      cliente pokemontcg.io (preços TCGPlayer + tendência CardMarket)
 outlook/scoring.py       os 4 componentes do score + lista de sets com reprint forte
 outlook/notorious.py     personagens notórios em tiers de apelo S/A/B (Pokémon + treinadores)
-outlook/pricecharting.py tendência best-effort (páginas públicas; nunca inventa)
+outlook/evaluate.py      avaliador/fitness (Spearman score×realizado) + relatório
+outlook/pricecharting.py tendência best-effort (DESATUALIZADO — HTML virou JS)
 outlook/report.py        cenário por era + tabela top-N em markdown
-tests/                   testes dos componentes do score
+experiments/longterm_score/  experimento ASI-Evolve (evaluator, initial_program, dataset)
+tests/                   testes dos componentes do score + do avaliador
 ```
 
 Rodar os testes:

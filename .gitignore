@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 outputs/
 .pytest_cache/
+calib_report.md
+calib_progress.log

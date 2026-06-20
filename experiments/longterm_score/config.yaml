@@ -1,0 +1,20 @@
+# Config do ASI-Evolve p/ o experimento longterm_score (TEMPLATE).
+# Credenciais do LLM vêm de variável de ambiente — NUNCA comite chave aqui.
+experiment: longterm_score
+
+llm:
+  provider: openai            # openai | anthropic | gemini | litellm (local)
+  model: gpt-4o               # ou claude-... / gemini-...
+  api_key_env: OPENAI_API_KEY # NOME da env var com a chave (a chave não vai no arquivo)
+
+evolution:
+  steps: 40
+  sample_n: 3
+  parent_selection: map-elites   # ucb1 | greedy | random | map-elites
+
+objective:
+  maximize: score             # fitness do evaluator (Spearman do total vs realizado)
+  constraints:
+    - "score permanece 0-100, com 4 componentes 0-25"
+    - "heurística transparente: sem hardcode por carta, sem ML opaco"
+    - "não inventar preço; ground truth só do dataset.json"

@@ -1,16 +1,20 @@
 """Tendência de preço via páginas públicas do PriceCharting — best-effort.
 
-Probe de 2026-05-14 confirmou que as páginas públicas retornam HTTP 200 com
-dados estruturados (preço raw + últimas vendas) sem precisar da API paga.
-Aqui usamos SÓ as últimas vendas ("Sold Listings") pra estimar uma tendência
-rudimentar: média das 3 vendas mais recentes vs média das 3 anteriores.
+⚠️ DESATUALIZADO (probe 2026-06-20): o PriceCharting passou a renderizar as
+vendas concluídas via JS/AJAX — o HTML público não traz mais a tabela de "Sold
+Listings", então este scrape devolve "n/d" na prática. Mantido por
+compatibilidade do `--trend`, mas SEM garantia de dados. Para tendência
+realizada CONFIÁVEL use a calibração (run_evaluate.py / outlook.evaluate), que
+lê avg7/avg30 do CardMarket direto da pokemontcg.io — robusto, sem scraping.
+
+Quando funcionava: usava só as últimas vendas ("Sold Listings"), média das 3
+mais recentes vs as 3 anteriores. A lógica abaixo segue intacta caso o HTML
+público volte a expor as vendas.
 
 HONESTIDADE OBRIGATÓRIA:
-- Amostra minúscula (6 vendas) → a seta é um INDÍCIO, não uma série histórica.
-- O matching carta→produto é por busca de texto; se o número da carta não
-  aparecer no título do produto encontrado, devolvemos "n/d" em vez de
-  arriscar a carta errada.
-- Qualquer falha (HTTP, parse, bloqueio) devolve "n/d" — nunca inventa.
+- Amostra minúscula (6 vendas) → a seta seria um INDÍCIO, não série histórica.
+- Matching carta→produto por texto; sem match confiável → "n/d".
+- Qualquer falha (HTTP, parse, bloqueio, ausência de dados) → "n/d", nunca inventa.
 """
 from __future__ import annotations
 
@@ -39,24 +43,29 @@ def _first_product_url(html: str, number: str) -> str | None:
     return None
 
 
-def fetch_trend(card_name: str, set_name: str, number: str) -> str:
-    """Seta de tendência ('↑ +12%', '→', '↓ -8%') ou 'n/d (motivo)'."""
+def _fetch_sales(card_name: str, set_name: str,
+                 number: str) -> tuple[list[float] | None, str]:
+    """Últimas ~6 vendas do produto, ou (None, motivo). Nunca inventa.
+
+    Isola a parte de rede/parse — reutilizada por fetch_trend (seta p/ humano)
+    e trend_pct (número p/ o avaliador de calibração).
+    """
     try:
         q = quote(f"pokemon {set_name} {card_name} #{number}")
         r = requests.get(SEARCH.format(q=q), headers=HEADERS, timeout=TIMEOUT_S)
         if r.status_code != 200:
-            return f"n/d (busca HTTP {r.status_code})"
+            return None, f"busca HTTP {r.status_code}"
         # A busca pode redirecionar direto pra página do produto.
         if "/game/" in r.url:
             product_html = r.text
         else:
             url = _first_product_url(r.text, number)
             if not url:
-                return "n/d (sem match confiável)"
+                return None, "sem match confiável"
             time.sleep(SLEEP_S)
             pr = requests.get(url, headers=HEADERS, timeout=TIMEOUT_S)
             if pr.status_code != 200:
-                return f"n/d (produto HTTP {pr.status_code})"
+                return None, f"produto HTTP {pr.status_code}"
             product_html = pr.text
         sales = [float(s.replace(",", ""))
                  for s in _SALE_RE.findall(product_html)]
@@ -64,18 +73,42 @@ def fetch_trend(card_name: str, set_name: str, number: str) -> str:
         # individuais vêm depois. Heurística: usa as últimas 6 ocorrências.
         sales = [s for s in sales if s > 0][-6:]
         if len(sales) < 6:
-            return "n/d (poucas vendas)"
-        recent, older = sales[:3], sales[3:]
-        avg_r, avg_o = sum(recent) / 3, sum(older) / 3
-        if avg_o <= 0:
-            return "n/d"
-        delta = (avg_r - avg_o) / avg_o * 100
-        if delta > 8:
-            return f"↑ +{delta:.0f}%"
-        if delta < -8:
-            return f"↓ {delta:.0f}%"
-        return "→ estável"
+            return None, "poucas vendas"
+        return sales, ""
     except requests.RequestException:
-        return "n/d (rede)"
+        return None, "rede"
     except Exception:
-        return "n/d (parse)"
+        return None, "parse"
+
+
+def _delta_pct(sales: list[float]) -> float | None:
+    """Variação % das 3 vendas recentes vs as 3 anteriores (ou None)."""
+    recent, older = sales[:3], sales[3:]
+    avg_r, avg_o = sum(recent) / 3, sum(older) / 3
+    if avg_o <= 0:
+        return None
+    return (avg_r - avg_o) / avg_o * 100
+
+
+def trend_pct(card_name: str, set_name: str, number: str) -> float | None:
+    """Variação % realizada (numérica) p/ o avaliador de calibração, ou None.
+
+    Mesma amostra/limitação do fetch_trend — 6 vendas públicas, indício apenas.
+    """
+    sales, _ = _fetch_sales(card_name, set_name, number)
+    return _delta_pct(sales) if sales else None
+
+
+def fetch_trend(card_name: str, set_name: str, number: str) -> str:
+    """Seta de tendência ('↑ +12%', '→ estável', '↓ -8%') ou 'n/d (motivo)'."""
+    sales, reason = _fetch_sales(card_name, set_name, number)
+    if not sales:
+        return f"n/d ({reason})"
+    delta = _delta_pct(sales)
+    if delta is None:
+        return "n/d"
+    if delta > 8:
+        return f"↑ +{delta:.0f}%"
+    if delta < -8:
+        return f"↓ {delta:.0f}%"
+    return "→ estável"
