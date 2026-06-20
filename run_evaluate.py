@@ -66,7 +66,7 @@ def main() -> int:
                            reverse=True)[:args.max_sets]
     print(f"{len(sets_meta)} sets; baixando cartas...", file=sys.stderr)
 
-    rows, no_trend = [], 0
+    rows = []
     for i, s in enumerate(sets_meta, 1):
         n_set = 0
         for card in ptcg_api.fetch_cards_for_set(s["id"]):
@@ -74,8 +74,6 @@ def main() -> int:
             if usd is None or not (args.min_price <= usd <= args.max_price):
                 continue
             trend = ptcg_api.cardmarket_trend_pct(card)
-            if trend is None:
-                no_trend += 1
             rows.append((score_card(card, s, usd), card, s, usd, trend))
             n_set += 1
         print(f"  [{i}/{len(sets_meta)}] {s['name']}: {n_set} cartas premium",

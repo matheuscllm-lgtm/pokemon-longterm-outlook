@@ -5,11 +5,12 @@
 se o score ORDENA as cartas de forma consistente com o que o mercado fez. Este
 módulo calcula esse número.
 
-GROUND TRUTH (proxy, declaradamente fraco): a variação de preço das vendas
-recentes do PriceCharting — a MESMA fonte/limitação da tendência do tool. É de
-curto prazo e amostra minúscula (6 vendas/carta). Logo isto NÃO prova
+GROUND TRUTH (proxy, declaradamente fraco): a variação realizada de CURTO prazo
+de cada carta — hoje o CardMarket (avg7 vs avg30) lido da pokemontcg.io pelo
+run_evaluate. Este módulo é agnóstico à fonte: recebe pares (carta, variação %)
+e quem coleta o ground truth é o caller. Curto prazo, então NÃO prova
 valorização de longo prazo; mede se a ordenação do score bate com o movimento
-realizado recente. É sinal de sanidade/triagem, não verdade. Por isso:
+realizado recente. Sinal de sanidade/triagem, não verdade. Por isso:
   - usamos correlação de POSTO (Spearman), porque o tool é um ranking, não um
     previsor de preço absoluto;
   - reportamos sempre o N efetivo (cartas com tendência válida);
