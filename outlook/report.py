@@ -4,19 +4,39 @@ Duas partes:
   1. CENÁRIO: panorama por era (nº de sets, idade, quantos já estão fora de
      impressão, mediana de preço dos chases) — tudo derivado dos DADOS do
      run, nada de opinião enlatada.
-  2. RANKING: top-N cartas por score de longo prazo, com os 4 componentes
-     abertos por linha (transparência > caixa-preta).
+  2. RANKING: top-N cartas por score de longo prazo. O nome da carta vem com
+     o número junto ("Mew V ... #251") e cada linha traz o link do gráfico no
+     PriceCharting. O detalhamento dos 4 componentes saiu da tabela (a pedido
+     do operador); o total continua, com o racional no rodapé.
 """
 from __future__ import annotations
 
 from collections import defaultdict
 from statistics import median
+from urllib.parse import quote_plus
 
 from .scoring import ScoredCard
 
 
 def _md_escape(text: str) -> str:
     return text.replace("|", "\\|")
+
+
+def _pricecharting_search_url(name: str, set_name: str, number: str) -> str:
+    """Link da carta no PriceCharting (a página do produto traz o gráfico).
+
+    Usa a BUSCA do PriceCharting em vez de montar uma URL /game/<slug> direta:
+    o slug do set no PC não bate com o nome do tcgcsv e arriscaria 404. A busca
+    sempre resolve (e cai na página da carta, onde está o gráfico histórico).
+    O prefixo de era ("SV03: ", "SWSH07: ") é removido pra não poluir a query.
+    """
+    set_part = set_name
+    if ":" in set_name:
+        prefix, rest = set_name.split(":", 1)
+        if len(prefix) <= 8:          # SV03 / SWSH07 / ME01...
+            set_part = rest.strip()
+    q = quote_plus(f"pokemon {set_part} {name} {number}".strip())
+    return f"https://www.pricecharting.com/search-products?type=prices&q={q}"
 
 
 def scenario_markdown(cards: list[ScoredCard], sets_meta: list[dict],
@@ -70,23 +90,28 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
     ranked = sorted(cards, key=lambda c: (-c.score, -c.market_usd))[:top_n]
     lines = [f"## Top {len(ranked)} — score de longo prazo "
              f"(heurística 0-100; decisão é do operador)", ""]
-    lines.append("| # | Score | Carta | Set | Nº | Raridade | ⭐ | Preço US$ | "
-                 "Idade | Persngm | Rarid | Supply | Preço | Tendência | "
-                 "Notas | Link TCG |")
-    lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    lines.append("| # | Score | Carta | Set | Raridade | ⭐ | Preço US$ | "
+                 "Idade | Tendência | Notas | TCG | Gráfico (PriceCharting) |")
+    lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|")
     for i, c in enumerate(ranked, 1):
         star = f"⭐ {c.notorious}" if c.notorious else ""
         notes = "; ".join(c.notes) if c.notes else ""
+        carta = _md_escape(c.name)
+        if c.number:
+            carta += f" #{_md_escape(c.number)}"
+        pc_url = _pricecharting_search_url(c.name, c.set_name, c.number)
         lines.append(
-            f"| {i} | **{c.score}** | {_md_escape(c.name)} | "
-            f"{_md_escape(c.set_name)} | {c.number} | {_md_escape(c.rarity)} | "
+            f"| {i} | **{c.score}** | {carta} | "
+            f"{_md_escape(c.set_name)} | {_md_escape(c.rarity)} | "
             f"{star} | {c.market_usd:.2f} | {c.age_months}m | "
-            f"{c.pts_character} | {c.pts_rarity} | {c.pts_supply} | "
-            f"{c.pts_price} | {c.trend or '—'} | {_md_escape(notes)} | "
-            f"[TCG]({c.tcg_url}) |")
+            f"{c.trend or '—'} | {_md_escape(notes)} | "
+            f"[TCG]({c.tcg_url}) | [📈 gráfico]({pc_url}) |")
     lines.append("")
-    lines.append("_Score = Personagem + Raridade + Supply + Preço (0-25 cada). "
-                 "Heurística de triagem com racional aberto — NÃO é previsão "
-                 "nem conselho de investimento (a Tendência é informativa e "
-                 "NÃO entra no score)." + _trend_footnote(trend_source) + "_")
+    lines.append("_Score = Personagem + Raridade + Supply + Preço (0-25 cada, "
+                 "somados) — o detalhamento por componente saiu da tabela a "
+                 "pedido; segue heurística de triagem com racional aberto, NÃO "
+                 "é previsão nem conselho (a Tendência é informativa e NÃO entra "
+                 "no score). Gráfico = página da carta no PriceCharting (busca), "
+                 "onde fica o histórico visual." + _trend_footnote(trend_source)
+                 + "_")
     return "\n".join(lines)

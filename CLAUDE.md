@@ -58,8 +58,12 @@ resultado = tabela no chat, nunca arquivo por padrão). O `.md` em `outputs/`
 | **Supply** | oferta encolhendo | ≥36 meses = 25 · 24-36m = 22 · 18-24m = 18 · 12-18m = 12 · 6-12m = 7 · <6m = 3; set com **reprint forte** trava em 12 |
 | **Preço** | espaço pra crescer com liquidez | $40-120 = 25 · $15-40 = 20 · >$300 = 12 (já precificado) · <$5 = 5 (sem liquidez) |
 
-A tabela mostra os 4 componentes POR LINHA — você vê exatamente de onde a
-nota veio e pode discordar de qualquer parcela.
+A tabela do ranking mostra o **score total** (não mais as 4 parcelas em
+colunas — saíram a pedido do operador; o racional dos componentes está acima
+e na coluna **Notas**). Cada linha traz o **número junto ao nome** da carta
+("Mew V (Alternate Full Art) #251") e dois links: **TCG** (TCGPlayer) e
+**Gráfico (PriceCharting)** — a página da carta no PriceCharting, onde fica o
+histórico visual de preço.
 
 ## Limitações honestas (leia antes de usar)
 
