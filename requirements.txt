@@ -1,2 +1,6 @@
 requests>=2.31
 pytest>=8.0
+# py7zr: lê os dumps diários .ppmd.7z do tcgcsv.com (histórico de preço real,
+# --trend). O filtro PPMd não é suportado por zipfile/lzma da stdlib. É opcional
+# em runtime (sem ele a tendência cai pra "n/d"), mas recomendado.
+py7zr>=0.21

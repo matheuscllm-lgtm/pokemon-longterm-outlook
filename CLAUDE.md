@@ -28,9 +28,18 @@ oferta encolhendo, patamar de preço). São perguntas diferentes.
 ```powershell
 cd C:\Users\mathe\pokemon-longterm-outlook
 .venv\Scripts\python.exe run_outlook.py                # SV + SWSH + ME, top 50
-.venv\Scripts\python.exe run_outlook.py --trend        # + setas de tendência (lento)
+.venv\Scripts\python.exe run_outlook.py --trend        # + tendência REAL (histórico tcgcsv)
 .venv\Scripts\python.exe run_outlook.py --top 30 --min-price 20
 ```
+
+`--trend` agora usa **histórico de preço REAL** do tcgcsv.com (dumps diários do
+TCGPlayer desde 2024-02-08), casado por `productId` — a variação entre hoje e o
+ponto mais distante disponível (até 1 ano). É a fonte default da tendência
+(`--trend-source tcgcsv`); a antiga raspagem do PriceCharting segue acessível em
+`--trend-source pricecharting` (indício fraco, ~6 vendas). O histórico exige
+`--source tcgcsv` (o casamento é por productId) e o pacote `py7zr` (lê o `.7z`
+PPMd); sem ele a tendência cai pra `n/d` honestamente, sem quebrar o run. Os
+dumps ficam em cache em `data/cache/` (1ª vez ~9s/ponto; depois instantâneo).
 
 Precisa da `POKEMONTCG_API_KEY` (User env var — já está configurada nesta
 máquina; key grátis em dev.pokemontcg.io). Sem a key roda também, só mais
@@ -56,8 +65,16 @@ nota veio e pode discordar de qualquer parcela.
 
 1. **Não é previsão.** É triagem por características historicamente
    associadas a valorização. Mercado pode fazer outra coisa.
-2. **Sem série histórica de preço.** A "tendência" opcional (`--trend`) vem
-   de ~6 vendas públicas do PriceCharting — amostra minúscula, indício apenas.
+2. **Série histórica de preço: agora REAL (com ressalvas).** A "tendência"
+   opcional (`--trend`) usa o **histórico diário do tcgcsv.com** (marketPrice
+   TCGPlayer desde 2024-02-08), casado por `productId` — não é mais a raspagem
+   de ~6 vendas do PriceCharting. Ressalvas que continuam valendo: (a) é
+   **market price agregado**, NÃO por condição (NM/LP); (b) cartas de set novo
+   (sem histórico até a janela) saem como `n/d (sem histórico)`, e a headline
+   usa a maior janela disponível (ex.: set de 9 meses mostra `(6m)`, não `1a`);
+   (c) a Tendência é **informativa e NÃO entra no score** (continua 4×25=100);
+   (d) depende do arquivo do tcgcsv (fonte voluntária) e do pacote `py7zr`.
+   Mesmo assim, é histórico de fato — não previsão.
 3. **Era SWSH**: a API não distingue alt-art de ultra/secret comum pela
    raridade — alt arts SWSH (ex.: Moonbreon) ficam **subpontuadas** no
    componente raridade. A linha ganha nota explicando isso.
@@ -73,9 +90,10 @@ run_outlook.py           CLI: baixa catálogo → score → cenário + ranking
 outlook/ptcg_api.py      cliente pokemontcg.io (sets, cartas, preços TCGPlayer)
 outlook/scoring.py       os 4 componentes do score + lista de sets com reprint forte
 outlook/notorious.py     lista curada de ~55 Pokémon notórios (portada do integrado)
-outlook/pricecharting.py tendência best-effort (páginas públicas; nunca inventa)
+outlook/pricecharting.py tendência best-effort via PriceCharting (--trend-source pricecharting; legado)
+outlook/pricehistory.py  tendência REAL: histórico diário do tcgcsv (.ppmd.7z via py7zr), casado por productId
 outlook/report.py        cenário por era + tabela top-N em markdown
-tests/                   testes dos componentes do score
+tests/                   testes dos componentes do score + do histórico de preço
 ```
 
 Rodar os testes:
