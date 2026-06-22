@@ -52,7 +52,21 @@ def scenario_markdown(cards: list[ScoredCard], sets_meta: list[dict],
     return "\n".join(lines)
 
 
-def ranking_markdown(cards: list[ScoredCard], top_n: int) -> str:
+def _trend_footnote(trend_source: str) -> str:
+    """Frase de honestidade sobre a coluna Tendência, conforme a fonte usada."""
+    if trend_source == "tcgcsv":
+        return (" Tendência = variação do marketPrice TCGPlayer entre hoje e o "
+                "ponto histórico mais distante disponível (até 1 ano), série "
+                "diária REAL do tcgcsv.com desde 2024-02-08, casada por "
+                "productId; é histórico de fato, não previsão.")
+    if trend_source == "pricecharting":
+        return (" Tendência vem de ~6 vendas públicas do PriceCharting "
+                "(amostra minúscula, indício apenas).")
+    return ""
+
+
+def ranking_markdown(cards: list[ScoredCard], top_n: int,
+                     trend_source: str = "") -> str:
     ranked = sorted(cards, key=lambda c: (-c.score, -c.market_usd))[:top_n]
     lines = [f"## Top {len(ranked)} — score de longo prazo "
              f"(heurística 0-100; decisão é do operador)", ""]
@@ -73,7 +87,6 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int) -> str:
     lines.append("")
     lines.append("_Score = Personagem + Raridade + Supply + Preço (0-25 cada). "
                  "Heurística de triagem com racional aberto — NÃO é previsão "
-                 "nem conselho de investimento; tendência (quando presente) "
-                 "vem de ~6 vendas públicas do PriceCharting (amostra "
-                 "minúscula, indício apenas)._")
+                 "nem conselho de investimento (a Tendência é informativa e "
+                 "NÃO entra no score)." + _trend_footnote(trend_source) + "_")
     return "\n".join(lines)
