@@ -7,8 +7,8 @@ racional aberto) e imprime: (1) um panorama do cenário por era e (2) a
 tabela top-N ranqueada.
 
 Uso típico:
-  python run_outlook.py                          # eras SV + SWSH, top 50
-  python run_outlook.py --top 30 --trend         # + tendência PriceCharting no top
+  python run_outlook.py                          # eras SV + SWSH + ME, top 50
+  python run_outlook.py --top 30 --trend         # + tendência REAL (histórico tcgcsv)
   python run_outlook.py --eras "Scarlet & Violet" --min-price 20
 
 Este avaliador NUNCA decide compra. Score alto = "olhe primeiro", não

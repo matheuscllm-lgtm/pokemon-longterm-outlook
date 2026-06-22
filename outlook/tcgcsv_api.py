@@ -44,6 +44,20 @@ SPECIAL_SETS = {
 }
 
 
+def _strip_number_suffix(name: str, full_number: str) -> str:
+    """Tira o sufixo ' - 008/159' que o TCGPlayer anexa a alguns nomes.
+
+    A coluna Nº da tabela já mostra esse número; repetido no nome é só ruído
+    (e desalinha visualmente as linhas que não têm o sufixo). Corta SÓ quando o
+    nome termina exatamente em ' - <Number>' — combinação literal, sem
+    heurística frouxa que arriscaria cortar um nome que use ' - ' de verdade.
+    """
+    suffix = f" - {full_number}"
+    if full_number and name.endswith(suffix):
+        return name[: -len(suffix)].rstrip()
+    return name
+
+
 def _get_json(url: str) -> dict:
     last: Exception | None = None
     for attempt in range(RETRIES):
@@ -109,10 +123,11 @@ def fetch_cards_with_prices(group_id: str) -> list[dict]:
         rarity = ext.get("Rarity")
         if not rarity:
             continue  # não é carta avulsa
-        number = str(ext.get("Number") or "").split("/")[0].strip()
+        raw_number = str(ext.get("Number") or "").strip()
+        number = raw_number.split("/")[0].strip()
         cards.append({
             "id": str(prod["productId"]),
-            "name": prod.get("name", ""),
+            "name": _strip_number_suffix(prod.get("name", ""), raw_number),
             "number": number,
             "rarity": rarity,
             "_market_usd": best_by_pid.get(prod["productId"]),
