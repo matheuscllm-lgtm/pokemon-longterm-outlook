@@ -41,6 +41,7 @@ TIMEOUT_S = 60
 DEFAULT_WINDOWS = (30, 90, 180, 365)  # dias atrás = pontos de referência
 THRESHOLD_PCT = 8.0                  # |%| pra a seta deixar de ser "estável"
 HORIZON_LABELS = {30: "1m", 90: "3m", 180: "6m", 365: "1a"}
+MAGIC_7Z = b"7z\xbc\xaf\x27\x1c"     # assinatura do 7z — rejeita HTML-200/truncado
 
 CACHE_DIR = (Path(__file__).resolve().parent.parent
              / "data" / "cache" / "tcgcsv_history")
@@ -98,7 +99,12 @@ def _map_path(d: date) -> Path:
 
 
 def _download(d: date) -> Optional[Path]:
-    """Baixa o `.7z` do dia (cacheado). 404/erro → None (dia ausente)."""
+    """Baixa o `.7z` do dia (cacheado). 404/erro/corpo-não-7z → None.
+
+    Valida a assinatura 7z ANTES de cachear: um challenge/erro HTML servido com
+    `status_code==200` (Cloudflare etc.) ou um corpo truncado não vira cache
+    envenenado — senão `_extract_cat3_map` estouraria toda run subsequente.
+    """
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     ap = _archive_path(d)
     if ap.exists() and ap.stat().st_size > 0:
@@ -110,6 +116,8 @@ def _download(d: date) -> Optional[Path]:
         return None
     if r.status_code != 200 or not r.content:
         return None
+    if not r.content.startswith(MAGIC_7Z):
+        return None  # corpo não é um 7z (página de erro/challenge servida como 200)
     ap.write_bytes(r.content)
     return ap
 
@@ -194,6 +202,9 @@ def price_map_for_date(d: date) -> Optional[dict[str, float]]:
             m = _extract_cat3_map(ap)
         except RuntimeError:        # py7zr ausente — não adianta tentar outro dia
             return None
+        except Exception:           # 7z corrompido/truncado (Bad7zFile/LZMAError/EOFError)
+            ap.unlink(missing_ok=True)   # remove o cache envenenado p/ permitir re-download
+            continue                # NUNCA estoura a run — degrada pra "n/d"
         if m:
             CACHE_DIR.mkdir(parents=True, exist_ok=True)
             mp.write_text(json.dumps(m))

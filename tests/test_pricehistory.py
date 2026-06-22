@@ -143,3 +143,33 @@ def test_extract_cat3_roundtrip(tmp_path: Path):
 
 def test_py7zr_available_is_bool():
     assert isinstance(ph.py7zr_available(), bool)
+
+
+# --------------------------------------------------------------------------- #
+# Robustez: nunca estoura a run (contrato "degrada pra n/d")
+# --------------------------------------------------------------------------- #
+def test_download_rejects_non_7z_body(tmp_path, monkeypatch):
+    """Um corpo HTML servido como 200 (challenge CF) NÃO vira cache envenenado."""
+    monkeypatch.setattr(ph, "CACHE_DIR", tmp_path)
+
+    class _Resp:
+        status_code = 200
+        content = b"<html>cloudflare challenge</html>"
+
+    monkeypatch.setattr(ph.requests, "get", lambda *a, **k: _Resp())
+    assert ph._download(date(2024, 2, 8)) is None
+    assert list(tmp_path.glob("*.7z")) == []     # nada gravado no cache
+
+
+def test_price_map_degrades_on_corrupt_archive(tmp_path, monkeypatch):
+    """7z corrompido/truncado -> None (sem estourar) e o cache envenenado some."""
+    pytest.importorskip("py7zr")
+    monkeypatch.setattr(ph, "CACHE_DIR", tmp_path)
+    garbage = tmp_path / "prices-2024-02-08.ppmd.7z"
+    garbage.write_bytes(ph.MAGIC_7Z + b"corpo invalido, nao e um 7z de verdade")
+    monkeypatch.setattr(
+        ph, "_download", lambda d: garbage if d == date(2024, 2, 8) else None
+    )
+    # NÃO pode levantar; degrada pra None; remove o arquivo envenenado.
+    assert ph.price_map_for_date(date(2024, 2, 8)) is None
+    assert not garbage.exists()
