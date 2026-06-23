@@ -32,6 +32,8 @@ from urllib.parse import quote_plus
 
 import requests
 
+from .sets import strip_era_prefix
+
 CT_BASE = "https://api.cardtrader.com/api/v2"
 CT_ENV_PATH = Path(r"C:\Users\mathe\card-trader-scanner\.env")
 CT_POKEMON_GAME_ID = 5
@@ -59,12 +61,12 @@ def _norm(text: str) -> str:
 
 
 def _strip_era_prefix(set_name: str) -> str:
-    """'SWSH07: Evolving Skies' → 'evolving skies' (nomes CT não têm o prefixo)."""
-    if ":" in set_name:
-        prefix, rest = set_name.split(":", 1)
-        if len(prefix) <= 8:          # SV08 / SWSH07 / ME03 / SV...
-            return _norm(rest)
-    return _norm(set_name)
+    """'SWSH07: Evolving Skies' → 'evolving skies' (nomes CT não têm o prefixo).
+
+    Tira o prefixo com o helper compartilhado (outlook.sets) e normaliza
+    (caixa/acento) pro match com os nomes de expansão do CardTrader.
+    """
+    return _norm(strip_era_prefix(set_name))
 
 
 def _clean_number(num: str) -> str:

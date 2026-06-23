@@ -5,7 +5,8 @@ Travam as três mudanças pedidas no modo de entrega: (1) número junto ao nome,
 """
 from datetime import date
 
-from outlook.report import _pricecharting_search_url, ranking_markdown
+from outlook.report import (_md_link, _pricecharting_search_url,
+                            ranking_markdown)
 from outlook.scoring import ScoredCard
 
 
@@ -62,3 +63,23 @@ def test_card_without_number_has_no_dangling_hash():
     md = ranking_markdown([_card(number="")], 10)
     assert "Mew V (Alternate Full Art) #" not in md
     assert "Mew V (Alternate Full Art)" in md
+
+
+def test_md_link_encodes_table_breaking_chars():
+    # '|' quebraria a célula da tabela; '(' / ')' sem par fechariam o link cedo.
+    out = _md_link("TCG", "https://x.com/a(b)c|d")
+    assert out == "[TCG](https://x.com/a%28b%29c%7Cd)"
+    dest = out[out.index("](") + 2:-1]
+    assert not any(ch in dest for ch in "|()")
+
+
+def test_md_link_passes_clean_url_through():
+    url = "https://www.tcgplayer.com/product/253147/pokemon-mew-v"
+    assert _md_link("TCG", url) == f"[TCG]({url})"
+
+
+def test_ranking_uses_shared_pricecharting_base():
+    # A base da URL é a mesma do módulo pricecharting (fonte única, sem duplicar).
+    from outlook.pricecharting import SEARCH
+    base = SEARCH.split("{q}")[0]
+    assert base in ranking_markdown([_card()], 10)
