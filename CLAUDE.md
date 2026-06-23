@@ -54,7 +54,7 @@ resultado = tabela no chat, nunca arquivo por padrão). O `.md` em `outputs/`
 | Componente | O que mede | Como pontua |
 |---|---|---|
 | **Personagem** | demanda perene do Pokémon | notório (lista curada ~55: Charizard, Umbreon, Pikachu...) = 25; resto = 8 |
-| **Raridade** | tier colecionável | SIR/alt-art 25 · IR 20 · TG/Character 16 · gold/secret/shiny 14 · ultra/VMAX 12 · resto ≤10 |
+| **Raridade** | tier colecionável | SIR/alt-art 25 · IR 20 · TG/Character 16 · gold/secret/shiny 14 · ultra/VMAX 12 · ACE SPEC 10 · double rare/Rare Holo V 6 · resto 3 |
 | **Supply** | oferta encolhendo | ≥36 meses = 25 · 24-36m = 22 · 18-24m = 18 · 12-18m = 12 · 6-12m = 7 · <6m = 3; set com **reprint forte** trava em 12 |
 | **Preço** | espaço pra crescer com liquidez | $40-120 = 25 · $15-40 = 20 · >$300 = 12 (já precificado) · <$5 = 5 (sem liquidez) |
 
