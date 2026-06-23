@@ -62,8 +62,8 @@ A tabela do ranking mostra o **score total** (não mais as 4 parcelas em
 colunas — saíram a pedido do operador; o racional dos componentes está acima
 e na coluna **Notas**). Cada linha traz o **número junto ao nome** da carta
 ("Mew V (Alternate Full Art) #251") e dois links: **TCG** (TCGPlayer) e
-**Gráfico (PriceCharting)** — a página da carta no PriceCharting, onde fica o
-histórico visual de preço.
+**Gráfico (PriceCharting)** — busca que cai na página da carta no
+PriceCharting, onde fica o histórico visual de preço.
 
 ## Limitações honestas (leia antes de usar)
 

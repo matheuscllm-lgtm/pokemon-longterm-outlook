@@ -15,28 +15,39 @@ from collections import defaultdict
 from statistics import median
 from urllib.parse import quote_plus
 
+from .pricecharting import SEARCH as _PRICECHARTING_SEARCH
 from .scoring import ScoredCard
+from .sets import strip_era_prefix
 
 
 def _md_escape(text: str) -> str:
     return text.replace("|", "\\|")
 
 
-def _pricecharting_search_url(name: str, set_name: str, number: str) -> str:
-    """Link da carta no PriceCharting (a página do produto traz o gráfico).
+def _md_link(label: str, url: str) -> str:
+    """Link markdown seguro pra dentro de uma célula de tabela.
 
-    Usa a BUSCA do PriceCharting em vez de montar uma URL /game/<slug> direta:
-    o slug do set no PC não bate com o nome do tcgcsv e arriscaria 404. A busca
-    sempre resolve (e cai na página da carta, onde está o gráfico histórico).
-    O prefixo de era ("SV03: ", "SWSH07: ") é removido pra não poluir a query.
+    Codifica os chars que quebrariam a tabela/link se aparecessem na URL:
+    '|' (delimita célula) e '(' / ')' (a sem-par fecha o link cedo). URLs reais
+    de TCGPlayer/PriceCharting não têm esses chars (conferido em 476 cartas),
+    mas isto blinda a renderização contra fontes de URL futuras.
     """
-    set_part = set_name
-    if ":" in set_name:
-        prefix, rest = set_name.split(":", 1)
-        if len(prefix) <= 8:          # SV03 / SWSH07 / ME01...
-            set_part = rest.strip()
-    q = quote_plus(f"pokemon {set_part} {name} {number}".strip())
-    return f"https://www.pricecharting.com/search-products?type=prices&q={q}"
+    safe = url.replace("|", "%7C").replace("(", "%28").replace(")", "%29")
+    return f"[{label}]({safe})"
+
+
+def _pricecharting_search_url(name: str, set_name: str, number: str) -> str:
+    """Link de BUSCA do PriceCharting pra carta (cai na página/gráfico dela).
+
+    Busca em vez de URL /game/<slug> direta: o slug do set no PC não bate com o
+    nome do tcgcsv e arriscaria 404; a busca sempre resolve. Reaproveita a base
+    `SEARCH` do módulo pricecharting (fonte única da URL) e o `strip_era_prefix`
+    compartilhado (tira "SV03: "/"SWSH07: " pra não poluir a query);
+    `" ".join(...split())` colapsa espaços caso algum trecho venha vazio.
+    """
+    terms = " ".join(
+        f"pokemon {strip_era_prefix(set_name)} {name} {number}".split())
+    return _PRICECHARTING_SEARCH.format(q=quote_plus(terms))
 
 
 def scenario_markdown(cards: list[ScoredCard], sets_meta: list[dict],
@@ -105,7 +116,7 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
             f"{_md_escape(c.set_name)} | {_md_escape(c.rarity)} | "
             f"{star} | {c.market_usd:.2f} | {c.age_months}m | "
             f"{c.trend or '—'} | {_md_escape(notes)} | "
-            f"[TCG]({c.tcg_url}) | [📈 gráfico]({pc_url}) |")
+            f"{_md_link('TCG', c.tcg_url)} | {_md_link('📈 gráfico', pc_url)} |")
     lines.append("")
     lines.append("_Score = Personagem + Raridade + Supply + Preço (0-25 cada, "
                  "somados) — o detalhamento por componente saiu da tabela a "
