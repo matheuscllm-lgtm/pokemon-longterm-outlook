@@ -1,8 +1,8 @@
 name: tests
 
-# Trava regressões: roda a suíte a cada PR (e em pushes na main). Os testes são
-# unitários e não tocam a rede (monkeypatch/lógica pura), então rodam offline.
-# Usa o Python 3 já presente no runner ubuntu-latest (sem actions/setup-python).
+# Roda a suíte a cada PR e a cada push na main. Os testes são unitários e
+# offline (monkeypatch / lógica pura), então não precisam de rede nem de
+# POKEMONTCG_API_KEY — o CI instala as deps e roda pytest, só isso.
 on:
   push:
     branches: [main]
@@ -13,7 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
       - name: Install dependencies
-        run: python3 -m pip install --upgrade pip -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
       - name: Run tests
-        run: python3 -m pytest tests/ -q
+        run: python -m pytest tests/ -q

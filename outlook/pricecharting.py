@@ -18,8 +18,6 @@ import re
 import time
 from urllib.parse import quote
 
-import requests
-
 SEARCH = "https://www.pricecharting.com/search-products?type=prices&q={q}"
 HEADERS = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                           "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -41,6 +39,7 @@ def _first_product_url(html: str, number: str) -> str | None:
 
 def fetch_trend(card_name: str, set_name: str, number: str) -> str:
     """Seta de tendência ('↑ +12%', '→', '↓ -8%') ou 'n/d (motivo)'."""
+    import requests  # local: deixa o módulo importável (SEARCH) sem puxar requests
     try:
         q = quote(f"pokemon {set_name} {card_name} #{number}")
         r = requests.get(SEARCH.format(q=q), headers=HEADERS, timeout=TIMEOUT_S)

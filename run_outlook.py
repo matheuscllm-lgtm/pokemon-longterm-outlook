@@ -7,8 +7,8 @@ racional aberto) e imprime: (1) um panorama do cenário por era e (2) a
 tabela top-N ranqueada.
 
 Uso típico:
-  python run_outlook.py                          # eras SV + SWSH, top 50
-  python run_outlook.py --top 30 --trend         # + tendência PriceCharting no top
+  python run_outlook.py                          # eras SV + SWSH + ME, top 50
+  python run_outlook.py --top 30 --trend         # + tendência REAL (histórico tcgcsv)
   python run_outlook.py --eras "Scarlet & Violet" --min-price 20
 
 Este avaliador NUNCA decide compra. Score alto = "olhe primeiro", não
@@ -19,14 +19,14 @@ from __future__ import annotations
 import argparse
 import sys
 import time
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-from outlook import history, ptcg_api, sealed, tcgcsv_api
+from outlook import history, pricehistory, ptcg_api, sealed, tcgcsv_api
 from outlook.pricecharting import fetch_trend
 from outlook.report import ranking_markdown, scenario_markdown
 from outlook.scoring import score_card
@@ -35,6 +35,33 @@ HERE = Path(__file__).resolve().parent
 OUT_DIR = HERE / "outputs"
 
 DEFAULT_ERAS = ["Scarlet & Violet", "Sword & Shield", "Mega Evolution"]
+
+
+def _trend_tcgcsv_history(ranked, source: str) -> None:
+    """Preenche `c.trend` com a variação REAL do marketPrice (arquivo tcgcsv).
+
+    O histórico é casado por `productId` (o `id` que o tcgcsv usa pra carta);
+    com `--source ptcg` o id é outro e não casa, então avisamos e pulamos.
+    """
+    if source != "tcgcsv":
+        print("  (tendência por histórico tcgcsv exige --source tcgcsv; "
+              "pulando — use --trend-source pricecharting pra outra fonte)")
+        for c in ranked:
+            c.trend = "n/d (use --source tcgcsv)"
+        return
+    if not pricehistory.py7zr_available():
+        print("  (py7zr ausente — `pip install py7zr` pra tendência por "
+              "histórico; pulando)")
+        for c in ranked:
+            c.trend = "n/d (py7zr ausente)"
+        return
+    print(f"Montando histórico real de preço (tcgcsv) pro top {len(ranked)} — "
+          "baixa alguns dumps diários (~9s cada na 1ª vez; depois cacheia)...")
+    maps = pricehistory.build_price_maps(date.today(), log=print)
+    if not maps:
+        print("  (nenhum ponto histórico disponível agora — tcgcsv fora do ar?)")
+    for c in ranked:
+        c.trend = pricehistory.trend_for(c.card_id, c.market_usd, maps).label
 
 
 def main() -> int:
@@ -47,7 +74,13 @@ def main() -> int:
     ap.add_argument("--max-price", type=float, default=1000.0,
                     help="preço market máximo US$ (default 1000 — acima já está precificado)")
     ap.add_argument("--trend", action="store_true",
-                    help="busca tendência no PriceCharting pro top-N (lento, ~2s/carta)")
+                    help="mostra tendência de preço pro top-N (ver --trend-source)")
+    ap.add_argument("--trend-source", choices=["tcgcsv", "pricecharting"],
+                    default="tcgcsv",
+                    help="tcgcsv (default; histórico REAL diário do TCGPlayer "
+                         "desde 2024-02-08, casado por productId — exige "
+                         "--source tcgcsv e py7zr) ou pricecharting (~6 vendas "
+                         "raspadas, indício apenas)")
     ap.add_argument("--source", choices=["tcgcsv", "ptcg"], default="tcgcsv",
                     help="tcgcsv (default; dumps diários TCGPlayer, estável) "
                          "ou ptcg (pokemontcg.io ao vivo, oscila)")
@@ -89,10 +122,14 @@ def main() -> int:
 
     if args.trend:
         ranked = sorted(scored, key=lambda c: (-c.score, -c.market_usd))[:args.top]
-        print(f"Buscando tendência PriceCharting pro top {len(ranked)} (best-effort)...")
-        for c in ranked:
-            c.trend = fetch_trend(c.name, c.set_name, c.number)
-            time.sleep(1.5)
+        if args.trend_source == "tcgcsv":
+            _trend_tcgcsv_history(ranked, args.source)
+        else:
+            print(f"Buscando tendência PriceCharting pro top {len(ranked)} "
+                  "(best-effort)...")
+            for c in ranked:
+                c.trend = fetch_trend(c.name, c.set_name, c.number)
+                time.sleep(1.5)
 
     # Snapshot diário: a memória que destrava tendência real + backtest (#1).
     if not args.no_snapshot:
@@ -119,7 +156,9 @@ def main() -> int:
     md = (f"# Cenário Pokémon TCG + score de longo prazo — "
           f"{datetime.now():%Y-%m-%d}\n\n"
           + scenario_markdown(scored, sets_meta, skipped_no_price, args.source)
-          + "\n\n" + ranking_markdown(scored, args.top))
+          + "\n\n" + ranking_markdown(
+              scored, args.top,
+              trend_source=args.trend_source if args.trend else ""))
     if sealed_scored:
         md += "\n\n" + sealed.sealed_ranking_markdown(sealed_scored, args.top)
     OUT_DIR.mkdir(exist_ok=True)
