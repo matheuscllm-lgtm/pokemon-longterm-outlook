@@ -19,6 +19,7 @@ Componentes:
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import date
 
@@ -39,13 +40,25 @@ HEAVY_REPRINT_SET_IDS = {
 }
 HEAVY_REPRINT_NAME_PARTS = (
     "151", "Paldean Fates", "Prismatic Evolutions", "Champion's Path",
-    "Shining Fates", "Crown Zenith", "Celebrations",
+    "Shining Fates", "Crown Zenith", "Celebrations", "Ascended Heroes",
 )
+
+# Sets ESPECIAIS ficam fora da numeração da era no TCGPlayer ("SV: 151",
+# "ME: Ascended Heroes"), ao contrário dos mains numerados ("SV01:", "ME01:").
+# Especiais são impressos em massa e por muito tempo — a oferta não encolhe
+# como a de um main que sai de catálogo. Detectar pelo padrão do nome elimina a
+# manutenção manual da lista acima (que já tinha deixado "Ascended Heroes" de
+# fora) e cobre a fonte tcgcsv (a default). A lista continua servindo a fonte
+# ptcg, cujos nomes não trazem o prefixo de era. Stance conservador de propósito:
+# na dúvida, NÃO creditamos oferta encolhendo a um set que segue sendo impresso.
+SPECIAL_SET_PREFIX_RE = re.compile(r"^(SV|SWSH|ME):")
 
 
 def is_heavy_reprint(set_id: str, set_name: str) -> bool:
+    name = set_name or ""
     return (set_id in HEAVY_REPRINT_SET_IDS
-            or any(part in set_name for part in HEAVY_REPRINT_NAME_PARTS))
+            or any(part in name for part in HEAVY_REPRINT_NAME_PARTS)
+            or bool(SPECIAL_SET_PREFIX_RE.match(name)))
 
 
 def rarity_points(rarity: str) -> int:
@@ -56,6 +69,11 @@ def rarity_points(rarity: str) -> int:
     if "illustration" in r:
         return 20
     if "trainer gallery" in r or "character" in r:
+        return 16
+    # era Mega: "Mega Attack Rare" = arte de ataque do Mega ex (tier full-art
+    # premium, abaixo de SIR; ~nível Illustration Rare no mercado). Sem esta
+    # regra cairia no default (3 = comum) — era o bug que subpontuava esses ex.
+    if "attack" in r:
         return 16
     if "hyper" in r or "secret" in r or "rainbow" in r:
         return 14
