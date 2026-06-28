@@ -26,7 +26,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-from outlook import history, pricehistory, ptcg_api, sealed, tcgcsv_api
+from outlook import doubleholo, history, pricehistory, ptcg_api, sealed, tcgcsv_api
 from outlook.pricecharting import fetch_trend
 from outlook.report import ranking_markdown, scenario_markdown
 from outlook.scoring import score_card
@@ -89,6 +89,10 @@ def main() -> int:
                          "— só na fonte tcgcsv")
     ap.add_argument("--no-snapshot", action="store_true",
                     help="não salvar o snapshot diário deste run (history.py)")
+    ap.add_argument("--doubleholo", metavar="JSON",
+                    help="JSON canônico do Double Holo (saída de "
+                         "doubleholo_signals.py ingest --json) — adiciona a "
+                         "coluna DH (2ª opinião), casada por productId")
     args = ap.parse_args()
 
     api = tcgcsv_api if args.source == "tcgcsv" else ptcg_api
@@ -119,6 +123,23 @@ def main() -> int:
     if not scored:
         print("Nenhuma carta no universo — confira eras/filtros.")
         return 1
+
+    # 2ª opinião Double Holo (coluna DH), casada por productId. Opcional.
+    show_dh = False
+    if args.doubleholo:
+        # O join é por productId TCGPlayer (== card_id só na fonte tcgcsv).
+        if args.source != "tcgcsv":
+            print("  ⚠ --doubleholo casa por productId TCGPlayer, que só é o "
+                  "card_id na fonte tcgcsv; com --source ptcg o id é outro e a "
+                  "coluna DH virá toda '—'. Use --source tcgcsv.")
+        try:
+            sigs = doubleholo.load_signals(args.doubleholo)
+            matched = doubleholo.attach_scores(scored, sigs)
+            show_dh = True
+            print(f"Double Holo: {len(sigs)} carta(s) no JSON, "
+                  f"{matched} casada(s) por productId no universo.")
+        except Exception as e:  # JSON malformado/forma errada: degrada, não derruba o run
+            print(f"  (--doubleholo ignorado: não consegui usar {args.doubleholo}: {e})")
 
     if args.trend:
         ranked = sorted(scored, key=lambda c: (-c.score, -c.market_usd))[:args.top]
@@ -158,7 +179,8 @@ def main() -> int:
           + scenario_markdown(scored, sets_meta, skipped_no_price, args.source)
           + "\n\n" + ranking_markdown(
               scored, args.top,
-              trend_source=args.trend_source if args.trend else ""))
+              trend_source=args.trend_source if args.trend else "",
+              show_dh=show_dh))
     if sealed_scored:
         md += "\n\n" + sealed.sealed_ranking_markdown(sealed_scored, args.top)
     OUT_DIR.mkdir(exist_ok=True)

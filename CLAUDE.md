@@ -31,6 +31,7 @@ cd C:\Users\mathe\pokemon-longterm-outlook
 .venv\Scripts\python.exe run_outlook.py --trend        # + tendência REAL (histórico tcgcsv)
 .venv\Scripts\python.exe run_outlook.py --top 30 --min-price 20
 .venv\Scripts\python.exe run_outlook.py --sealed       # + ranking de selados (ETB/Box/Bundle/Tin)
+.venv\Scripts\python.exe run_outlook.py --doubleholo dh.json  # + coluna DH (2ª opinião Double Holo)
 .venv\Scripts\python.exe -m outlook.history            # resumo da série histórica (maiores altas/quedas)
 .venv\Scripts\python.exe -m outlook.validate           # calibração do score + backtest (quando houver história)
 ```
@@ -67,7 +68,17 @@ resultado = tabela no chat, nunca arquivo por padrão). O `.md` em `outputs/`
 
 A tabela do ranking mostra o **score total** (não mais as 4 parcelas em
 colunas — saíram a pedido do operador; o racional dos componentes está acima
-e na coluna **Notas**). Cada linha traz o **número junto ao nome** da carta
+e na coluna **Notas**).
+
+**Coluna DH (opcional, `--doubleholo dh.json`):** uma 2ª opinião de mercado do
+Double Holo, nota 0-100 (50=neutro), avaliando os DADOS premium do Double Holo
+(previsão de preço + sinal IA + ROI de gradação + momentum). É calculada em
+`outlook/doubleholo.py` a partir do JSON canônico gerado por
+`scanners-commons/tooling/doubleholo_signals.py ingest --json`, e casada por
+**productId do TCGPlayer** (`tcg_product_id` == `card_id`) — join determinístico,
+sem casar por nome. **NÃO entra no score** de longo prazo (continua 4×25=100); é
+coluna à parte. Carta sem dado Double Holo mostra "—". O JSON vem do DOM-scraper
+(`~/doubleholo-scraper/`), que lê a sessão premium logada sem tocar no token. Cada linha traz o **número junto ao nome** da carta
 ("Mew V (Alternate Full Art) #251") e dois links: **TCG** (TCGPlayer) e
 **Gráfico (PriceCharting)** — busca que cai na página da carta no
 PriceCharting, onde fica o histórico visual de preço.

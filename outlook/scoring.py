@@ -138,6 +138,7 @@ class ScoredCard:
     pts_price: int = 0
     tcg_url: str = ""
     trend: str = ""           # preenchido (opcional) pelo módulo pricecharting
+    dh_score: int | None = None  # 2ª opinião Double Holo (módulo doubleholo); NÃO entra no score
     notes: list[str] = field(default_factory=list)
 
     @property
