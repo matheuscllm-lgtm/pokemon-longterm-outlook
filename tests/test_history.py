@@ -37,3 +37,21 @@ def test_price_change_needs_two(tmp_path, monkeypatch):
     monkeypatch.setattr(history, "SNAP_DIR", tmp_path)
     history.save_snapshot([_scored(100.0)], when=date(2026, 6, 1))
     assert history.price_change("c1") is None
+
+
+def test_summary_reports_movers(tmp_path, monkeypatch):
+    # Trava o conteúdo do summary (altas/quedas 1º→último snapshot) — o
+    # cálculo agora agrupa as séries numa passada só (_series_by_card).
+    monkeypatch.setattr(history, "SNAP_DIR", tmp_path)
+    history.save_snapshot([_scored(100.0)], when=date(2026, 6, 1))
+    history.save_snapshot([_scored(150.0)], when=date(2026, 6, 21))
+    out = history.summary()
+    assert "2 dia(s)" in out
+    assert "Maiores altas" in out and "Maiores quedas" in out
+    assert "+50.0%" in out and "Pikachu ex" in out and "em 20d" in out
+
+
+def test_summary_single_day_asks_for_more_data(tmp_path, monkeypatch):
+    monkeypatch.setattr(history, "SNAP_DIR", tmp_path)
+    history.save_snapshot([_scored(100.0)], when=date(2026, 6, 1))
+    assert "só 1 dia" in history.summary()

@@ -100,6 +100,24 @@ def fetch_sets(series_list: list[str], today: date | None = None) -> list[dict]:
     return out
 
 
+def _best_market_by_pid(prices: list[dict]) -> dict[int, float]:
+    """{productId: maior marketPrice não-reverse} — regra única de preço.
+
+    Compartilhada entre cartas e selados (era duplicada verbatim nas duas
+    funções). Ignora "Reverse Holofoil"; havendo várias variantes do mesmo
+    produto, fica com a de maior market.
+    """
+    best: dict[int, float] = {}
+    for p in prices:
+        if "reverse" in (p.get("subTypeName") or "").lower():
+            continue
+        m = p.get("marketPrice")
+        if isinstance(m, (int, float)) and m > 0:
+            pid = p["productId"]
+            best[pid] = max(best.get(pid, 0.0), float(m))
+    return best
+
+
 def fetch_cards_with_prices(group_id: str) -> list[dict]:
     """Cartas do set já com o melhor preço market embutido (USD).
 
@@ -109,14 +127,7 @@ def fetch_cards_with_prices(group_id: str) -> list[dict]:
     """
     prods = _get_json(f"{BASE}/{group_id}/products")["results"]
     prices = _get_json(f"{BASE}/{group_id}/prices")["results"]
-    best_by_pid: dict[int, float] = {}
-    for p in prices:
-        if "reverse" in (p.get("subTypeName") or "").lower():
-            continue
-        m = p.get("marketPrice")
-        if isinstance(m, (int, float)) and m > 0:
-            pid = p["productId"]
-            best_by_pid[pid] = max(best_by_pid.get(pid, 0.0), float(m))
+    best_by_pid = _best_market_by_pid(prices)
     cards: list[dict] = []
     for prod in prods:
         ext = {e["name"]: e.get("value") for e in (prod.get("extendedData") or [])}
@@ -171,14 +182,7 @@ def fetch_sealed_with_prices(group_id: str) -> list[dict]:
     """
     prods = _get_json(f"{BASE}/{group_id}/products")["results"]
     prices = _get_json(f"{BASE}/{group_id}/prices")["results"]
-    best_by_pid: dict[int, float] = {}
-    for p in prices:
-        if "reverse" in (p.get("subTypeName") or "").lower():
-            continue
-        m = p.get("marketPrice")
-        if isinstance(m, (int, float)) and m > 0:
-            pid = p["productId"]
-            best_by_pid[pid] = max(best_by_pid.get(pid, 0.0), float(m))
+    best_by_pid = _best_market_by_pid(prices)
     out: list[dict] = []
     for prod in prods:
         ext = {e["name"]: e.get("value") for e in (prod.get("extendedData") or [])}

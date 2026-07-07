@@ -1,5 +1,5 @@
 """Testes das funções puras da fonte tcgcsv (sem rede)."""
-from outlook.tcgcsv_api import _strip_number_suffix
+from outlook.tcgcsv_api import _best_market_by_pid, _strip_number_suffix
 
 
 def test_strips_exact_number_suffix():
@@ -27,3 +27,21 @@ def test_preserves_alt_art_descriptor_before_number():
 
 def test_empty_number_is_noop():
     assert _strip_number_suffix("Pikachu", "") == "Pikachu"
+
+
+def test_best_market_ignores_reverse_and_keeps_max_variant():
+    # Regra única de preço (compartilhada por cartas e selados): ignora
+    # "Reverse Holofoil" e fica com a variante de maior market por produto.
+    prices = [
+        {"productId": 1, "subTypeName": "Normal", "marketPrice": 10.0},
+        {"productId": 1, "subTypeName": "Holofoil", "marketPrice": 25.5},
+        {"productId": 1, "subTypeName": "Reverse Holofoil", "marketPrice": 99.0},
+        {"productId": 2, "subTypeName": "Normal", "marketPrice": 0},      # sem preço
+        {"productId": 3, "subTypeName": "Normal", "marketPrice": None},   # sem preço
+        {"productId": 4, "subTypeName": None, "marketPrice": 3.0},        # subType ausente
+    ]
+    assert _best_market_by_pid(prices) == {1: 25.5, 4: 3.0}
+
+
+def test_best_market_empty_input():
+    assert _best_market_by_pid([]) == {}
