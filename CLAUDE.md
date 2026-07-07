@@ -204,14 +204,14 @@ outlook/pricehistory.py  tendência REAL: histórico diário do tcgcsv (.ppmd.7z
 outlook/history.py       persiste snapshots diários do score (data/snapshots/) → série histórica própria
 outlook/validate.py      calibração transversal do score + backtest longitudinal (usa history)
 outlook/report.py        cenário por era + tabela top-N em markdown
-tests/                   70 testes em 10 arquivos: scoring, sealed, history, validate, pricehistory,
+tests/                   74 testes em 10 arquivos: scoring, sealed, history, validate, pricehistory,
                          doubleholo, notorious, report, sets, tcgcsv_api
 ```
 
 ## Testes e CI
 
 ```bash
-python -m pytest tests/ -q     # 70 testes (nuvem/Linux: python3)
+python -m pytest tests/ -q     # 74 testes (nuvem/Linux: python3)
 ```
 
 No PC do operador: `.venv\Scripts\python.exe -m pytest tests/ -q`.
