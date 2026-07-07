@@ -76,25 +76,39 @@ def load_rows() -> list[dict]:
     return rows
 
 
+def _series_by_card(rows: list[dict]) -> dict[str, list[tuple[date, float, int]]]:
+    """{card_id: [(data, market_usd, score), ...] ordenado por data}.
+
+    Agrupa TODAS as séries numa passada só — quem precisa de vários cards
+    (summary) chama isto uma vez em vez de reler os CSVs por card.
+    """
+    out: dict[str, list[tuple[date, float, int]]] = {}
+    for r in rows:
+        out.setdefault(r["card_id"], []).append(
+            (date.fromisoformat(r["date"]),
+             float(r["market_usd"]), int(r["score"])))
+    for s in out.values():
+        s.sort()
+    return out
+
+
 def card_series(card_id: str) -> list[tuple[date, float, int]]:
     """(data, market_usd, score) ordenado por data, para um card_id."""
-    out: list[tuple[date, float, int]] = []
-    for r in load_rows():
-        if r["card_id"] == card_id:
-            out.append((date.fromisoformat(r["date"]),
-                        float(r["market_usd"]), int(r["score"])))
-    return sorted(out)
+    return _series_by_card(load_rows()).get(card_id, [])
+
+
+def _price_change_of(series: list[tuple[date, float, int]]) -> tuple[float, int] | None:
+    if len(series) < 2:
+        return None
+    (d0, p0, _), (d1, p1, _) = series[0], series[-1]
+    if p0 <= 0:
+        return None
+    return (100.0 * (p1 - p0) / p0, (d1 - d0).days)
 
 
 def price_change(card_id: str) -> tuple[float, int] | None:
     """(% mudança, dias) entre o 1º e o último snapshot do card. None se <2."""
-    s = card_series(card_id)
-    if len(s) < 2:
-        return None
-    (d0, p0, _), (d1, p1, _) = s[0], s[-1]
-    if p0 <= 0:
-        return None
-    return (100.0 * (p1 - p0) / p0, (d1 - d0).days)
+    return _price_change_of(card_series(card_id))
 
 
 def summary() -> str:
@@ -109,13 +123,16 @@ def summary() -> str:
     if len(dates) < 2:
         lines.append("(só 1 dia de dados — rode em outra data p/ ter tendência.)")
         return "\n".join(lines)
+    # Séries agrupadas UMA vez: o caminho antigo (price_change por card)
+    # relia todos os CSVs do disco a cada card — O(cards × arquivos).
+    series = _series_by_card(rows)
     moves, seen = [], set()
     for r in rows:
         cid = r["card_id"]
         if cid in seen:
             continue
         seen.add(cid)
-        ch = price_change(cid)
+        ch = _price_change_of(series.get(cid, []))
         if ch:
             moves.append((ch[0], r["name"], r["set_name"], ch[1]))
     moves.sort(reverse=True)
