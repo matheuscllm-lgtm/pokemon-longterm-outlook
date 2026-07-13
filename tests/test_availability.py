@@ -121,9 +121,36 @@ def test_cheapest_unknown_set_is_labeled(monkeypatch):
     assert r["status"] == "set não mapeado no CT"
 
 
-def test_cheapest_unknown_number_is_labeled(monkeypatch):
+def test_cheapest_unknown_number_above_set_range_flags_wrong_set(monkeypatch):
+    # nº 999 > máx 214 do set casado → autodetecção de provável set errado
+    # (a classe de bug do "Base Set" WotC vira erro autodeclarado, não um
+    # "carta não encontrada" genérico).
     ct = _ct_with_fake_api(monkeypatch, LISTINGS)
     r = ct.cheapest("SWSH07: Evolving Skies", "999")
+    assert "nº 999 > máx 214" in r["status"]
+    assert "provável set errado" in r["status"]
+
+
+def test_cheapest_unknown_number_within_range_is_plain_not_found(monkeypatch):
+    ct = CTAvailability("jwt-fake")
+
+    def fake_get(path, **params):
+        if path == "/expansions":
+            return [{"id": 11, "name": "Evolving Skies", "game_id": 5}]
+        if path == "/blueprints/export":
+            return [{"id": 1, "fixed_properties": {"collector_number": "100"}},
+                    {"id": 2, "fixed_properties": {"collector_number": "214"}}]
+        raise AssertionError(f"rota inesperada: {path}")
+
+    monkeypatch.setattr(ct, "_get", fake_get)
+    r = ct.cheapest("SWSH07: Evolving Skies", "150")   # dentro da faixa
+    assert r["status"] == "carta não encontrada no CT"
+
+
+def test_cheapest_letter_number_not_found_is_plain(monkeypatch):
+    # nº com letra (TG12) não entra na comparação numérica — sem falso alarme
+    ct = _ct_with_fake_api(monkeypatch, LISTINGS)
+    r = ct.cheapest("SWSH07: Evolving Skies", "TG99")
     assert r["status"] == "carta não encontrada no CT"
 
 
