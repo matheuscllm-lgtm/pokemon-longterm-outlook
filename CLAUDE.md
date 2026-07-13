@@ -64,7 +64,7 @@ cd C:\Users\mathe\pokemon-longterm-outlook
 .venv\Scripts\python.exe run_outlook.py --top 30 --min-price 20
 .venv\Scripts\python.exe run_outlook.py --sealed       # + ranking de selados (ETB/Box/Bundle/Tin)
 .venv\Scripts\python.exe run_outlook.py --doubleholo dh.json  # + coluna DH (2ª opinião Double Holo)
-.venv\Scripts\python.exe run_availability.py --top 25  # disponibilidade por plataforma do top-N
+.venv\Scripts\python.exe run_availability.py --top 100 # ONDE cada carta do top está mais barata em NM inglês
 .venv\Scripts\python.exe -m outlook.history            # resumo da série histórica (maiores altas/quedas)
 .venv\Scripts\python.exe -m outlook.validate           # calibração do score + backtest (quando houver história)
 ```
@@ -77,6 +77,11 @@ Na nuvem/Linux, os mesmos comandos com `python3` (ou `.venv/bin/python`), ex.:
 `Mega Evolution` (`DEFAULT_ERAS`) · `--source {tcgcsv,ptcg}` default `tcgcsv` ·
 `--trend-source {tcgcsv,pricecharting}` default `tcgcsv` · `--no-snapshot`
 pula o snapshot diário.
+
+**`run_availability.py`**: onde cada carta do top-N está mais barata em NM
+inglês — CardTrader ao vivo (exige `CT_JWT`: env var ou `.env` do
+card-trader-scanner) + referência/low TCGPlayer + links das demais
+plataformas. Detalhes na seção "Onde está mais barata em NM inglês" abaixo.
 
 **Tendência (`--trend`)**: usa **histórico de preço REAL** do tcgcsv.com
 (dumps diários do TCGPlayer desde 2024-02-08), casado por `productId` — a
@@ -132,22 +137,28 @@ coluna à parte. Carta sem dado Double Holo mostra "—". O JSON vem do DOM-scra
 (`~/doubleholo-scraper/`, no PC do operador), que lê a sessão premium logada sem
 tocar no token.
 
-## Disponibilidade por plataforma (`run_availability.py`)
+## Onde está mais barata em NM inglês (`run_availability.py`)
 
 > **O que resolve:** pra cada carta do top-N do ranking, responder "onde ela
-> está acessível AGORA e por quanto", com link direto.
+> está mais barata AGORA em NM inglês", com link direto e veredito honesto.
 
-`python run_availability.py --top 25` recalcula o ranking (fonte tcgcsv, mesma
-régua do `run_outlook.py`) e, pra cada carta do top-N, consulta cada
+`python run_availability.py --top 100` recalcula o ranking (fonte tcgcsv,
+mesma régua do `run_outlook.py`) e, pra cada carta do top-N, consulta cada
 plataforma. Flags: `--top` (default 25), `--eras` (default SV+SWSH+ME),
 `--min-price 5.0`, `--max-price 1000.0`. Cobertura **honesta** por plataforma
-(`outlook/availability.py`, estado 2026-06):
+(`outlook/availability.py`, estado 2026-07):
 
 - **CardTrader** → **preço REAL ao vivo** via API oficial (menor oferta EN+NM
-  não-graded) + link direto da carta. O token `CT_JWT` é lido do `.env` do
-  repo `card-trader-scanner` (PC do operador:
-  `C:\Users\mathe\card-trader-scanner\.env`) e **nunca é logado/impresso**.
-- **TCGPlayer** → preço market de referência (já vem do ranking/tcgcsv) +
+  não-graded PLAUSÍVEL) + link direto da carta. Token `CT_JWT` da **env var**
+  (qualquer ambiente, inclusive nuvem) ou do `.env` do repo
+  `card-trader-scanner` (PC: `C:\Users\mathe\card-trader-scanner\.env`);
+  **nunca é logado/impresso** (sanitização de BOM/zero-width inclusa).
+  Robustez do match: blueprint desambiguado pelo NOME além do número;
+  nomes de set divergentes têm override explícito (ex.: "Scarlet & Violet
+  151" no CT é só "151"); **anúncio-lixo** (<50% da referência market) é
+  pulado e contado — caso real: SIR de US$ 118 anunciada "NM EN" por R$ 0,89.
+- **TCGPlayer** → preço market de referência + menor anúncio (`lowPrice`,
+  condição NÃO filtrada — informativo, NUNCA decide o veredito NM-EN) +
   link direto do produto.
 - **eBay** → SEM preço automatizado (Browse API exige keys não criadas neste
   contexto; scrape = 403). Link de busca.
@@ -155,14 +166,20 @@ plataforma. Flags: `--top` (default 25), `--eras` (default SV+SWSH+ME),
   o Cloudflare). Link de busca.
 - **Liga Pokémon** → SEM preço automatizado (Cloudflare; o coletor headful é
   lento demais pra dezenas de cartas ad-hoc). Link de busca.
-- **MYP** → SEM preço automatizado E SEM busca por URL (o site só filtra via
-  JavaScript; testado `?busca`/`?q`/`?nome`/`?s` — nenhum filtra). Link de
-  busca via Google site-restrito.
+- **MYP** → SEM preço automatizado AQUI: a API (`mypcards.com/api/v1`) existe
+  mas está atrás de challenge Cloudflare (provado 2026-07 da nuvem: 403 + TLS
+  reset via curl_cffi/proxy); cobertura automatizada é do scanner MYP da
+  frota. O site também não filtra por querystring → link de busca via Google
+  site-restrito.
 
-**Nunca inventa preço**: plataforma sem coleta automatizada aparece como link
-pra conferência manual, explicitamente. Decisão de compra é do operador; a
-ferramenta só coleta e linka. O `.md` em `outputs/availability_*.md` é apoio
-local — a entrega segue sendo a tabela no chat.
+**Veredito "Mais barato NM-EN"** (`verdict_nm_en`, função pura): compara SÓ
+fontes com filtro NM+EN real (hoje: CardTrader) contra a referência market
+TCGPlayer; CT abaixo de 50% da ref sai como `⚠️ suspeito`, nunca vencedor;
+sem `CT_JWT` sai `n/d` explícito. **Nunca inventa preço**: plataforma sem
+coleta automatizada aparece como link pra conferência manual. Decisão de
+compra é do operador; a ferramenta só coleta e linka. O `.md` em
+`outputs/availability_*.md` é apoio local — a entrega segue sendo a tabela
+no chat.
 
 ## Limitações honestas (leia antes de usar)
 
@@ -190,13 +207,13 @@ local — a entrega segue sendo a tabela no chat.
 
 ```
 run_outlook.py           CLI principal: baixa catálogo → score → cenário + ranking (+ --sealed, snapshot)
-run_availability.py      CLI de disponibilidade por plataforma pro top-N (CT ao vivo + links)
+run_availability.py      CLI: onde o top-N está mais barato em NM inglês (CT ao vivo + TCG low + links)
+outlook/availability.py  CardTrader NM-EN ao vivo (CT_JWT, filtro de lixo, overrides de set) + links eBay/COMC/Liga/MYP
 outlook/tcgcsv_api.py    fonte DEFAULT: dumps diários TCGPlayer (cartas + selados)
 outlook/ptcg_api.py      cliente pokemontcg.io (sets, cartas, preços TCGPlayer) — fonte alternativa
 outlook/scoring.py       os 4 componentes do score + detecção de reprint forte (HEAVY_REPRINT_SET_IDS / SPECIAL_SET_PREFIX_RE)
 outlook/sealed.py        score de SELADO (ETB/Box/Bundle/Tin): Tipo + Idade + MSRP + Reimpressão
 outlook/notorious.py     lista curada de 60 Pokémon notórios (portada do integrado)
-outlook/availability.py  disponibilidade por plataforma: CardTrader ao vivo (CT_JWT) + links eBay/COMC/Liga/MYP
 outlook/sets.py          helpers puros de nome de set (strip_era_prefix), compartilhados entre report e availability
 outlook/doubleholo.py    coluna DH: nota 0-100 a partir do JSON premium do Double Holo, join por productId
 outlook/pricecharting.py tendência best-effort via PriceCharting (--trend-source pricecharting; legado)

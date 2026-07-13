@@ -1,12 +1,20 @@
-"""Disponibilidade por plataforma pro top-N do ranking de longo prazo — CLI.
+"""Onde cada carta do top-N está mais barata em NM inglês — CLI.
 
 Recalcula o ranking (fonte tcgcsv, mesma régua do run_outlook) e, pra cada
-carta do top-N, consulta o CardTrader AO VIVO (menor oferta EN+NM, preço
-real) e monta links diretos de eBay / COMC / Liga / MYP (busca — essas
-plataformas não têm preço automatizável barato hoje; ver availability.py).
+carta do top-N:
+  - consulta o CardTrader AO VIVO (menor oferta EN+NM não-graded, preço real;
+    exige CT_JWT — env var ou .env do card-trader-scanner no PC);
+  - mostra a referência TCGPlayer (market) e o menor anúncio TCGPlayer
+    (lowPrice — condição NÃO filtrada, informativo);
+  - monta links diretos de eBay / COMC / Liga / MYP (busca — essas
+    plataformas não têm preço automatizável barato hoje; ver availability.py).
+
+O veredito "mais barato NM-EN" SÓ compara fontes com filtro NM+EN real
+(hoje: CardTrader) contra a referência market do TCGPlayer — o lowPrice
+nunca decide, porque não é NM garantido.
 
 Uso:
-  python run_availability.py --top 25
+  python run_availability.py --top 100
   python run_availability.py --top 50 --eras "Scarlet & Violet"
 
 Decisão de compra é do operador; isto aqui só coleta e linka.
@@ -24,7 +32,8 @@ if hasattr(sys.stdout, "reconfigure"):
 
 from outlook import tcgcsv_api
 from outlook.availability import (CTAvailability, comc_url, ebay_url,
-                                  liga_url, load_ct_jwt, myp_url)
+                                  liga_url, load_ct_jwt, myp_url,
+                                  verdict_nm_en)
 from outlook.scoring import score_card
 
 HERE = Path(__file__).resolve().parent
@@ -42,6 +51,7 @@ def collect_top(eras: list[str], min_price: float, max_price: float,
                 continue
             sc = score_card(card, s, usd)
             sc.tcg_url = tcgcsv_api.tcgplayer_url(card)
+            sc.low_usd = tcgcsv_api.best_low_usd(card)
             scored.append(sc)
         print(f"  [{i}/{len(sets_meta)}] {s['name']}", file=sys.stderr)
     return sorted(scored, key=lambda c: (-c.score, -c.market_usd))[:top_n]
@@ -58,34 +68,34 @@ def main() -> int:
 
     jwt = load_ct_jwt()
     if not jwt:
-        print("⚠️ CT_JWT não encontrado no .env do card-trader-scanner — "
-              "CardTrader sai sem preço (só links).")
+        print("⚠️ CT_JWT ausente (env var CT_JWT ou .env do card-trader-scanner) "
+              "— CardTrader sai sem preço (só links) e o veredito NM-EN vira n/d.")
     ct = CTAvailability(jwt) if jwt else None
 
     print("Recalculando ranking (tcgcsv)...", file=sys.stderr)
     top = collect_top(args.eras, args.min_price, args.max_price, args.top)
 
-    lines = [f"# Disponibilidade por plataforma — top {len(top)} "
+    lines = [f"# Onde está mais barata (NM inglês) — top {len(top)} "
              f"({datetime.now():%Y-%m-%d %H:%M})", ""]
-    lines.append("| # | Score | Carta | Set | Nº | TCG ref US$ | CT US$ real "
-                 "| Qtd CT | Mais barato (coletados) | Links |")
-    lines.append("|---|---|---|---|---|---|---|---|---|---|")
+    lines.append("| # | Score | Carta | Set | Nº | TCG market US$ (ref) | "
+                 "TCG low US$* | CT NM-EN US$ | Qtd CT | Mais barato NM-EN | "
+                 "Links |")
+    lines.append("|---|---|---|---|---|---|---|---|---|---|---|")
     for i, c in enumerate(top, 1):
         if ct:
             print(f"[{i}/{len(top)}] CT lookup: {c.name} ({c.set_name} {c.number})",
                   file=sys.stderr)
-            r = ct.cheapest(c.set_name, c.number)
+            r = ct.cheapest(c.set_name, c.number, c.name, ref_usd=c.market_usd)
         else:
             r = {"status": "sem CT_JWT"}
         ct_usd = r.get("usd")
         ct_cell = f"{ct_usd:.2f}" if ct_usd is not None else f"— ({r['status']})"
+        if ct_usd is not None and r.get("junk_skipped"):
+            ct_cell += f" ({r['junk_skipped']} lixo ign.)"
         qty = r.get("qty") if r.get("qty") is not None else "—"
-        if ct_usd is not None:
-            cheaper = ("CardTrader" if ct_usd < c.market_usd else "TCGPlayer")
-            delta = abs(ct_usd - c.market_usd) / c.market_usd * 100
-            verdict = f"**{cheaper}** ({delta:.0f}% {'abaixo' if cheaper=='CardTrader' else 'acima'} da ref)"
-        else:
-            verdict = "TCGPlayer (única ref coletada)"
+        low_cell = f"{c.low_usd:.2f}" if c.low_usd is not None else "—"
+        verdict = verdict_nm_en(ct_usd, c.market_usd,
+                                ct_status=r.get("status", ""), has_ct=bool(ct))
         links = []
         if r.get("url"):
             links.append(f"[CT]({r['url']})")
@@ -96,13 +106,21 @@ def main() -> int:
         links.append(f"[MYP]({myp_url(c.name)})")
         lines.append(f"| {i} | {c.score} | {c.name.replace('|', ' ')} | "
                      f"{c.set_name.replace('|', ' ')} | {c.number} | "
-                     f"{c.market_usd:.2f} | {ct_cell} | {qty} | {verdict} | "
-                     f"{' · '.join(links)} |")
+                     f"{c.market_usd:.2f} | {low_cell} | {ct_cell} | {qty} | "
+                     f"{verdict} | {' · '.join(links)} |")
     lines.append("")
-    lines.append("_CT US$ real = menor oferta EN+NM não-graded ao vivo na API "
-                 "do CardTrader (convertida pra US$). eBay/COMC/Liga/MYP: sem "
-                 "preço automatizado hoje — links de busca pra conferência "
-                 "manual. Decisão é do operador._")
+    lines.append("_CT NM-EN US$ = menor oferta EN + Near Mint não-graded ao "
+                 "vivo na API do CardTrader (convertida pra US$; token CT_JWT "
+                 "via env var ou .env do card-trader-scanner). TCG low* = menor "
+                 "anúncio atual no TCGPlayer, condição NÃO filtrada (pode ser "
+                 "LP/HP) — informativo, nunca decide o veredito NM-EN. O "
+                 "veredito compara o anúncio NM-EN coletado com a referência "
+                 "market do TCGPlayer (média de vendas, não é anúncio); CT "
+                 "abaixo de 50% da ref sai como ⚠️ suspeito (provável variante "
+                 "errada), nunca como vencedor. eBay/COMC/Liga/MYP: sem preço "
+                 "automatizado (MYP: API atrás de Cloudflare — ver "
+                 "availability.py) — links de busca pra conferência manual. "
+                 "Decisão é do operador._")
     md = "\n".join(lines)
     out = HERE / "outputs" / f"availability_{datetime.now():%Y%m%d_%H%M%S}.md"
     out.parent.mkdir(exist_ok=True)

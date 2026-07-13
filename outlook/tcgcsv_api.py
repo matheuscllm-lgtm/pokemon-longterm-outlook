@@ -100,21 +100,27 @@ def fetch_sets(series_list: list[str], today: date | None = None) -> list[dict]:
     return out
 
 
-def _best_market_by_pid(prices: list[dict]) -> dict[int, float]:
-    """{productId: maior marketPrice não-reverse} — regra única de preço.
+def _best_prices_by_pid(prices: list[dict]) -> dict[int, tuple[float, Optional[float]]]:
+    """{productId: (marketPrice, lowPrice)} da melhor variante não-reverse.
 
-    Compartilhada entre cartas e selados (era duplicada verbatim nas duas
-    funções). Ignora "Reverse Holofoil"; havendo várias variantes do mesmo
-    produto, fica com a de maior market.
+    Regra ÚNICA de preço, compartilhada entre cartas e selados (era duplicada
+    verbatim nas duas funções). "Melhor" = maior marketPrice (mesma régua de
+    sempre); ignora "Reverse Holofoil". O lowPrice carregado é o DA MESMA
+    variante vencedora — menor anúncio atual no TCGPlayer, com a ressalva de
+    que a fonte NÃO separa por condição (pode ser LP/HP).
     """
-    best: dict[int, float] = {}
+    best: dict[int, tuple[float, Optional[float]]] = {}
     for p in prices:
         if "reverse" in (p.get("subTypeName") or "").lower():
             continue
         m = p.get("marketPrice")
-        if isinstance(m, (int, float)) and m > 0:
-            pid = p["productId"]
-            best[pid] = max(best.get(pid, 0.0), float(m))
+        if not isinstance(m, (int, float)) or m <= 0:
+            continue
+        low = p.get("lowPrice")
+        low_f = float(low) if isinstance(low, (int, float)) and low > 0 else None
+        pid = p["productId"]
+        if pid not in best or float(m) > best[pid][0]:
+            best[pid] = (float(m), low_f)
     return best
 
 
@@ -122,12 +128,13 @@ def fetch_cards_with_prices(group_id: str) -> list[dict]:
     """Cartas do set já com o melhor preço market embutido (USD).
 
     Devolve dicts no formato do scoring: id/name/number/rarity + _market_usd
-    + _url. Produtos sem extendedData.Rarity (selados, lotes) ficam de fora;
-    cartas sem preço market também (contadas pelo chamador via diferença).
+    + _low_usd + _url. Produtos sem extendedData.Rarity (selados, lotes) ficam
+    de fora; cartas sem preço market também (contadas pelo chamador via
+    diferença).
     """
     prods = _get_json(f"{BASE}/{group_id}/products")["results"]
     prices = _get_json(f"{BASE}/{group_id}/prices")["results"]
-    best_by_pid = _best_market_by_pid(prices)
+    best_by_pid = _best_prices_by_pid(prices)
     cards: list[dict] = []
     for prod in prods:
         ext = {e["name"]: e.get("value") for e in (prod.get("extendedData") or [])}
@@ -136,12 +143,14 @@ def fetch_cards_with_prices(group_id: str) -> list[dict]:
             continue  # não é carta avulsa
         raw_number = str(ext.get("Number") or "").strip()
         number = raw_number.split("/")[0].strip()
+        pair = best_by_pid.get(prod["productId"])
         cards.append({
             "id": str(prod["productId"]),
             "name": _strip_number_suffix(prod.get("name", ""), raw_number),
             "number": number,
             "rarity": rarity,
-            "_market_usd": best_by_pid.get(prod["productId"]),
+            "_market_usd": pair[0] if pair else None,
+            "_low_usd": pair[1] if pair else None,
             "_url": prod.get("url") or "",
         })
     return cards
@@ -182,7 +191,7 @@ def fetch_sealed_with_prices(group_id: str) -> list[dict]:
     """
     prods = _get_json(f"{BASE}/{group_id}/products")["results"]
     prices = _get_json(f"{BASE}/{group_id}/prices")["results"]
-    best_by_pid = _best_market_by_pid(prices)
+    best_by_pid = _best_prices_by_pid(prices)
     out: list[dict] = []
     for prod in prods:
         ext = {e["name"]: e.get("value") for e in (prod.get("extendedData") or [])}
@@ -191,11 +200,12 @@ def fetch_sealed_with_prices(group_id: str) -> list[dict]:
         ptype = _sealed_type(prod.get("name", ""))
         if ptype is None:
             continue
+        pair = best_by_pid.get(prod["productId"])
         out.append({
             "id": str(prod["productId"]),
             "name": prod.get("name", ""),
             "product_type": ptype,
-            "_market_usd": best_by_pid.get(prod["productId"]),
+            "_market_usd": pair[0] if pair else None,
             "_url": prod.get("url") or "",
         })
     return out
@@ -203,6 +213,11 @@ def fetch_sealed_with_prices(group_id: str) -> list[dict]:
 
 def best_market_usd(card: dict) -> Optional[float]:
     return card.get("_market_usd")
+
+
+def best_low_usd(card: dict) -> Optional[float]:
+    """Menor anúncio TCGPlayer da variante vencedora — condição NÃO filtrada."""
+    return card.get("_low_usd")
 
 
 def tcgplayer_url(card: dict) -> str:
