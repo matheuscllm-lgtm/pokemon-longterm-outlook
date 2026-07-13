@@ -32,7 +32,8 @@ if hasattr(sys.stdout, "reconfigure"):
 
 from outlook import tcgcsv_api
 from outlook.availability import (CTAvailability, comc_url, ebay_url,
-                                  liga_url, load_ct_jwt, myp_url)
+                                  liga_url, load_ct_jwt, myp_url,
+                                  verdict_nm_en)
 from outlook.scoring import score_card
 
 HERE = Path(__file__).resolve().parent
@@ -84,24 +85,15 @@ def main() -> int:
         if ct:
             print(f"[{i}/{len(top)}] CT lookup: {c.name} ({c.set_name} {c.number})",
                   file=sys.stderr)
-            r = ct.cheapest(c.set_name, c.number)
+            r = ct.cheapest(c.set_name, c.number, c.name)
         else:
             r = {"status": "sem CT_JWT"}
         ct_usd = r.get("usd")
         ct_cell = f"{ct_usd:.2f}" if ct_usd is not None else f"— ({r['status']})"
         qty = r.get("qty") if r.get("qty") is not None else "—"
         low_cell = f"{c.low_usd:.2f}" if c.low_usd is not None else "—"
-        if ct_usd is not None:
-            delta = abs(ct_usd - c.market_usd) / c.market_usd * 100
-            if ct_usd < c.market_usd:
-                verdict = (f"**CardTrader** US$ {ct_usd:.2f} "
-                           f"({delta:.0f}% abaixo da ref TCG)")
-            else:
-                verdict = (f"**TCGPlayer** (ref; CT está {delta:.0f}% acima)")
-        elif ct:
-            verdict = f"n/d — CT: {r['status']}; confira os links"
-        else:
-            verdict = "n/d — sem fonte NM-EN ao vivo (defina CT_JWT)"
+        verdict = verdict_nm_en(ct_usd, c.market_usd,
+                                ct_status=r.get("status", ""), has_ct=bool(ct))
         links = []
         if r.get("url"):
             links.append(f"[CT]({r['url']})")
@@ -121,10 +113,12 @@ def main() -> int:
                  "anúncio atual no TCGPlayer, condição NÃO filtrada (pode ser "
                  "LP/HP) — informativo, nunca decide o veredito NM-EN. O "
                  "veredito compara o anúncio NM-EN coletado com a referência "
-                 "market do TCGPlayer (média de vendas, não é anúncio). "
-                 "eBay/COMC/Liga/MYP: sem preço automatizado (MYP: API atrás de "
-                 "Cloudflare — ver availability.py) — links de busca pra "
-                 "conferência manual. Decisão é do operador._")
+                 "market do TCGPlayer (média de vendas, não é anúncio); CT "
+                 "abaixo de 50% da ref sai como ⚠️ suspeito (provável variante "
+                 "errada), nunca como vencedor. eBay/COMC/Liga/MYP: sem preço "
+                 "automatizado (MYP: API atrás de Cloudflare — ver "
+                 "availability.py) — links de busca pra conferência manual. "
+                 "Decisão é do operador._")
     md = "\n".join(lines)
     out = HERE / "outputs" / f"availability_{datetime.now():%Y%m%d_%H%M%S}.md"
     out.parent.mkdir(exist_ok=True)

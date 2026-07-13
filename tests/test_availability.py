@@ -1,9 +1,9 @@
 """Testes de outlook.availability — helpers puros + filtro NM-EN do CT (sem rede)."""
 import pytest
 
-from outlook.availability import (CTAvailability, _clean_number, _clean_secret,
-                                  comc_url, ebay_url, liga_url, load_ct_jwt,
-                                  myp_url)
+from outlook.availability import (CTAvailability, _base_name, _clean_number,
+                                  _clean_secret, comc_url, ebay_url, liga_url,
+                                  load_ct_jwt, myp_url, verdict_nm_en)
 
 
 # ── segredo: env var, BOM/zero-width (família de erro conhecida da frota) ────
@@ -132,3 +132,72 @@ def test_to_usd_eur_uses_rates_without_network():
     ct._usd_rates = {"EUR": 0.90}                 # 1 USD = 0.90 EUR
     assert ct._to_usd(900, "EUR") == pytest.approx(10.0)
     assert ct._to_usd(500, "USD") == pytest.approx(5.0)
+
+
+# ── desambiguação de blueprint pelo nome (bug real: Venusaur ex a $0.16) ─────
+def test_blueprint_prefers_name_match_among_same_number(monkeypatch):
+    ct = CTAvailability("jwt-fake")
+
+    def fake_get(path, **params):
+        if path == "/expansions":
+            return [{"id": 5, "name": "Scarlet & Violet 151", "game_id": 5}]
+        if path == "/blueprints/export":
+            # dois blueprints no MESMO número: o errado vem primeiro
+            return [
+                {"id": 1, "name": "Basic Grass Energy",
+                 "fixed_properties": {"collector_number": "198"}},
+                {"id": 2, "name": "Venusaur ex",
+                 "fixed_properties": {"collector_number": "198"}},
+            ]
+        if path == "/marketplace/products":
+            # só responde pro blueprint certo — se pedir o errado, o teste falha
+            assert params["blueprint_id"] == 2
+            return {"2": [{"properties_hash": {"condition": "Near Mint",
+                                               "pokemon_language": "en"},
+                           "graded": False,
+                           "price": {"cents": 9000, "currency": "USD"},
+                           "quantity": 1}]}
+        raise AssertionError(f"rota inesperada: {path}")
+
+    monkeypatch.setattr(ct, "_get", fake_get)
+    r = ct.cheapest("SV: Scarlet & Violet 151", "198/165",
+                    "Venusaur ex (Special Illustration Rare)")
+    assert r["status"] == "ok"
+    assert r["usd"] == pytest.approx(90.0)
+
+
+def test_blueprint_without_name_falls_back_to_first(monkeypatch):
+    ct = _ct_with_fake_api(monkeypatch, LISTINGS)
+    r = ct.cheapest("SWSH07: Evolving Skies", "214")   # sem card_name: como antes
+    assert r["status"] == "ok"
+
+
+def test_base_name_strips_descriptors():
+    assert _base_name("Venusaur ex (Alternate Full Art)") == "venusaur ex"
+    assert _base_name("Mew V (Alternate Full Art)") == "mew v"
+    assert _base_name("Iono") == "iono"
+
+
+# ── veredito NM-EN: honesto por construção ───────────────────────────────────
+def test_verdict_ct_cheaper_within_sanity_wins():
+    v = verdict_nm_en(46.01, 58.25)
+    assert v.startswith("**CardTrader** US$ 46.01")
+
+
+def test_verdict_too_good_is_suspect_not_winner():
+    # caso real do run: Venusaur ex ref $118.73, CT $0.16 → nunca "vencedor"
+    v = verdict_nm_en(0.16, 118.73)
+    assert "suspeito" in v
+    assert "CardTrader**" not in v
+
+
+def test_verdict_ct_above_ref_points_to_tcg():
+    v = verdict_nm_en(148.06, 109.68)
+    assert v.startswith("**TCGPlayer**")
+    assert "35% acima" in v
+
+
+def test_verdict_without_ct_source_is_honest_nd():
+    assert "CT_JWT" in verdict_nm_en(None, 50.0, has_ct=False)
+    v = verdict_nm_en(None, 50.0, ct_status="sem oferta EN+NM", has_ct=True)
+    assert v.startswith("n/d — CT: sem oferta EN+NM")

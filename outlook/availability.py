@@ -98,6 +98,47 @@ def _clean_number(num: str) -> str:
     return (num or "").split("/")[0].strip().lstrip("0") or "0"
 
 
+def _base_name(card_name: str) -> str:
+    """'Venusaur ex (Alternate Full Art)' → 'venusaur ex' (sem descritores)."""
+    out, depth = [], 0
+    for ch in card_name or "":
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth = max(0, depth - 1)
+        elif depth == 0:
+            out.append(ch)
+    return " ".join(_norm("".join(out)).split())
+
+
+# Abaixo desta fração da referência market, um "achado" CT é quase sempre
+# match de carta/variante errada — regra da frota: rotular suspeito, nunca
+# escolher o número que confirma o deal.
+SUSPECT_RATIO = 0.5
+
+
+def verdict_nm_en(ct_usd: Optional[float], market_usd: float,
+                  ct_status: str = "", has_ct: bool = True) -> str:
+    """Veredito 'Mais barato NM-EN' — honesto por construção.
+
+    Compara APENAS fontes com filtro NM+EN real (hoje: CardTrader) contra a
+    referência market do TCGPlayer. CT bom demais (< SUSPECT_RATIO da ref)
+    vira '⚠️ suspeito', nunca vencedor.
+    """
+    if ct_usd is None:
+        if not has_ct:
+            return "n/d — sem fonte NM-EN ao vivo (defina CT_JWT)"
+        return f"n/d — CT: {ct_status}; confira os links"
+    if market_usd > 0 and ct_usd < SUSPECT_RATIO * market_usd:
+        off = (1 - ct_usd / market_usd) * 100
+        return (f"⚠️ suspeito — CT US$ {ct_usd:.2f} está {off:.0f}% abaixo da "
+                f"ref (provável variante/carta errada no match; confira o link CT)")
+    delta = abs(ct_usd - market_usd) / market_usd * 100 if market_usd > 0 else 0.0
+    if ct_usd < market_usd:
+        return f"**CardTrader** US$ {ct_usd:.2f} ({delta:.0f}% abaixo da ref TCG)"
+    return f"**TCGPlayer** (ref; CT está {delta:.0f}% acima)"
+
+
 class CTAvailability:
     """Menor oferta EN+NM não-graded por carta, via API oficial do CardTrader."""
 
@@ -150,19 +191,36 @@ class CTAvailability:
                 return e["id"]
         return None
 
-    def _blueprint_for(self, expansion_id: int, number: str) -> Optional[dict]:
+    def _blueprint_for(self, expansion_id: int, number: str,
+                       card_name: str = "") -> Optional[dict]:
+        """Blueprint pelo número de coleção, desambiguado pelo NOME.
+
+        Sets com blueprints duplicados no mesmo número (promos, variantes)
+        faziam o match número-só devolver a carta ERRADA — e o preço vinha
+        absurdo. Com card_name, entre os candidatos do número vence o que
+        contém o nome-base da carta; sem candidato com nome batendo, cai no
+        primeiro do número (o veredito ainda tem o gate de suspeito).
+        """
         if expansion_id not in self._blueprints:
             self._blueprints[expansion_id] = self._get(
                 "/blueprints/export", expansion_id=expansion_id)
         want = _clean_number(number)
+        candidates = []
         for bp in self._blueprints[expansion_id]:
             fixed = bp.get("fixed_properties") or {}
             bp_num = fixed.get("collector_number") or bp.get("version") or ""
             if _clean_number(str(bp_num)) == want:
-                return bp
-        return None
+                candidates.append(bp)
+        if not candidates:
+            return None
+        base = _base_name(card_name)
+        if base:
+            for bp in candidates:
+                if base in _norm(bp.get("name", "")):
+                    return bp
+        return candidates[0]
 
-    def cheapest(self, set_name: str, number: str) -> dict:
+    def cheapest(self, set_name: str, number: str, card_name: str = "") -> dict:
         """{'usd', 'qty', 'url', 'status'} — menor oferta EN+NM não-graded.
 
         status: 'ok' | 'set não mapeado' | 'carta não encontrada' |
@@ -172,7 +230,7 @@ class CTAvailability:
             exp_id = self.find_expansion_id(set_name)
             if not exp_id:
                 return {"status": "set não mapeado no CT"}
-            bp = self._blueprint_for(exp_id, number)
+            bp = self._blueprint_for(exp_id, number, card_name)
             if not bp:
                 return {"status": "carta não encontrada no CT"}
             listings = self._get("/marketplace/products", blueprint_id=bp["id"],
