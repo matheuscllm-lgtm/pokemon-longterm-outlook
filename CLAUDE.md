@@ -165,10 +165,22 @@ plataforma. Flags: `--top` (default 25), `--eras` (default SV+SWSH+ME),
 - **TCGPlayer** → preço market de referência + menor anúncio (`lowPrice`,
   condição NÃO filtrada — informativo, NUNCA decide o veredito NM-EN) +
   link direto do produto.
-- **eBay** → SEM preço automatizado (Browse API exige keys não criadas neste
-  contexto; scrape = 403). Link de busca.
-- **COMC** → SEM preço automatizado (exige navegador real/headful pra passar
-  o Cloudflare). Link de busca.
+- **eBay** → **preço REAL do menor anúncio ativo** via Browse API oficial
+  (grátis; mesmas chaves do ebay-arbitrage-scanner: env vars
+  `EBAY_CLIENT_ID`/`EBAY_CLIENT_SECRET`, sanitizadas contra BOM). Guards de
+  precisão: nº de coleção obrigatório no título (zeros à esquerda ok), título
+  com marcador graded (PSA/BGS/CGC/SGC) ou idioma não-EN é pulado, anúncio
+  <50% da ref é lixo contado. Match por BUSCA (não identidade) e condição NM
+  NÃO garantida → coluna **informativa**, nunca decide o veredito. Sem as
+  chaves → só link (aviso honesto). `--no-ebay` desliga.
+- **COMC** → **preço REAL da menor listagem** banda EX-NM + ungraded + Buy It
+  Now (filtros server-side na URL de busca), via Firecrawl — **OPT-IN
+  `--comc-price`** (cada carta = 1 fetch = créditos pagos da
+  `FIRECRAWL_API_KEY`; a COMC é Cloudflare, acesso direto da nuvem = 403).
+  Condição por allowlist NM fechada (nunca substring), nº tem que casar, set
+  que nomeia idioma não-EN é excluído, lixo <50% da ref contado. Banda EX-NM
+  inclui EX e o match é por busca → coluna **informativa**, nunca decide o
+  veredito. Sem flag/key → só link, como antes.
 - **Liga Pokémon** → SEM preço automatizado (Cloudflare; o coletor headful é
   lento demais pra dezenas de cartas ad-hoc). Link de busca.
 - **MYP** → SEM preço automatizado AQUI: a API (`mypcards.com/api/v1`) existe
@@ -214,6 +226,8 @@ no chat.
 run_outlook.py           CLI principal: baixa catálogo → score → cenário + ranking (+ --sealed, snapshot)
 run_availability.py      CLI: onde o top-N está mais barato em NM inglês (CT ao vivo + TCG low + links)
 outlook/availability.py  CardTrader NM-EN ao vivo (CT_JWT, filtro de lixo, overrides de set) + links eBay/COMC/Liga/MYP
+outlook/ebay_availability.py  eBay Browse API: menor anúncio ativo plausível (EBAY_CLIENT_ID/SECRET; informativo)
+outlook/comc_availability.py  COMC via Firecrawl (opt-in --comc-price): menor listagem EX-NM ungraded EN (informativo)
 outlook/tcgcsv_api.py    fonte DEFAULT: dumps diários TCGPlayer (cartas + selados)
 outlook/ptcg_api.py      cliente pokemontcg.io (sets, cartas, preços TCGPlayer) — fonte alternativa
 outlook/scoring.py       os 4 componentes do score + detecção de reprint forte (HEAVY_REPRINT_SET_IDS / SPECIAL_SET_PREFIX_RE)
@@ -226,14 +240,15 @@ outlook/pricehistory.py  tendência REAL: histórico diário do tcgcsv (.ppmd.7z
 outlook/history.py       persiste snapshots diários do score (data/snapshots/) → série histórica própria
 outlook/validate.py      calibração transversal do score + backtest longitudinal (usa history)
 outlook/report.py        cenário por era + tabela top-N em markdown
-tests/                   74 testes em 10 arquivos: scoring, sealed, history, validate, pricehistory,
-                         doubleholo, notorious, report, sets, tcgcsv_api
+tests/                   128 testes em 13 arquivos: scoring, sealed, history, validate, pricehistory,
+                         doubleholo, notorious, report, sets, tcgcsv_api,
+                         availability, ebay_availability, comc_availability
 ```
 
 ## Testes e CI
 
 ```bash
-python -m pytest tests/ -q     # 74 testes (nuvem/Linux: python3)
+python -m pytest tests/ -q     # 128 testes (nuvem/Linux: python3)
 ```
 
 No PC do operador: `.venv\Scripts\python.exe -m pytest tests/ -q`.
