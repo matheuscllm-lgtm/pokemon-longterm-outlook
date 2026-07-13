@@ -103,9 +103,11 @@ def fetch_sets(series_list: list[str], today: date | None = None) -> list[dict]:
 def _best_prices_by_pid(prices: list[dict]) -> dict[int, tuple[float, Optional[float]]]:
     """{productId: (marketPrice, lowPrice)} da melhor variante não-reverse.
 
-    "Melhor" = maior marketPrice (mesma régua de sempre). O lowPrice carregado
-    é o DA MESMA variante vencedora — menor anúncio atual no TCGPlayer, com a
-    ressalva de que a fonte NÃO separa por condição (pode ser LP/HP).
+    Regra ÚNICA de preço, compartilhada entre cartas e selados (era duplicada
+    verbatim nas duas funções). "Melhor" = maior marketPrice (mesma régua de
+    sempre); ignora "Reverse Holofoil". O lowPrice carregado é o DA MESMA
+    variante vencedora — menor anúncio atual no TCGPlayer, com a ressalva de
+    que a fonte NÃO separa por condição (pode ser LP/HP).
     """
     best: dict[int, tuple[float, Optional[float]]] = {}
     for p in prices:

@@ -140,7 +140,8 @@ def test_blueprint_prefers_name_match_among_same_number(monkeypatch):
 
     def fake_get(path, **params):
         if path == "/expansions":
-            return [{"id": 5, "name": "Scarlet & Violet 151", "game_id": 5}]
+            # nome REAL da expansão no CT é só "151" (o override aponta pra cá)
+            return [{"id": 5, "name": "151", "game_id": 5}]
         if path == "/blueprints/export":
             # dois blueprints no MESMO número: o errado vem primeiro
             return [
@@ -232,3 +233,21 @@ def test_cheapest_without_ref_keeps_old_behavior(monkeypatch):
     r = ct.cheapest("SWSH07: Evolving Skies", "214")
     assert r["usd"] == pytest.approx(0.16)        # sem ref não filtra (backstop
     assert r["junk_skipped"] == 0                 # é o gate do veredito)
+
+
+# ── override de nome de set (caso provado: 151 caía no set base via fuzzy) ───
+def test_expansion_override_beats_greedy_contains():
+    ct = CTAvailability("jwt-fake")
+    ct._expansions = [
+        {"id": 100, "name": "Scarlet & Violet", "game_id": 5},   # o fuzzy pegava este
+        {"id": 200, "name": "151", "game_id": 5},                # o certo no CT
+    ]
+    assert ct.find_expansion_id("SV: Scarlet & Violet 151") == 200
+    # e o set base continua indo pro set base
+    assert ct.find_expansion_id("SV01: Scarlet & Violet Base Set") == 100
+
+
+def test_expansion_override_without_target_is_none_not_wrong_set():
+    ct = CTAvailability("jwt-fake")
+    ct._expansions = [{"id": 100, "name": "Scarlet & Violet", "game_id": 5}]
+    assert ct.find_expansion_id("SV: Scarlet & Violet 151") is None

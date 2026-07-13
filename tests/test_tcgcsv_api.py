@@ -53,3 +53,21 @@ def test_best_prices_low_invalid_stays_none_and_market_zero_is_skipped():
     ]
     out = _best_prices_by_pid(prices)
     assert out == {2: (25.0, None), 4: (12.0, None)}
+
+
+def test_best_prices_ignores_reverse_none_subtype_and_priceless():
+    # Casos portados da regra única da main (era _best_market_by_pid):
+    # subTypeName ausente conta como variante válida; sem market fica fora.
+    prices = [
+        {"productId": 1, "subTypeName": "Normal", "marketPrice": 10.0},
+        {"productId": 1, "subTypeName": "Holofoil", "marketPrice": 25.5},
+        {"productId": 1, "subTypeName": "Reverse Holofoil", "marketPrice": 99.0},
+        {"productId": 2, "subTypeName": "Normal", "marketPrice": 0},      # sem preço
+        {"productId": 3, "subTypeName": "Normal", "marketPrice": None},   # sem preço
+        {"productId": 4, "subTypeName": None, "marketPrice": 3.0},        # subType ausente
+    ]
+    assert _best_prices_by_pid(prices) == {1: (25.5, None), 4: (3.0, None)}
+
+
+def test_best_prices_empty_input():
+    assert _best_prices_by_pid([]) == {}

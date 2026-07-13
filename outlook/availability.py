@@ -176,12 +176,25 @@ class CTAvailability:
             return amount * FX_EUR_USD_FALLBACK
         return None
 
+    # Nomes de set onde o fuzzy erra DE PROPÓSITO conhecido (tcgcsv → CT).
+    # Caso provado: "Scarlet & Violet 151" caía no set base "Scarlet & Violet"
+    # via contains — o nome real no CT é só "151" (code mew). Sempre exato.
+    SET_NAME_OVERRIDES = {
+        "scarlet & violet 151": "151",
+    }
+
     def find_expansion_id(self, set_name: str) -> Optional[int]:
         if self._expansions is None:
             data = self._get("/expansions")
             self._expansions = [e for e in data
                                 if e.get("game_id") == CT_POKEMON_GAME_ID]
         target = _strip_era_prefix(set_name)
+        override = self.SET_NAME_OVERRIDES.get(target)
+        if override:
+            for e in self._expansions:
+                if _norm(e.get("name", "")) == override:
+                    return e["id"]
+            return None                      # override sem alvo: melhor n/d que set errado
         for e in self._expansions:           # match exato primeiro
             if _norm(e.get("name", "")) == target:
                 return e["id"]
