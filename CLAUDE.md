@@ -155,8 +155,13 @@ plataforma. Flags: `--top` (default 25), `--eras` (default SV+SWSH+ME),
   **nunca é logado/impresso** (sanitização de BOM/zero-width inclusa).
   Robustez do match: blueprint desambiguado pelo NOME além do número;
   nomes de set divergentes têm override explícito (ex.: "Scarlet & Violet
-  151" no CT é só "151"); **anúncio-lixo** (<50% da referência market) é
-  pulado e contado — caso real: SIR de US$ 118 anunciada "NM EN" por R$ 0,89.
+  151" no CT é só "151"; "… Base Set" do SV01/SWSH01 NÃO é o "Base Set"
+  WotC; "Pokemon GO" é o "Pokémon TCG: Pokémon GO" internacional, não o
+  set japonês homônimo — falsos matches provados em 2026-07-13) e o
+  contains é RANQUEADO (não first-hit da API); erro transiente da API do
+  CT tem retry curto (401 isolado observado entre 2 runs); **anúncio-lixo**
+  (<50% da referência market) é pulado e contado — caso real: SIR de
+  US$ 118 anunciada "NM EN" por R$ 0,89.
 - **TCGPlayer** → preço market de referência + menor anúncio (`lowPrice`,
   condição NÃO filtrada — informativo, NUNCA decide o veredito NM-EN) +
   link direto do produto.

@@ -192,10 +192,13 @@ def test_verdict_too_good_is_suspect_not_winner():
     assert "CardTrader**" not in v
 
 
-def test_verdict_ct_above_ref_points_to_tcg():
+def test_verdict_ct_above_ref_does_not_crown_tcgplayer():
+    # A ref market NÃO é anúncio comprável — o veredito constata que o CT
+    # está acima, sem declarar "TCGPlayer" vencedor (auditoria 2026-07-13).
     v = verdict_nm_en(148.06, 109.68)
-    assert v.startswith("**TCGPlayer**")
+    assert "TCGPlayer**" not in v
     assert "35% acima" in v
+    assert "não anúncio" in v
 
 
 def test_verdict_without_ct_source_is_honest_nd():
@@ -251,3 +254,94 @@ def test_expansion_override_without_target_is_none_not_wrong_set():
     ct = CTAvailability("jwt-fake")
     ct._expansions = [{"id": 100, "name": "Scarlet & Violet", "game_id": 5}]
     assert ct.find_expansion_id("SV: Scarlet & Violet 151") is None
+
+
+# ── falsos matches de set provados no run 2026-07-13 ─────────────────────────
+def test_base_set_suffix_never_matches_wotc_base_set():
+    # "SV01: Scarlet & Violet Base Set" caía no "Base Set" WotC de 1999
+    # (contains first-hit) → carta chase saía "não encontrada" — ou, pior,
+    # nº coincidente casaria carta ERRADA em silêncio.
+    ct = CTAvailability("jwt-fake")
+    ct._expansions = [
+        {"id": 1472, "name": "Base Set", "game_id": 5},          # WotC 1999
+        {"id": 3239, "name": "Scarlet & Violet", "game_id": 5},
+        {"id": 1623, "name": "Sword & Shield", "game_id": 5},
+    ]
+    assert ct.find_expansion_id("SV01: Scarlet & Violet Base Set") == 3239
+    assert ct.find_expansion_id("SWSH01: Sword & Shield Base Set") == 1623
+
+
+def test_pokemon_go_matches_international_set_not_japanese():
+    # "Pokemon GO" caía no "Pokémon GO Enhanced Expansion Pack" (set JP
+    # s10b) → "sem oferta EN+NM" enganoso; o internacional é o pkmgo.
+    ct = CTAvailability("jwt-fake")
+    ct._expansions = [
+        {"id": 3057, "name": "Pokémon GO Enhanced Expansion Pack", "game_id": 5},
+        {"id": 3058, "name": "Pokémon TCG: Pokémon GO", "game_id": 5},
+    ]
+    assert ct.find_expansion_id("Pokemon GO") == 3058
+
+
+def test_contains_ranked_prefers_most_specific_contained_name():
+    # Sem override: entre nomes CT contidos no alvo, vence o mais LONGO
+    # (mais específico) — não o primeiro da lista da API.
+    ct = CTAvailability("jwt-fake")
+    ct._expansions = [
+        {"id": 1, "name": "Zenith", "game_id": 5},               # genérico 1º
+        {"id": 2, "name": "Crown Zenith", "game_id": 5},
+    ]
+    assert ct.find_expansion_id("SWSH: Crown Zenith: Galarian Gallery") == 2
+
+
+def test_contains_ranked_prefers_shortest_containing_name():
+    # Alvo contido em vários nomes CT: vence o mais CURTO (menos sufixo).
+    ct = CTAvailability("jwt-fake")
+    ct._expansions = [
+        {"id": 1, "name": "Temporal Forces Enhanced Booster Pack", "game_id": 5},
+        {"id": 2, "name": "SV: Temporal Forces", "game_id": 5},
+    ]
+    assert ct.find_expansion_id("Temporal Forces") == 2
+
+
+# ── retry de erro transiente do CT (caso real: 401 isolado entre 2 runs) ─────
+def test_ct_get_retries_transient_error_then_succeeds(monkeypatch):
+    import outlook.availability as av
+
+    calls = {"n": 0}
+
+    class FakeResp:
+        def __init__(self, status, payload=None):
+            self.status_code = status
+            self._payload = payload
+
+        def json(self):
+            return self._payload
+
+    def fake_get(url, headers=None, params=None, timeout=None):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return FakeResp(401)              # blip transiente observado
+        return FakeResp(200, {"ok": True})
+
+    monkeypatch.setattr(av.requests, "get", fake_get)
+    monkeypatch.setattr(av.time, "sleep", lambda s: None)
+    ct = CTAvailability("jwt-fake")
+    assert ct._get("/expansions") == {"ok": True}
+    assert calls["n"] == 2
+
+
+def test_ct_get_persistent_error_still_raises(monkeypatch):
+    import outlook.availability as av
+
+    class FakeResp:
+        status_code = 500
+
+        def json(self):  # pragma: no cover
+            return {}
+
+    monkeypatch.setattr(av.requests, "get",
+                        lambda *a, **k: FakeResp())
+    monkeypatch.setattr(av.time, "sleep", lambda s: None)
+    ct = CTAvailability("jwt-fake")
+    with pytest.raises(RuntimeError, match="CT HTTP 500"):
+        ct._get("/expansions")

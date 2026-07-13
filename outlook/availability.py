@@ -44,6 +44,7 @@ from .sets import strip_era_prefix
 CT_BASE = "https://api.cardtrader.com/api/v2"
 CT_ENV_PATH = Path(r"C:\Users\mathe\card-trader-scanner\.env")
 CT_POKEMON_GAME_ID = 5
+CT_RETRIES = 3
 REQUEST_DELAY_S = 0.55
 TIMEOUT_S = 30
 FX_API = "https://open.er-api.com/v6/latest/USD"
@@ -136,7 +137,10 @@ def verdict_nm_en(ct_usd: Optional[float], market_usd: float,
     delta = abs(ct_usd - market_usd) / market_usd * 100 if market_usd > 0 else 0.0
     if ct_usd < market_usd:
         return f"**CardTrader** US$ {ct_usd:.2f} ({delta:.0f}% abaixo da ref TCG)"
-    return f"**TCGPlayer** (ref; CT está {delta:.0f}% acima)"
+    # CT acima da ref: NÃO declara "TCGPlayer" vencedor — a ref é média de
+    # vendas, não um anúncio comprável (auditoria 2026-07-13). Só constata.
+    return (f"nenhum anúncio NM-EN abaixo da ref — CT {delta:.0f}% acima "
+            f"(ref TCG = média de vendas, não anúncio)")
 
 
 class CTAvailability:
@@ -151,12 +155,23 @@ class CTAvailability:
         self._usd_rates: dict[str, float] | None = None
 
     def _get(self, path: str, **params):
-        time.sleep(REQUEST_DELAY_S)
-        r = requests.get(f"{CT_BASE}{path}", headers=self.headers,
-                         params=params, timeout=TIMEOUT_S)
-        if r.status_code != 200:
-            raise RuntimeError(f"CT HTTP {r.status_code} em {path}")
-        return r.json()
+        # Retry curto: a API do CT devolve erro TRANSIENTE ocasional (caso
+        # real observado: um 401 isolado em /blueprints/export que sumiu no
+        # request seguinte) — sem retry, a linha degrada pra "erro" e o
+        # relatório oscila entre runs. Erro persistente continua reportado.
+        last: Exception | None = None
+        for attempt in range(CT_RETRIES):
+            time.sleep(REQUEST_DELAY_S * (attempt + 1))
+            try:
+                r = requests.get(f"{CT_BASE}{path}", headers=self.headers,
+                                 params=params, timeout=TIMEOUT_S)
+            except requests.RequestException as exc:
+                last = RuntimeError(f"CT rede em {path}: {exc}")
+                continue
+            if r.status_code == 200:
+                return r.json()
+            last = RuntimeError(f"CT HTTP {r.status_code} em {path}")
+        raise last
 
     def _to_usd(self, cents: int, currency: str) -> Optional[float]:
         amount = cents / 100.0
@@ -177,10 +192,21 @@ class CTAvailability:
         return None
 
     # Nomes de set onde o fuzzy erra DE PROPÓSITO conhecido (tcgcsv → CT).
-    # Caso provado: "Scarlet & Violet 151" caía no set base "Scarlet & Violet"
-    # via contains — o nome real no CT é só "151" (code mew). Sempre exato.
+    # Casos provados em runs reais:
+    #   - "Scarlet & Violet 151" caía no set base "Scarlet & Violet" via
+    #     contains — o nome real no CT é só "151" (code mew).
+    #   - "SV01/SWSH01: ... Base Set" caía no "Base Set" WotC de 1999 (code
+    #     bs) — "base set" ⊆ alvo e o WotC vinha primeiro na lista. Nº que
+    #     coincidisse casaria carta ERRADA em silêncio; nº alto saía "carta
+    #     não encontrada" (run 2026-07-13: 4 linhas).
+    #   - "Pokemon GO" caía no "Pokémon GO Enhanced Expansion Pack" (set
+    #     JAPONÊS s10b) → "sem oferta EN+NM" enganoso em 5 linhas; o set
+    #     internacional no CT chama "Pokémon TCG: Pokémon GO" (code pkmgo).
     SET_NAME_OVERRIDES = {
         "scarlet & violet 151": "151",
+        "scarlet & violet base set": "scarlet & violet",
+        "sword & shield base set": "sword & shield",
+        "pokemon go": "pokemon tcg: pokemon go",
     }
 
     def find_expansion_id(self, set_name: str) -> Optional[int]:
@@ -198,10 +224,22 @@ class CTAvailability:
         for e in self._expansions:           # match exato primeiro
             if _norm(e.get("name", "")) == target:
                 return e["id"]
-        for e in self._expansions:           # depois, contains (mais frouxo)
-            n = _norm(e.get("name", ""))
-            if target in n or n in target:
-                return e["id"]
+        # Contains RANQUEADO (não first-hit, que dependia da ordem da API e
+        # produzia os falsos matches acima):
+        #   1) nome CT contido no alvo → o mais LONGO vence (mais específico:
+        #      "crown zenith" ⊃ alvo "crown zenith: galarian gallery" ganha
+        #      de um hipotético nome curto genérico);
+        #   2) alvo contido no nome CT → o mais CURTO vence (menos sufixo
+        #      estranho: "pokemon tcg: pokemon go" ganha de "pokemon go
+        #      enhanced expansion pack").
+        contained = [e for e in self._expansions
+                     if _norm(e.get("name", "")) and _norm(e.get("name", "")) in target]
+        if contained:
+            return max(contained, key=lambda e: len(_norm(e.get("name", ""))))["id"]
+        containing = [e for e in self._expansions
+                      if target and target in _norm(e.get("name", ""))]
+        if containing:
+            return min(containing, key=lambda e: len(_norm(e.get("name", ""))))["id"]
         return None
 
     def _blueprint_for(self, expansion_id: int, number: str,
