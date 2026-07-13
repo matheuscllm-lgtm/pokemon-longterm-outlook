@@ -3,11 +3,13 @@
 Para cada carta do top-N do ranking de longo prazo, responde: em qual
 plataforma ela está disponível e por quanto, com link de acesso direto.
 
-Cobertura honesta por plataforma (2026-06):
+Cobertura honesta por plataforma (2026-07):
   - CardTrader  → PREÇO REAL via API oficial (menor oferta EN+NM não-graded)
-                  + link direto da carta. Token CT_JWT lido do .env do repo
-                  card-trader-scanner (nunca logado/impresso).
-  - TCGPlayer   → preço market de referência (já vem do ranking/tcgcsv)
+                  + link direto da carta. Token CT_JWT lido da env var CT_JWT
+                  (qualquer ambiente, inclusive nuvem) ou do .env do repo
+                  card-trader-scanner (PC). Nunca logado/impresso.
+  - TCGPlayer   → preço market de referência (já vem do ranking/tcgcsv) +
+                  menor anúncio (lowPrice, condição NÃO filtrada — informativo)
                   + link direto do produto.
   - eBay        → SEM preço automatizado (Browse API exige keys que o
                   operador ainda não criou; scrape = 403). Link de busca.
@@ -15,15 +17,20 @@ Cobertura honesta por plataforma (2026-06):
                   pra passar o Cloudflare). Link de busca.
   - Liga Pokémon→ SEM preço automatizado (Cloudflare; coletor é headful e
                   lento demais pra 50 cartas ad-hoc). Link de busca.
-  - MYP         → SEM preço automatizado E SEM busca por URL (o site só
-                  filtra via JavaScript; testado ?busca/?q/?nome/?s — nenhum
-                  filtra). Link de busca via Google site-restrito.
+  - MYP         → SEM preço automatizado AQUI: a API (mypcards.com/api/v1)
+                  existe, mas está atrás de challenge Cloudflare — provado
+                  2026-07 do ambiente nuvem (403 + TLS reset mesmo via
+                  curl_cffi/proxy). Cobertura automatizada do MYP é do
+                  scanner MYP da frota (PC). O site também não filtra por
+                  querystring (testado ?busca/?q/?nome/?s) → link de busca
+                  via Google site-restrito.
 
 NUNCA inventa preço: plataforma sem coleta automatizada aparece como link
 pra conferência manual, explicitamente.
 """
 from __future__ import annotations
 
+import os
 import time
 import unicodedata
 from pathlib import Path
@@ -42,13 +49,31 @@ TIMEOUT_S = 30
 FX_API = "https://open.er-api.com/v6/latest/USD"
 FX_EUR_USD_FALLBACK = 1.08   # usado só se a API de câmbio falhar (documentado)
 
+# BOM/zero-width num segredo crasham o header HTTP (latin-1) e o run vem
+# "verde mas vazio" — .strip() comum NÃO remove BOM. Sanitização explícita.
+_INVISIBLE_CHARS = "\ufeff\u200b\u200c\u200d\u200e\u200f"
+
+
+def _clean_secret(raw: Optional[str]) -> Optional[str]:
+    if raw is None:
+        return None
+    cleaned = raw.strip().strip(_INVISIBLE_CHARS).strip()
+    return cleaned or None
+
 
 def load_ct_jwt(env_path: Path = CT_ENV_PATH) -> Optional[str]:
-    """Lê CT_JWT do .env do repo CardTrader. O valor NUNCA é impresso."""
+    """CT_JWT da env var (qualquer ambiente) ou do .env do repo CardTrader (PC).
+
+    A env var tem precedência — é o único caminho viável fora do PC do
+    operador (nuvem/CI). O valor NUNCA é impresso/logado.
+    """
+    from_env = _clean_secret(os.environ.get("CT_JWT"))
+    if from_env:
+        return from_env
     try:
         for line in env_path.read_text(encoding="utf-8").splitlines():
-            if line.strip().startswith("CT_JWT="):
-                return line.split("=", 1)[1].strip() or None
+            if line.strip().lstrip(_INVISIBLE_CHARS).startswith("CT_JWT="):
+                return _clean_secret(line.split("=", 1)[1])
     except OSError:
         pass
     return None

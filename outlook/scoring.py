@@ -137,6 +137,7 @@ class ScoredCard:
     pts_supply: int = 0
     pts_price: int = 0
     tcg_url: str = ""
+    low_usd: float | None = None  # menor anúncio TCGPlayer (condição NÃO filtrada; usado pelo run_availability)
     trend: str = ""           # preenchido (opcional) pelo módulo pricecharting
     dh_score: int | None = None  # 2ª opinião Double Holo (módulo doubleholo); NÃO entra no score
     notes: list[str] = field(default_factory=list)

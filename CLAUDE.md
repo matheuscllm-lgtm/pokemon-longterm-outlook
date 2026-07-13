@@ -32,9 +32,19 @@ cd C:\Users\mathe\pokemon-longterm-outlook
 .venv\Scripts\python.exe run_outlook.py --top 30 --min-price 20
 .venv\Scripts\python.exe run_outlook.py --sealed       # + ranking de selados (ETB/Box/Bundle/Tin)
 .venv\Scripts\python.exe run_outlook.py --doubleholo dh.json  # + coluna DH (2ª opinião Double Holo)
+.venv\Scripts\python.exe run_availability.py --top 100 # ONDE cada carta do top está mais barata em NM inglês
 .venv\Scripts\python.exe -m outlook.history            # resumo da série histórica (maiores altas/quedas)
 .venv\Scripts\python.exe -m outlook.validate           # calibração do score + backtest (quando houver história)
 ```
+
+**`run_availability.py` (onde está mais barata, NM inglês):** recalcula o
+top-N e, por carta, coleta a menor oferta **EN + Near Mint não-graded ao
+vivo no CardTrader** (exige `CT_JWT` — env var em qualquer ambiente, ou o
+`.env` do card-trader-scanner no PC), mostra a referência TCGPlayer (market)
+e o menor anúncio TCGPlayer (`lowPrice`, condição NÃO filtrada — informativo,
+nunca decide), e linka eBay/COMC/Liga/MYP pra conferência manual (sem preço
+automatizável — MYP tem API mas atrás de Cloudflare; ver `availability.py`).
+Sem `CT_JWT` o veredito NM-EN sai como `n/d`, honestamente.
 
 `--trend` agora usa **histórico de preço REAL** do tcgcsv.com (dumps diários do
 TCGPlayer desde 2024-02-08), casado por `productId` — a variação entre hoje e o
@@ -109,6 +119,8 @@ PriceCharting, onde fica o histórico visual de preço.
 
 ```
 run_outlook.py           CLI: baixa catálogo → score → cenário + ranking (+ --sealed, snapshot)
+run_availability.py      CLI: onde o top-N está mais barato em NM inglês (CT ao vivo + TCG low + links)
+outlook/availability.py  CardTrader NM-EN ao vivo (CT_JWT) + links eBay/COMC/Liga/MYP; cobertura honesta
 outlook/tcgcsv_api.py    fonte DEFAULT: dumps diários TCGPlayer (cartas + selados)
 outlook/ptcg_api.py      cliente pokemontcg.io (sets, cartas, preços TCGPlayer) — fonte alternativa
 outlook/scoring.py       os 4 componentes do score + detecção de set especial (reprint forte)
