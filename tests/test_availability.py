@@ -201,3 +201,34 @@ def test_verdict_without_ct_source_is_honest_nd():
     assert "CT_JWT" in verdict_nm_en(None, 50.0, has_ct=False)
     v = verdict_nm_en(None, 50.0, ct_status="sem oferta EN+NM", has_ct=True)
     assert v.startswith("n/d — CT: sem oferta EN+NM")
+
+
+# ── filtro de anúncio-lixo (caso real: SIR de $118 "vendida" a R$ 0,89) ──────
+JUNK = {"properties_hash": {"condition": "Near Mint", "pokemon_language": "en"},
+        "graded": False, "price": {"cents": 16, "currency": "USD"},
+        "quantity": 24}
+REAL = {"properties_hash": {"condition": "Near Mint", "pokemon_language": "en"},
+        "graded": False, "price": {"cents": 14100, "currency": "USD"},
+        "quantity": 2}
+
+
+def test_cheapest_with_ref_skips_junk_and_reports_next_plausible(monkeypatch):
+    ct = _ct_with_fake_api(monkeypatch, [JUNK, REAL])
+    r = ct.cheapest("SWSH07: Evolving Skies", "214", ref_usd=118.73)
+    assert r["status"] == "ok"
+    assert r["usd"] == pytest.approx(141.0)       # a plausível, não o lixo
+    assert r["junk_skipped"] == 1
+
+
+def test_cheapest_only_junk_is_labeled_not_zero(monkeypatch):
+    ct = _ct_with_fake_api(monkeypatch, [JUNK])
+    r = ct.cheapest("SWSH07: Evolving Skies", "214", ref_usd=118.73)
+    assert r["status"] == "só anúncios-lixo (1 < 50% da ref)"
+    assert "usd" not in r
+
+
+def test_cheapest_without_ref_keeps_old_behavior(monkeypatch):
+    ct = _ct_with_fake_api(monkeypatch, [JUNK, REAL])
+    r = ct.cheapest("SWSH07: Evolving Skies", "214")
+    assert r["usd"] == pytest.approx(0.16)        # sem ref não filtra (backstop
+    assert r["junk_skipped"] == 0                 # é o gate do veredito)

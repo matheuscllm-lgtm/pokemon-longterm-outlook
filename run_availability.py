@@ -85,11 +85,13 @@ def main() -> int:
         if ct:
             print(f"[{i}/{len(top)}] CT lookup: {c.name} ({c.set_name} {c.number})",
                   file=sys.stderr)
-            r = ct.cheapest(c.set_name, c.number, c.name)
+            r = ct.cheapest(c.set_name, c.number, c.name, ref_usd=c.market_usd)
         else:
             r = {"status": "sem CT_JWT"}
         ct_usd = r.get("usd")
         ct_cell = f"{ct_usd:.2f}" if ct_usd is not None else f"— ({r['status']})"
+        if ct_usd is not None and r.get("junk_skipped"):
+            ct_cell += f" ({r['junk_skipped']} lixo ign.)"
         qty = r.get("qty") if r.get("qty") is not None else "—"
         low_cell = f"{c.low_usd:.2f}" if c.low_usd is not None else "—"
         verdict = verdict_nm_en(ct_usd, c.market_usd,

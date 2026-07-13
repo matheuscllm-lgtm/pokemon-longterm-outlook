@@ -220,11 +220,20 @@ class CTAvailability:
                     return bp
         return candidates[0]
 
-    def cheapest(self, set_name: str, number: str, card_name: str = "") -> dict:
-        """{'usd', 'qty', 'url', 'status'} — menor oferta EN+NM não-graded.
+    def cheapest(self, set_name: str, number: str, card_name: str = "",
+                 ref_usd: Optional[float] = None) -> dict:
+        """{'usd', 'qty', 'url', 'status', 'junk_skipped'} — menor oferta
+        EN+NM não-graded PLAUSÍVEL.
+
+        Marketplace tem anúncio-lixo (caso real: Venusaur ex SIR por R$ 0,89
+        com as ofertas reais a ~R$ 776) — com ref_usd, anúncios abaixo de
+        SUSPECT_RATIO×ref são pulados e CONTADOS em junk_skipped, e vence a
+        oferta plausível mais barata. Sem ref_usd, comportamento antigo (o
+        gate do veredito segue de backstop).
 
         status: 'ok' | 'set não mapeado' | 'carta não encontrada' |
-                'sem oferta EN+NM' | 'erro: ...' — nunca silencioso.
+                'sem oferta EN+NM' | 'só anúncios-lixo (N < 50% da ref)' |
+                'erro: ...' — nunca silencioso.
         """
         try:
             exp_id = self.find_expansion_id(set_name)
@@ -237,7 +246,7 @@ class CTAvailability:
                                  language="en")
             if isinstance(listings, dict):
                 listings = [l for ls in listings.values() for l in ls]
-            best = None
+            best, junk = None, 0
             for l in listings:
                 props = l.get("properties_hash") or {}
                 if props.get("condition") != "Near Mint":
@@ -253,11 +262,19 @@ class CTAvailability:
                 usd = self._to_usd(cents, price.get("currency", "EUR"))
                 if usd is None:
                     continue
+                if ref_usd and ref_usd > 0 and usd < SUSPECT_RATIO * ref_usd:
+                    junk += 1
+                    continue
                 if best is None or usd < best["usd"]:
                     best = {"usd": usd, "qty": l.get("quantity"),
                             "url": f"https://www.cardtrader.com/cards/{bp['id']}",
-                            "status": "ok"}
-            return best or {"status": "sem oferta EN+NM"}
+                            "status": "ok", "junk_skipped": junk}
+            if best:
+                best["junk_skipped"] = junk
+                return best
+            if junk:
+                return {"status": f"só anúncios-lixo ({junk} < 50% da ref)"}
+            return {"status": "sem oferta EN+NM"}
         except RuntimeError as exc:
             return {"status": f"erro: {exc}"}
 
