@@ -271,6 +271,20 @@ class CTAvailability:
                     return bp
         return candidates[0]
 
+    def _max_numeric_number(self, expansion_id: int) -> Optional[int]:
+        """Maior collector number NUMÉRICO do set casado (pros de letra: TG12
+        etc. ficam de fora). Usa o export já cacheado pelo _blueprint_for."""
+        best: Optional[int] = None
+        for bp in self._blueprints.get(expansion_id, []):
+            fixed = bp.get("fixed_properties") or {}
+            num = _clean_number(str(fixed.get("collector_number")
+                                    or bp.get("version") or ""))
+            if num.isdigit():
+                n = int(num)
+                if best is None or n > best:
+                    best = n
+        return best
+
     def cheapest(self, set_name: str, number: str, card_name: str = "",
                  ref_usd: Optional[float] = None) -> dict:
         """{'usd', 'qty', 'url', 'status', 'junk_skipped'} — menor oferta
@@ -282,9 +296,11 @@ class CTAvailability:
         oferta plausível mais barata. Sem ref_usd, comportamento antigo (o
         gate do veredito segue de backstop).
 
-        status: 'ok' | 'set não mapeado' | 'carta não encontrada' |
-                'sem oferta EN+NM' | 'só anúncios-lixo (N < 50% da ref)' |
-                'erro: ...' — nunca silencioso.
+        status: 'ok' | 'set não mapeado' | 'carta não encontrada' (com o
+                sufixo 'provável set errado' quando o nº pedido excede a
+                faixa numérica do set casado) | 'sem oferta EN+NM' |
+                'só anúncios-lixo (N < 50% da ref)' | 'erro: ...' —
+                nunca silencioso.
         """
         try:
             exp_id = self.find_expansion_id(set_name)
@@ -292,6 +308,18 @@ class CTAvailability:
                 return {"status": "set não mapeado no CT"}
             bp = self._blueprint_for(exp_id, number, card_name)
             if not bp:
+                # Autodetecção de set errado (auditoria 2026-07-13): quando o
+                # nº pedido está ACIMA da faixa numérica do set casado, o
+                # provável não é "carta rara demais" — é o match de expansão
+                # ter caído noutro set (classe de bug que produziu 9% do
+                # relatório em n/d antes dos overrides). Sinaliza explícito
+                # em vez do genérico "carta não encontrada".
+                want = _clean_number(number)
+                max_num = self._max_numeric_number(exp_id)
+                if want.isdigit() and max_num and int(want) > max_num:
+                    return {"status": (f"carta não encontrada — nº {want} > "
+                                       f"máx {max_num} do set casado no CT "
+                                       f"(provável set errado; confira)")}
                 return {"status": "carta não encontrada no CT"}
             listings = self._get("/marketplace/products", blueprint_id=bp["id"],
                                  language="en")

@@ -158,8 +158,10 @@ plataforma. Flags: `--top` (default 25), `--eras` (default SV+SWSH+ME),
   151" no CT é só "151"; "… Base Set" do SV01/SWSH01 NÃO é o "Base Set"
   WotC; "Pokemon GO" é o "Pokémon TCG: Pokémon GO" internacional, não o
   set japonês homônimo — falsos matches provados em 2026-07-13) e o
-  contains é RANQUEADO (não first-hit da API); erro transiente da API do
-  CT tem retry curto (401 isolado observado entre 2 runs); **anúncio-lixo**
+  contains é RANQUEADO (não first-hit da API); nº pedido acima da faixa
+  numérica do set casado sai como "provável set errado" (autodetecção da
+  classe de falso match, sem depender de override); erro transiente da API
+  do CT tem retry curto (401 isolado observado entre 2 runs); **anúncio-lixo**
   (<50% da referência market) é pulado e contado — caso real: SIR de
   US$ 118 anunciada "NM EN" por R$ 0,89.
 - **TCGPlayer** → preço market de referência + menor anúncio (`lowPrice`,
@@ -240,7 +242,7 @@ outlook/pricehistory.py  tendência REAL: histórico diário do tcgcsv (.ppmd.7z
 outlook/history.py       persiste snapshots diários do score (data/snapshots/) → série histórica própria
 outlook/validate.py      calibração transversal do score + backtest longitudinal (usa history)
 outlook/report.py        cenário por era + tabela top-N em markdown
-tests/                   128 testes em 13 arquivos: scoring, sealed, history, validate, pricehistory,
+tests/                   130 testes em 13 arquivos: scoring, sealed, history, validate, pricehistory,
                          doubleholo, notorious, report, sets, tcgcsv_api,
                          availability, ebay_availability, comc_availability
 ```
@@ -248,7 +250,7 @@ tests/                   128 testes em 13 arquivos: scoring, sealed, history, va
 ## Testes e CI
 
 ```bash
-python -m pytest tests/ -q     # 128 testes (nuvem/Linux: python3)
+python -m pytest tests/ -q     # 130 testes (nuvem/Linux: python3)
 ```
 
 No PC do operador: `.venv\Scripts\python.exe -m pytest tests/ -q`.
