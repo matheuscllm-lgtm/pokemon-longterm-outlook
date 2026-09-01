@@ -364,6 +364,35 @@ def ebay_url(name: str, set_name: str, number: str) -> str:
     return f"https://www.ebay.com/sch/i.html?_nkw={q}"
 
 
+# Categoria "CCG Individual Cards" do eBay — a mesma que ebay_availability.py
+# usa na Browse API; sem ela a busca traz lote, playmat e caixa junto.
+EBAY_CCG_SINGLES_CATEGORY = "183454"
+
+
+def ebay_psa10_url(name: str, set_name: str, number: str) -> str:
+    """Link de COMPRA no eBay já filtrado em PSA 10, do mais barato pro mais caro.
+
+    Mesma query da coleta (`ebay_availability.cheapest`): nome sem o qualificador
+    entre parênteses + número limpo + set sem prefixo de era — o número é o que
+    identifica a variante, e o slab do PSA traz o número no título. Acrescenta
+    "psa 10" e fixa três parâmetros do eBay:
+
+      _sacat=183454  categoria CCG Individual Cards (corta lote/acessório)
+      LH_BIN=1       só Buy It Now (espelha buyingOptions:{FIXED_PRICE} da API)
+      _sop=15        ordena por preço + frete, menor primeiro
+
+    É um link de BUSCA, não de um anúncio específico: sem EBAY_CLIENT_ID/SECRET
+    não há como resolver o menor anúncio real, e este projeto não inventa preço.
+    A busca é texto — pode trazer PSA 10 de outra variante do mesmo número; a
+    conferência final é no anúncio.
+    """
+    q = quote_plus(" ".join(
+        f"pokemon {_base_name(name)} {_clean_number(number)} "
+        f"{_strip_era_prefix(set_name)} psa 10".split()))
+    return (f"https://www.ebay.com/sch/i.html?_nkw={q}"
+            f"&_sacat={EBAY_CCG_SINGLES_CATEGORY}&LH_BIN=1&_sop=15")
+
+
 def comc_url(name: str) -> str:
     return f"https://www.comc.com/Cards/Pokemon,sq,{quote_plus(name)}"
 
