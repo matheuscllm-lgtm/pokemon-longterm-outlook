@@ -97,17 +97,24 @@ def _trend_footnote(trend_source: str) -> str:
 
 
 def ranking_markdown(cards: list[ScoredCard], top_n: int,
-                     trend_source: str = "", show_dh: bool = False) -> str:
+                     trend_source: str = "", show_dh: bool = False,
+                     graded: bool = False) -> str:
     ranked = sorted(cards, key=lambda c: (-c.score, -c.market_usd))[:top_n]
     lines = [f"## Top {len(ranked)} — score de longo prazo "
              f"(heurística 0-100; decisão é do operador)", ""]
     # Coluna DH (2ª opinião Double Holo) só entra quando houve --doubleholo.
     dh_h = "DH | " if show_dh else ""
     dh_sep = "---|" if show_dh else ""
+    # Modo graded: o Preço do score é o do slab, então a tabela mostra PSA 10
+    # e a liquidez dele (o preço raw vira contexto, não a régua).
+    price_h = ("PSA 10 US$ | Vendas/mês | Raw US$ | " if graded
+               else "Preço US$ | ")
+    price_sep = "---|---|---|" if graded else "---|"
     lines.append("| # | Score | " + dh_h + "Carta | Set | Raridade | ⭐ | "
-                 "Preço US$ | Idade | Tendência | Notas | TCG | "
+                 + price_h + "Idade | Tendência | Notas | TCG | "
                  "Gráfico (PriceCharting) |")
-    lines.append("|---|---|" + dh_sep + "---|---|---|---|---|---|---|---|---|---|")
+    lines.append("|---|---|" + dh_sep + "---|---|---|---|" + price_sep
+                 + "---|---|---|---|---|")
     for i, c in enumerate(ranked, 1):
         star = f"⭐ {c.notorious}" if c.notorious else ""
         notes = "; ".join(c.notes) if c.notes else ""
@@ -117,10 +124,18 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
         pc_url = _pricecharting_search_url(c.name, c.set_name, c.number)
         dh_c = (f"{c.dh_score if c.dh_score is not None else '—'} | "
                 if show_dh else "")
+        if graded:
+            p10 = (f"{c.psa10_usd:.2f}" if c.psa10_usd is not None
+                   else f"n/d ({c.psa10_status or 'sem consulta'})")
+            spm = (f"{c.psa10_sales_per_month:g}"
+                   if c.psa10_sales_per_month is not None else "n/d")
+            price_c = f"{p10} | {spm} | {c.market_usd:.2f} | "
+        else:
+            price_c = f"{c.market_usd:.2f} | "
         lines.append(
             f"| {i} | **{c.score}** | " + dh_c + f"{carta} | "
             f"{_md_escape(c.set_name)} | {_md_escape(c.rarity)} | "
-            f"{star} | {c.market_usd:.2f} | {c.age_months}m | "
+            f"{star} | " + price_c + f"{c.age_months}m | "
             f"{c.trend or '—'} | {_md_escape(notes)} | "
             f"{_md_link('TCG', c.tcg_url)} | {_md_link('📈 gráfico', pc_url)} |")
     lines.append("")
@@ -128,11 +143,19 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
                "preço + sinal IA + ROI de gradação + momentum); é avaliação dos "
                "dados do Double Holo, NÃO entra no score e NÃO é conselho de "
                "compra; '—' = sem dado Double Holo pra essa carta." if show_dh else "")
+    graded_note = (" MODO GRADED: o componente Preço foi medido no slab "
+                   "**PSA 10** (preço justo do PriceCharting, de vendas reais), "
+                   "não no preço de carta crua — a coluna Raw US$ fica só como "
+                   "contexto. Vendas/mês = liquidez do PSA 10; abaixo de 3/mês o "
+                   "componente é tetado (preço de tabela num mercado ilíquido não "
+                   "é preço realizável) e a linha ganha nota. Carta com PSA 10 "
+                   "'n/d' manteve o Preço da régua raw, com o motivo declarado — "
+                   "nunca inventamos preço nem liquidez." if graded else "")
     lines.append("_Score = Personagem + Raridade + Supply + Preço (0-25 cada, "
                  "somados) — o detalhamento por componente saiu da tabela a "
                  "pedido; segue heurística de triagem com racional aberto, NÃO "
                  "é previsão nem conselho (a Tendência é informativa e NÃO entra "
                  "no score). Gráfico = página da carta no PriceCharting (busca), "
-                 "onde fica o histórico visual." + dh_note
+                 "onde fica o histórico visual." + graded_note + dh_note
                  + _trend_footnote(trend_source) + "_")
     return "\n".join(lines)

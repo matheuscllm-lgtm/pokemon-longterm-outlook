@@ -119,6 +119,50 @@ def price_points(market_usd: float) -> int:
     return 12
 
 
+# ── Modo graded (operador que só compra PSA 10) ──────────────────────────────
+# As faixas raw acima são a MESMA lógica econômica ("espaço pra crescer com
+# liquidez"), só que medida no preço de carta solta. Quem compra slab precisa
+# da régua no preço do slab: as faixas abaixo são as raw multiplicadas por 3,
+# fator calibrado no múltiplo PSA 10/raw OBSERVADO no top 25 deste repo em
+# 2026-09-01 (mediana 3.3×, p25 2.5×, p75 5.4×, n=25) — não é chute, mas
+# também não é previsão: é a mesma heurística de triagem, reancorada.
+PSA10_PRICE_BANDS_USD = (15.0, 45.0, 120.0, 360.0, 900.0)
+
+# Liquidez mínima (vendas/mês do PSA 10) para o componente valer cheio. Abaixo
+# disso o slab é ilíquido e o preço de tabela não é preço realizável, então o
+# componente é TETADO — mesma mecânica do teto de reprint forte no Supply.
+# Corte 3.0/mês = fronteira dos tiers B/C da régua de liquidez da frota
+# (`ebay-arbitrage-scanner/src/scorer.py::liquidity_tier`: A≥10, B≥3, C≥1).
+PSA10_MIN_SALES_PER_MONTH = 3.0
+PSA10_ILLIQUID_CAP = 12
+
+
+def price_points_psa10(psa10_usd: float,
+                       sales_per_month: float | None = None) -> int:
+    """Componente de Preço (0-25) medido no PSA 10, com teto de iliquidez.
+
+    `sales_per_month=None` (o PriceCharting não publicou volume) NÃO teta: sem
+    dado é sem dado, não é sinal de iliquidez — a carta fica com a nota da
+    faixa e a ausência é reportada na coluna de liquidez.
+    """
+    lo15, lo45, lo120, lo360, lo900 = PSA10_PRICE_BANDS_USD
+    if psa10_usd < lo15:
+        pts = 5
+    elif psa10_usd < lo45:
+        pts = 12
+    elif psa10_usd < lo120:
+        pts = 20
+    elif psa10_usd < lo360:
+        pts = 25
+    elif psa10_usd < lo900:
+        pts = 18
+    else:
+        pts = 12
+    if sales_per_month is not None and sales_per_month < PSA10_MIN_SALES_PER_MONTH:
+        return min(pts, PSA10_ILLIQUID_CAP)
+    return pts
+
+
 @dataclass
 class ScoredCard:
     card_id: str
@@ -139,6 +183,11 @@ class ScoredCard:
     tcg_url: str = ""
     low_usd: float | None = None  # menor anúncio TCGPlayer (condição NÃO filtrada; usado pelo run_availability)
     trend: str = ""           # preenchido (opcional) pelo módulo pricecharting
+    # Modo graded (--graded): preço e liquidez do slab PSA 10 (módulo psa10).
+    # Quando psa10_usd está preenchido, pts_price foi medido NELE, não no raw.
+    psa10_usd: float | None = None
+    psa10_sales_per_month: float | None = None
+    psa10_status: str = ""
     dh_score: int | None = None  # 2ª opinião Double Holo (módulo doubleholo); NÃO entra no score
     notes: list[str] = field(default_factory=list)
 
@@ -152,8 +201,38 @@ class ScoredCard:
         return (t.year - self.release.year) * 12 + (t.month - self.release.month)
 
 
+def apply_psa10(sc, psa10_usd: float | None,
+                sales_per_month: float | None = None,
+                status: str = "") -> None:
+    """Aplica o modo graded numa carta já pontuada, IN-PLACE.
+
+    Existe como função à parte porque o preço PSA 10 chega DEPOIS da triagem:
+    o ranking raw define o pool a consultar (não dá pra consultar o catálogo
+    inteiro carta a carta), e só então o componente de Preço é remedido no
+    slab. Sem preço PSA 10, o componente permanece o raw e a linha ganha nota
+    explicando por quê — nunca zeramos nem inventamos.
+    """
+    sc.psa10_usd = psa10_usd
+    sc.psa10_sales_per_month = sales_per_month
+    sc.psa10_status = status
+    if psa10_usd is None:
+        if status and status != "ok":
+            sc.notes.append(f"sem preço PSA 10 ({status}) — "
+                            "Preço medido na régua raw")
+        return
+    sc.pts_price = price_points_psa10(psa10_usd, sales_per_month)
+    if (sales_per_month is not None
+            and sales_per_month < PSA10_MIN_SALES_PER_MONTH):
+        sc.notes.append(
+            f"PSA 10 ilíquido ({sales_per_month:g} vendas/mês) — preço de "
+            "tabela pode não ser realizável")
+
+
 def score_card(card: dict, set_meta: dict, market_usd: float,
-               today: date | None = None) -> ScoredCard:
+               today: date | None = None,
+               psa10_usd: float | None = None,
+               psa10_sales_per_month: float | None = None,
+               psa10_status: str = "") -> ScoredCard:
     today = today or date.today()
     release = date.fromisoformat(set_meta["releaseDate"].replace("/", "-"))
     heavy = is_heavy_reprint(set_meta["id"], set_meta.get("name", ""))
@@ -180,6 +259,8 @@ def score_card(card: dict, set_meta: dict, market_usd: float,
         sc.notes.append("alt-art (detectada pelo nome TCGPlayer)")
     sc.pts_supply = supply_points(release, today, heavy)
     sc.pts_price = price_points(market_usd)
+    if psa10_usd is not None or psa10_status:
+        apply_psa10(sc, psa10_usd, psa10_sales_per_month, psa10_status)
     if heavy:
         sc.notes.append("reprint forte — supply não encolhe como o normal")
     if (sc.series == "Sword & Shield" and sc.pts_rarity in (12, 14)

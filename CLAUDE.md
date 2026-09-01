@@ -64,6 +64,7 @@ cd C:\Users\mathe\pokemon-longterm-outlook
 .venv\Scripts\python.exe run_outlook.py --top 30 --min-price 20
 .venv\Scripts\python.exe run_outlook.py --sealed       # + ranking de selados (ETB/Box/Bundle/Tin)
 .venv\Scripts\python.exe run_outlook.py --doubleholo dh.json  # + coluna DH (2ª opinião Double Holo)
+.venv\Scripts\python.exe run_outlook.py --graded      # régua de PSA 10 (quem só compra graduada)
 .venv\Scripts\python.exe run_availability.py --top 100 # ONDE cada carta do top está mais barata em NM inglês
 .venv\Scripts\python.exe -m outlook.history            # resumo da série histórica (maiores altas/quedas)
 .venv\Scripts\python.exe -m outlook.validate           # calibração do score + backtest (quando houver história)
@@ -113,6 +114,28 @@ da frota" acima). O `.md` em `outputs/` é apoio local.
 | **Raridade** | tier colecionável | SIR/alt-art 25 · IR 20 · TG/Character/**Mega Attack** 16 · gold/secret/shiny/**Mega Hyper** 14 · ultra/VMAX 12 · ACE SPEC 10 · double rare/Rare Holo V 6 · resto 3 |
 | **Supply** | oferta encolhendo | ≥36 meses = 25 · 24-36m = 22 · 18-24m = 18 · 12-18m = 12 · 6-12m = 7 · <6m = 3; set com **reprint forte** trava em 12 |
 | **Preço** | espaço pra crescer com liquidez | $40-120 = 25 · $15-40 = 20 · $120-300 = 18 · $5-15 = 12 · >$300 = 12 (já precificado) · <$5 = 5 (sem liquidez) |
+
+**Modo graded (`--graded`), para quem só compra PSA 10:** o componente **Preço**
+deixa de ser medido no preço de carta crua e passa a ser medido no **slab PSA
+10** — que é o mercado de quem compra graduada. Faixas: `$120-360 = 25` ·
+`$45-120 = 20` · `$360-900 = 18` · `$15-45 = 12` · `>$900 = 12` · `<$15 = 5`.
+São as MESMAS faixas raw multiplicadas por **3**, fator calibrado no múltiplo
+PSA 10/raw observado no próprio top 25 (mediana 3.3×, p25 2.5×, p75 5.4×,
+n=25) — reancoragem, não fórmula nova. Os outros 3 componentes não mudam, e o
+score segue 4×25=100.
+
+Entra também a **liquidez do slab** (vendas/mês do PSA 10): abaixo de **3/mês**
+(fronteira B/C da régua de liquidez da frota) o componente é **tetado em 12** —
+preço de tabela num mercado que quase não negocia não é preço realizável. Sem
+dado de liquidez **não teta** (ausência não é sinal de iliquidez).
+
+Preço e liquidez vêm de `outlook/psa10.py` (PriceCharting, a mesma fonte que
+este repo já usa pra tendência — campo novo da mesma página). O modo consulta
+só o **pool do topo** (`--graded-pool`, default 2× `--top`, mínimo 50): o
+ranking raw define quem vale consultar, e só então o Preço é remedido. Carta
+sem PSA 10 confiável **mantém a régua raw com o motivo declarado na linha** —
+nunca zeramos nem inventamos. A tabela ganha as colunas `PSA 10 US$`,
+`Vendas/mês` e `Raw US$` (esta só como contexto).
 
 A detecção de "reprint forte" mora em `outlook/scoring.py`
 (`HEAVY_REPRINT_SET_IDS` + `SPECIAL_SET_PREFIX_RE`); a lista de notórios em
@@ -237,20 +260,21 @@ outlook/sealed.py        score de SELADO (ETB/Box/Bundle/Tin): Tipo + Idade + MS
 outlook/notorious.py     lista curada de 60 Pokémon notórios (portada do integrado)
 outlook/sets.py          helpers puros de nome de set (strip_era_prefix), compartilhados entre report e availability
 outlook/doubleholo.py    coluna DH: nota 0-100 a partir do JSON premium do Double Holo, join por productId
+outlook/psa10.py         modo graded: preço e liquidez do slab PSA 10 via PriceCharting (escada de queries + guard de número)
 outlook/pricecharting.py tendência best-effort via PriceCharting (--trend-source pricecharting; legado)
 outlook/pricehistory.py  tendência REAL: histórico diário do tcgcsv (.ppmd.7z via py7zr), cache data/cache/tcgcsv_history/
 outlook/history.py       persiste snapshots diários do score (data/snapshots/) → série histórica própria
 outlook/validate.py      calibração transversal do score + backtest longitudinal (usa history)
 outlook/report.py        cenário por era + tabela top-N em markdown
-tests/                   130 testes em 13 arquivos: scoring, sealed, history, validate, pricehistory,
+tests/                   162 testes em 14 arquivos: scoring, sealed, history, validate, pricehistory,
                          doubleholo, notorious, report, sets, tcgcsv_api,
-                         availability, ebay_availability, comc_availability
+                         availability, ebay_availability, comc_availability, graded_psa10
 ```
 
 ## Testes e CI
 
 ```bash
-python -m pytest tests/ -q     # 130 testes (nuvem/Linux: python3)
+python -m pytest tests/ -q     # 162 testes (nuvem/Linux: python3)
 ```
 
 No PC do operador: `.venv\Scripts\python.exe -m pytest tests/ -q`.

@@ -26,7 +26,8 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-from outlook import doubleholo, history, pricehistory, ptcg_api, sealed, tcgcsv_api
+from outlook import (doubleholo, history, pricehistory, psa10, ptcg_api,
+                     scoring, sealed, tcgcsv_api)
 from outlook.pricecharting import fetch_trend
 from outlook.report import ranking_markdown, scenario_markdown
 from outlook.scoring import score_card
@@ -87,6 +88,15 @@ def main() -> int:
     ap.add_argument("--sealed", action="store_true",
                     help="também ranqueia produtos selados (ETB/Box/Bundle/Tin) "
                          "— só na fonte tcgcsv")
+    ap.add_argument("--graded", action="store_true",
+                    help="modo GRADED: o componente de Preço passa a ser medido "
+                         "no slab PSA 10 (preço + liquidez via PriceCharting), "
+                         "não no preço de carta crua — régua de quem só compra "
+                         "graduada. Consulta o pool do topo (ver --graded-pool)")
+    ap.add_argument("--graded-pool", type=int, default=0,
+                    help="quantas cartas do topo consultar no PriceCharting no "
+                         "modo graded (default: 2x --top, mínimo 50). Cada "
+                         "carta = 1 requisição educada (~1.5s)")
     ap.add_argument("--no-snapshot", action="store_true",
                     help="não salvar o snapshot diário deste run (history.py)")
     ap.add_argument("--doubleholo", metavar="JSON",
@@ -141,6 +151,24 @@ def main() -> int:
         except Exception as e:  # JSON malformado/forma errada: degrada, não derruba o run
             print(f"  (--doubleholo ignorado: não consegui usar {args.doubleholo}: {e})")
 
+    # Modo graded: remede o componente de Preço no slab PSA 10.
+    if args.graded:
+        pool_n = args.graded_pool or max(args.top * 2, 50)
+        pool = sorted(scored, key=lambda c: (-c.score, -c.market_usd))[:pool_n]
+        print(f"Modo graded: consultando preço/liquidez PSA 10 de {len(pool)} "
+              f"cartas no PriceCharting (~{len(pool) * 1.5 / 60:.0f} min)...")
+        got = 0
+        for i, c in enumerate(pool, 1):
+            r = psa10.fetch_psa10(c.name, c.set_name, c.number)
+            scoring.apply_psa10(c, r["usd"], r["sales_per_month"], r["status"])
+            if r["usd"] is not None:
+                got += 1
+            print(f"  [{i}/{len(pool)}] {c.name} {c.number}: "
+                  f"{'US$ %.2f' % r['usd'] if r['usd'] else r['status']}",
+                  file=sys.stderr)
+        print(f"PSA 10 obtido em {got}/{len(pool)} cartas do pool "
+              f"(as demais mantêm o Preço da régua raw, com nota).")
+
     if args.trend:
         ranked = sorted(scored, key=lambda c: (-c.score, -c.market_usd))[:args.top]
         if args.trend_source == "tcgcsv":
@@ -180,7 +208,7 @@ def main() -> int:
           + "\n\n" + ranking_markdown(
               scored, args.top,
               trend_source=args.trend_source if args.trend else "",
-              show_dh=show_dh))
+              show_dh=show_dh, graded=args.graded))
     if sealed_scored:
         md += "\n\n" + sealed.sealed_ranking_markdown(sealed_scored, args.top)
     OUT_DIR.mkdir(exist_ok=True)
