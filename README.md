@@ -11,6 +11,11 @@ preço). Dados: tcgcsv.com (dump diário do TCGPlayer, fonte default) — com
 decisão é sempre do operador. Documentação completa (em linguagem acessível):
 [CLAUDE.md](CLAUDE.md).
 
+Cada carta do ranking inclui **eBay (busca) · TCG · PriceCharting** na coluna
+**Links**, também nos modos `--graded` e `--doubleholo`. O eBay abre a busca
+por nome, número e coleção, sem exigir graduação ou chaves de API; o link
+não confirma um anúncio específico nem um preço de compra.
+
 ```powershell
 .venv\Scripts\python.exe run_outlook.py --top 50            # ranking
 .venv\Scripts\python.exe run_outlook.py --top 30 --trend   # + histórico real

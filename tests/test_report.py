@@ -1,9 +1,13 @@
 """Testes do formato de entrega (report.ranking_markdown) — colunas e links.
 
-Travam as três mudanças pedidas no modo de entrega: (1) número junto ao nome,
-(2) colunas de componente fora da tabela, (3) coluna de link do PriceCharting.
+Travam número junto ao nome, componentes fora da tabela e links de eBay,
+TCGPlayer e PriceCharting em todos os modos do ranking.
 """
 from datetime import date
+import re
+from urllib.parse import parse_qs, urlparse
+
+import pytest
 
 from outlook.report import (_md_link, _pricecharting_search_url,
                             ranking_markdown)
@@ -44,10 +48,29 @@ def test_component_columns_and_number_column_dropped_from_header():
     assert "**100**" in md                  # o total continua
 
 
-def test_pricecharting_column_and_link_present():
-    md = ranking_markdown([_card()], 10)
-    assert "PriceCharting" in _header(md)
-    assert "pricecharting.com/search-products" in md
+@pytest.mark.parametrize("graded", [False, True])
+@pytest.mark.parametrize("show_dh", [False, True])
+def test_links_present_on_every_row(graded, show_dh):
+    md = ranking_markdown([
+        _card(),
+        _card(name="Mewtwo V (Alternate Full Art)", set_name="Pokemon GO",
+              number="072/078", tcg_url=""),
+    ], 10, graded=graded, show_dh=show_dh)
+    assert "| Links |" in _header(md)
+    rows = [line for line in md.splitlines() if re.match(r"\| \d+ \|", line)]
+    assert len(rows) == 2
+    for row, expected in zip(rows, ["pokemon Mew V 251 Fusion Strike",
+                                   "pokemon Mewtwo V 72 Pokemon GO"]):
+        assert row.count("|") == _header(md).count("|")
+        url = re.search(r"\[eBay \(busca\)\]\(([^)]+)\)", row).group(1)
+        assert urlparse(url).netloc == "www.ebay.com"
+        query = parse_qs(urlparse(url).query)
+        assert query["_nkw"] == [expected.lower()]
+        assert query["_sacat"] == ["183454"]
+        assert "pricecharting.com/search-products" in row
+    assert "[TCG](https://tcg/x)" in rows[0]
+    assert " · — · " in rows[1]
+    assert "não é anúncio verificado" in md
 
 
 def test_pricecharting_url_strips_era_prefix_and_keeps_number():

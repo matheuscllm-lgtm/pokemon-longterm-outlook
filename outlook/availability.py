@@ -360,8 +360,17 @@ class CTAvailability:
 
 # ── Links de busca direta (plataformas sem coleta automatizada) ──────────────
 def ebay_url(name: str, set_name: str, number: str) -> str:
-    q = quote_plus(f"pokemon {name} {_clean_number(number)} {_strip_era_prefix(set_name)}")
-    return f"https://www.ebay.com/sch/i.html?_nkw={q}"
+    """Busca da carta no eBay, sem exigir graduação ou consultar a API.
+
+    Nome base, número e coleção identificam a carta; qualificadores de catálogo
+    como '(Alternate Full Art)' saem porque nem todo vendedor os usa no título.
+    """
+    card_number = _clean_number(number) if number and number.strip() else ""
+    q = quote_plus(" ".join(
+        f"pokemon {_base_name(name)} {card_number} "
+        f"{_strip_era_prefix(set_name)}".split()))
+    return (f"https://www.ebay.com/sch/i.html?_nkw={q}"
+            f"&_sacat={EBAY_CCG_SINGLES_CATEGORY}")
 
 
 # Categoria "CCG Individual Cards" do eBay — a mesma que ebay_availability.py
