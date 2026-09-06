@@ -145,9 +145,13 @@ scanner integrado).
 A tabela do ranking mostra o **score total** (não mais as 4 parcelas em
 colunas — saíram a pedido do operador; o racional dos componentes está acima
 e na coluna **Notas**). Cada linha traz o **número junto ao nome** da carta
-("Mew V (Alternate Full Art) #251") e dois links: **TCG** (TCGPlayer) e
-**Gráfico (PriceCharting)** — busca que cai na página da carta no
-PriceCharting, onde fica o histórico visual de preço.
+("Mew V (Alternate Full Art) #251") e a coluna **Links**, no padrão MYP:
+**eBay (busca) · TCG · PriceCharting**. O eBay está presente em todas as
+linhas, inclusive com `--graded` ou `--doubleholo`, sem precisar de chaves
+de API. Abre a busca da carta por nome base, número e coleção na categoria
+de cartas individuais, sem exigir graduação (raw também aparece). É busca,
+não anúncio verificado ou preço eBay. TCG aponta à referência TCGPlayer;
+PriceCharting abre a busca da carta para consultar o histórico visual.
 
 **Coluna DH (opcional, `--doubleholo dh.json`):** uma 2ª opinião de mercado do
 Double Holo, nota 0-100 (50=neutro), avaliando os DADOS premium do Double Holo

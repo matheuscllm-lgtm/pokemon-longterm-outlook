@@ -48,7 +48,7 @@ def test_clean_number_strips_denominator_and_leading_zeros():
 
 
 def test_search_urls_contain_the_card_name():
-    assert "Umbreon" in ebay_url("Umbreon VMAX", "SWSH07: Evolving Skies", "214")
+    assert "umbreon" in ebay_url("Umbreon VMAX", "SWSH07: Evolving Skies", "214").lower()
     assert "Umbreon" in comc_url("Umbreon VMAX")
     assert "Umbreon" in liga_url("Umbreon VMAX")
     assert "mypcards.com" in myp_url("Umbreon VMAX")  # busca Google site-restrita

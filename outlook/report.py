@@ -5,9 +5,9 @@ Duas partes:
      impressão, mediana de preço dos chases) — tudo derivado dos DADOS do
      run, nada de opinião enlatada.
   2. RANKING: top-N cartas por score de longo prazo. O nome da carta vem com
-     o número junto ("Mew V ... #251") e cada linha traz o link do gráfico no
-     PriceCharting. O detalhamento dos 4 componentes saiu da tabela (a pedido
-     do operador); o total continua, com o racional no rodapé.
+     o número junto ("Mew V ... #251") e cada linha traz eBay, TCGPlayer e
+     PriceCharting na coluna Links. O detalhamento dos 4 componentes saiu da
+     tabela (a pedido do operador); o total continua, com o racional no rodapé.
 """
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from collections import defaultdict
 from statistics import median
 from urllib.parse import quote_plus
 
+from .availability import ebay_url
 from .pricecharting import SEARCH as _PRICECHARTING_SEARCH
 from .scoring import ScoredCard
 from .sets import strip_era_prefix
@@ -111,10 +112,9 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
                else "Preço US$ | ")
     price_sep = "---|---|---|" if graded else "---|"
     lines.append("| # | Score | " + dh_h + "Carta | Set | Raridade | ⭐ | "
-                 + price_h + "Idade | Tendência | Notas | TCG | "
-                 "Gráfico (PriceCharting) |")
+                 + price_h + "Idade | Tendência | Notas | Links |")
     lines.append("|---|---|" + dh_sep + "---|---|---|---|" + price_sep
-                 + "---|---|---|---|---|")
+                 + "---|---|---|---|")
     for i, c in enumerate(ranked, 1):
         star = f"⭐ {c.notorious}" if c.notorious else ""
         notes = "; ".join(c.notes) if c.notes else ""
@@ -122,6 +122,11 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
         if c.number:
             carta += f" #{_md_escape(c.number)}"
         pc_url = _pricecharting_search_url(c.name, c.set_name, c.number)
+        links = " · ".join((
+            _md_link('eBay (busca)', ebay_url(c.name, c.set_name, c.number)),
+            _md_link('TCG', c.tcg_url) if c.tcg_url else '—',
+            _md_link('📈 PriceCharting', pc_url),
+        ))
         dh_c = (f"{c.dh_score if c.dh_score is not None else '—'} | "
                 if show_dh else "")
         if graded:
@@ -137,7 +142,7 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
             f"{_md_escape(c.set_name)} | {_md_escape(c.rarity)} | "
             f"{star} | " + price_c + f"{c.age_months}m | "
             f"{c.trend or '—'} | {_md_escape(notes)} | "
-            f"{_md_link('TCG', c.tcg_url)} | {_md_link('📈 gráfico', pc_url)} |")
+            f"{links} |")
     lines.append("")
     dh_note = (" DH = 2ª opinião do Double Holo (0-100, 50=neutro: previsão de "
                "preço + sinal IA + ROI de gradação + momentum); é avaliação dos "
@@ -155,7 +160,9 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
                  "somados) — o detalhamento por componente saiu da tabela a "
                  "pedido; segue heurística de triagem com racional aberto, NÃO "
                  "é previsão nem conselho (a Tendência é informativa e NÃO entra "
-                 "no score). Gráfico = página da carta no PriceCharting (busca), "
+                 "no score). eBay = busca da carta por nome, número e coleção, "
+                 "sem filtro de graduação; não é anúncio verificado nem cotação. "
+                 "PriceCharting = página da carta no PriceCharting (busca), "
                  "onde fica o histórico visual." + graded_note + dh_note
                  + _trend_footnote(trend_source) + "_")
     return "\n".join(lines)
