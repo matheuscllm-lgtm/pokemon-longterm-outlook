@@ -300,5 +300,13 @@ Python 3.11 a cada push na `main` e em todo PR.
   `POKEMONTCG_API_KEY` vive em env var.
 - Não há `CHANGELOG.md` nem versionamento explícito neste repo — a fonte de
   verdade do estado é a `main`.
-- Skill do repo: `.claude/commands/auto.md` — comando `/auto` (agente master
-  autônomo da frota, sincronizado do `scanners-commons`).
+- Skills do repo:
+  - `.claude/skills/pokemon-longterm/SKILL.md` — o caminho canônico de rodar e
+    entregar o ranking. Fixa a régua padrão (`--graded`, PSA 10 — o operador só
+    compra graduada), a checagem de pendências antes do run, a entrega VERBATIM
+    da tabela do `outlook/report.py` e a fronteira com os scanners de
+    arbitragem (pergunta diferente). Espelhado em `~/.claude/skills/` no PC do
+    operador e instalável no Cowork pelo `.skill` empacotado — **se editar uma
+    cópia, sincronize a outra**.
+  - `.claude/commands/auto.md` — comando `/auto` (agente master autônomo da
+    frota, sincronizado do `scanners-commons`).
