@@ -18,7 +18,7 @@ oferta encolhendo, patamar de preço). São perguntas diferentes.
 
 ## 🛰️ Convenções herdadas da frota
 
-> **Manual completo da frota** (repo privado):
+> **Manual completo da frota** (repo público):
 > https://github.com/matheuscllm-lgtm/scanners-commons — cópia-mestra local
 > (PC do operador): `C:\Users\mathe\scanners-commons\`.
 
