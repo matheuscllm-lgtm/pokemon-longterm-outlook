@@ -97,6 +97,13 @@ def main() -> int:
                     help="quantas cartas do topo consultar no PriceCharting no "
                          "modo graded (default: 2x --top, mínimo 50). Cada "
                          "carta = 1 requisição educada (~1.5s)")
+    ap.add_argument("--lowpop", action="store_true",
+                    help="modo LOW POP (régua 2026-09-21): Supply e Preço dão "
+                         "lugar a ESCASSEZ (nº de PSA 10 no censo do "
+                         "PriceCharting) e DEMANDA (vendas/mês da PSA 10), "
+                         "lidos da mesma página do modo graded; --max-price "
+                         "passa a valer sobre o preço PSA 10. Pool via "
+                         "--graded-pool (cache em disco por 1 dia)")
     ap.add_argument("--no-snapshot", action="store_true",
                     help="não salvar o snapshot diário deste run (history.py)")
     ap.add_argument("--doubleholo", metavar="JSON",
@@ -106,7 +113,11 @@ def main() -> int:
     args = ap.parse_args()
 
     api = tcgcsv_api if args.source == "tcgcsv" else ptcg_api
+    args.eras = tcgcsv_api.expand_eras(args.eras)
     print(f"Fonte: {args.source} | Eras: {args.eras}")
+    # No modo low pop o teto de preço é do SLAB (decisão do operador: "tabela
+    # até US$600" = PSA 10 até 600); a crua só passa pelo piso.
+    raw_max = float("inf") if args.lowpop else args.max_price
     sets_meta = api.fetch_sets(args.eras)
     print(f"{len(sets_meta)} sets encontrados; baixando cartas (pode levar ~1-2 min)...")
 
@@ -122,7 +133,7 @@ def main() -> int:
             if usd is None:
                 skipped_no_price += 1
                 continue
-            if not (args.min_price <= usd <= args.max_price):
+            if not (args.min_price <= usd <= raw_max):
                 continue
             sc = score_card(card, s, usd)
             sc.tcg_url = api.tcgplayer_url(card)
@@ -151,8 +162,48 @@ def main() -> int:
         except Exception as e:  # JSON malformado/forma errada: degrada, não derruba o run
             print(f"  (--doubleholo ignorado: não consegui usar {args.doubleholo}: {e})")
 
-    # Modo graded: remede o componente de Preço no slab PSA 10.
-    if args.graded:
+    # Modo graded / low pop: remede componentes no slab PSA 10 (PriceCharting).
+    if args.lowpop:
+        pool_n = args.graded_pool or max(args.top * 2, 50)
+        # Candidatos em rodízio por era (ver scoring.lowpop_pool), já sem quem
+        # tem a CRUA acima do teto (o slab nunca fica abaixo dela). O teto vale
+        # sobre o PSA 10, que só se conhece depois da consulta — então o pool
+        # é preenchido ATÉ ter pool_n cartas dentro do teto, com orçamento de
+        # consultas limitado (smoke 2026-09-21: pool por Personagem+Raridade
+        # puxou 23/24 slabs acima de US$600 e a tabela saiu com 1 linha).
+        candidates = scoring.lowpop_pool(
+            [c for c in scored if c.market_usd <= args.max_price], len(scored))
+        budget = pool_n * 3
+        print(f"Modo low pop: até {budget} consultas ao PriceCharting pra "
+              f"encher {pool_n} vagas com PSA 10 ≤ US$ {args.max_price:g} "
+              f"(~{budget * 3 / 60:.0f} min sem cache)...")
+        kept, over_cap, consulted, got, got_pop = [], 0, 0, 0, 0
+        for c in candidates:
+            if len(kept) >= pool_n or consulted >= budget:
+                break
+            consulted += 1
+            r = psa10.fetch_psa10(c.name, c.set_name, c.number)
+            scoring.apply_lowpop(c, r)
+            got += r["usd"] is not None
+            got_pop += r.get("pop_psa") is not None
+            print(f"  [{consulted}/{budget}] {c.name} {c.number} ({c.series}): "
+                  f"{'US$ %.2f' % r['usd'] if r['usd'] else r['status']}"
+                  + (f" · pop10 {r['pop_psa'][9]}" if r.get("pop_psa") else ""),
+                  file=sys.stderr)
+            if c.psa10_usd is not None and c.psa10_usd > args.max_price:
+                over_cap += 1
+                continue
+            kept.append(c)  # dentro do teto, ou PSA 10 n/d (fica, com nota)
+        print(f"PSA 10 obtido em {got}/{consulted} consultas; censo em "
+              f"{got_pop}/{consulted}. Ranking low pop = {len(kept)} cartas "
+              f"(PSA 10 ≤ US$ {args.max_price:g}); {over_cap} acima do teto "
+              f"saíram; {len(scored) - consulted} cartas do universo não foram "
+              f"consultadas — suba --graded-pool pra cobrir mais.")
+        # Só o pool consultado entra no ranking: misturar cartas medidas
+        # (escassez/demanda) com cartas na régua antiga na MESMA tabela seria
+        # comparar réguas diferentes.
+        scored = kept
+    elif args.graded:
         pool_n = args.graded_pool or max(args.top * 2, 50)
         pool = sorted(scored, key=lambda c: (-c.score, -c.market_usd))[:pool_n]
         print(f"Modo graded: consultando preço/liquidez PSA 10 de {len(pool)} "
@@ -208,7 +259,7 @@ def main() -> int:
           + "\n\n" + ranking_markdown(
               scored, args.top,
               trend_source=args.trend_source if args.trend else "",
-              show_dh=show_dh, graded=args.graded))
+              show_dh=show_dh, graded=args.graded, lowpop=args.lowpop))
     if sealed_scored:
         md += "\n\n" + sealed.sealed_ranking_markdown(sealed_scored, args.top)
     OUT_DIR.mkdir(exist_ok=True)

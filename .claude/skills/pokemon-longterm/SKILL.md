@@ -28,7 +28,28 @@ scanners irmãos. Se o operador misturar as duas coisas num pedido só, rode est
 primeiro (define O QUE olhar) e depois ofereça o scanner (define ONDE comprar) —
 ver a seção de handoff no fim.
 
-## A régua padrão é PSA 10 — use `--graded`
+## A régua VIGENTE é low pop — use `--lowpop` (2026-09-21)
+
+**Decisão do operador (2026-09-21):** o objetivo é achar slabs PSA 10 com
+potencial de virar chase, e o score antigo media Supply por idade do set e
+Preço por faixa — dois componentes cegos pra isso. `--lowpop` troca os dois
+por **Escassez** (nº de PSA 10 no censo do PriceCharting) e **Demanda**
+(vendas/mês da PSA 10), lidos da mesma página do modo graded. Vintage entra
+(`--eras all` ou `--eras vintage`), e `--max-price` passa a valer sobre o
+**PSA 10** (o operador fixou **US$600** por carta). Comando canônico:
+
+```bash
+python run_outlook.py --lowpop --eras all --max-price 600 --graded-pool 300
+```
+
+Só o pool consultado entra no ranking (montado em rodízio por era e
+preenchido até ter `--graded-pool` cartas dentro do teto); o run declara
+quantas cartas ficaram fora — se o operador quiser cobertura maior, suba `--graded-pool` (há cache de
+1 dia em `data/cache/pricecharting/`, então re-rodar é barato). Linhas com
+"pop não confiável" ou "vendas/mês n/d" caíram na régua anterior naquele
+componente e dizem isso na coluna Notas — nunca esconda essa nota.
+
+## A régua anterior (PSA 10 por faixa) — `--graded`, só se ele pedir
 
 **O operador compra exclusivamente carta graduada, foco PSA 10** (decisão dele,
 2026-09-01). O componente de Preço do score nasceu calibrado em carta CRUA, que
@@ -78,7 +99,9 @@ Flags que mudam o resultado, quando ele pedir:
 
 | Pedido dele | Flag |
 |---|---|
-| "mostra mais cartas" | `--top 100` (o pool graded acompanha: 2× o top, mínimo 50) |
+| "mostra mais cartas" | `--top 100` (o pool graded/low pop acompanha: 2× o top, mínimo 50) |
+| "só vintage" / "inclui vintage" | `--eras vintage` / `--eras all` (Wizards, EX, DP, HGSS, BW, XY, SM + SV/SWSH/ME) |
+| "até X dólares" (low pop) | `--max-price X` — no `--lowpop` o teto é do **PSA 10**, não da crua |
 | "e a tendência de preço?" | `--trend` — **exige `py7zr`** (`pip install py7zr`); sem o pacote a coluna sai `—`, honestamente |
 | "e os selados?" | `--sealed` |
 | "quero ver carta mais barata também" | `--min-price 20` / `--max-price` ajustam o universo |
@@ -144,6 +167,12 @@ inventado aqui vira decisão de capital errada lá na frente.
 - **Slab ilíquido** (< 3 vendas/mês) teta o Preço em 12 — preço de tabela num
   mercado que quase não negocia não é preço realizável. Liquidez **desconhecida**
   NÃO teta: ausência de dado não é sinal de iliquidez.
+- **Pop baixa no PriceCharting pode ser página errada**: o site tem páginas
+  duplicadas/finas (censo total 2 ou 4). O guard já rebaixa essas linhas pra
+  "pop não confiável" com o motivo — não trate uma como achado de escassez.
+- **1st Edition / Shadowless são páginas separadas** no PriceCharting; o
+  scanner escolhe a sem qualificador (unlimited). Se o operador quiser 1st
+  Edition, é consulta manual, não este modo.
 - **`--graded-pool` ≠ `--top`**: o ranking raw escolhe quem vale consultar no
   PriceCharting; só então o Preço é remedido. Se o operador pedir top 100, o
   pool vai a 200 consultas e o run dobra de tempo — avise antes.

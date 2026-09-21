@@ -71,6 +71,7 @@ cd C:\Users\mathe\pokemon-longterm-outlook
 .venv\Scripts\python.exe run_outlook.py --sealed       # + ranking de selados (ETB/Box/Bundle/Tin)
 .venv\Scripts\python.exe run_outlook.py --doubleholo dh.json  # + coluna DH (2ª opinião Double Holo)
 .venv\Scripts\python.exe run_outlook.py --graded      # régua de PSA 10 (quem só compra graduada)
+.venv\Scripts\python.exe run_outlook.py --lowpop --eras all --max-price 600 --graded-pool 300  # RÉGUA VIGENTE (2026-09-21): escassez + demanda medidas
 .venv\Scripts\python.exe run_availability.py --top 100 # ONDE cada carta do top está mais barata em NM inglês
 .venv\Scripts\python.exe -m outlook.history            # resumo da série histórica (maiores altas/quedas)
 .venv\Scripts\python.exe -m outlook.validate           # calibração do score + backtest (quando houver história)
@@ -142,6 +143,50 @@ ranking raw define quem vale consultar, e só então o Preço é remedido. Carta
 sem PSA 10 confiável **mantém a régua raw com o motivo declarado na linha** —
 nunca zeramos nem inventamos. A tabela ganha as colunas `PSA 10 US$`,
 `Vendas/mês` e `Raw US$` (esta só como contexto).
+
+**Modo low pop (`--lowpop`) — a régua vigente (decisão do operador,
+2026-09-21):** o objetivo é achar slabs PSA 10 com potencial de virar chase, e
+a régua acima tinha dois componentes **cegos** pra isso: Supply mede idade do
+set (não quantas cópias existem) e Preço mede faixa (não se alguém compra).
+Neste modo os dois dão lugar a componentes **medidos** na MESMA página do
+PriceCharting que o modo graded já lê (aba *POP Report* + vendas por nota,
+provado em sonda de 30 cartas em 2026-09-21: 29/30 com censo, sem navegador):
+
+| Componente | O que mede | Como pontua (faixas PROVISÓRIAS, a calibrar sobre o universo inteiro) |
+|---|---|---|
+| **Escassez** (substitui Supply) | nº de **PSA 10** no censo PSA | ≤50 = 25 · ≤200 = 22 · ≤500 = 18 · ≤2.000 = 12 · ≤10.000 = 7 · acima = 3 |
+| **Demanda** (substitui Preço) | **vendas/mês** da PSA 10 | ≥30 (1/dia) = 25 · ≥10 = 20 · ≥3 = 14 · ≥1 = 8 · abaixo = 3 |
+
+Personagem e Raridade não mudam; o score segue 4×25 = 100. Regras duras:
+
+- **Guard de página fina/duplicada** (achado da sonda: o PriceCharting tem
+  páginas com censo quase vazio — Venusaur 15 com pop 4, Gardevoir ex 233 com
+  pop 2). Pop baixa ALI é página errada, não escassez. Censo total <
+  `POP_TOTAL_MIN_TRUST` (25), ou **mais vendas/mês de PSA 10 do que PSA 10
+  existentes**, = "pop não confiável": Escassez cai pra idade do set, com o
+  motivo na linha. Sem vendas publicadas, Demanda cai pra faixa de preço do
+  slab, com nota. Nunca zera, nunca inventa.
+- **`--max-price` vale sobre o PSA 10** (o operador pediu "tabela até
+  US$600" = slab até 600); a crua só passa pelo piso `--min-price`.
+- **Só o pool consultado entra no ranking** (misturar cartas medidas com
+  cartas na régua antiga seria comparar réguas diferentes); o run declara
+  quantas ficaram fora. O pool é montado em **rodízio por era**
+  (`scoring.lowpop_pool`: melhores por Personagem + Raridade de cada era, em
+  revezamento — o score cru é cego a era e sairia 100% SV) e **preenchido até
+  ter `--graded-pool` cartas dentro do teto** (o PSA 10 só se conhece após a
+  consulta; orçamento = 3× o pool). `--graded-pool` grande + **cache em
+  disco** (`data/cache/pricecharting/`, 1 dia, gitignored) tornam o universo
+  inteiro viável em runs repetidos (~3 s por carta nova).
+- **Vintage entra**: `--eras vintage` (Wizards of the Coast, EX, Diamond &
+  Pearl, HeartGold & SoulSilver, Black & White, XY, Sun & Moon — mapa
+  explícito por nome em `outlook/tcgcsv_api.py::VINTAGE_SETS`, sem kits/POP/
+  decks) e `--eras all`. No PriceCharting, 1st Edition/Shadowless são páginas
+  separadas; a sem qualificador (unlimited) é a que o scanner escolhe.
+- Colunas novas na tabela: `Pop PSA10 / total (gem)` e `Prêmio` (PSA 10 ÷
+  crua — informativo, **não entra no score** até calibrar; < 1,5× vira nota).
+  O `tcg_product_id` lido da página é a chave de join com o catálogo tcgcsv.
+- O censo é **mensal**; velocidade de pop exige duas leituras — os campos vão
+  no snapshot diário (`history.py`) justamente pra isso.
 
 A detecção de "reprint forte" mora em `outlook/scoring.py`
 (`HEAVY_REPRINT_SET_IDS` + `SPECIAL_SET_PREFIX_RE`); a lista de notórios em
@@ -254,6 +299,13 @@ no chat.
    quando quiser o retrato atualizado.
 5. **Quem decide capital é o operador.** Score alto = "olhe primeiro".
    Não existe coluna "COMPRAR" de propósito.
+6. **A régua NUNCA foi validada como previsão** (auditoria de 2026-09-21).
+   A calibração transversal compara com o preço de hoje, e preço é
+   componente — mede circularidade; o backtest precisa de snapshots
+   acumulados. No `ebay-arbitrage-scanner`, a mesma heurística correlacionou
+   +0,43 com o preço e ~0 com o prêmio da PSA 10. Foi isso que motivou o
+   modo low pop (escassez e demanda MEDIDAS); as faixas dele ainda são
+   provisórias e precisam de calibração sobre o universo inteiro.
 
 ## Arquitetura
 
@@ -270,21 +322,22 @@ outlook/sealed.py        score de SELADO (ETB/Box/Bundle/Tin): Tipo + Idade + MS
 outlook/notorious.py     lista curada de 60 Pokémon notórios (portada do integrado)
 outlook/sets.py          helpers puros de nome de set (strip_era_prefix), compartilhados entre report e availability
 outlook/doubleholo.py    coluna DH: nota 0-100 a partir do JSON premium do Double Holo, join por productId
-outlook/psa10.py         modo graded: preço e liquidez do slab PSA 10 via PriceCharting (escada de queries + guard de número)
+outlook/psa10.py         modos graded/low pop: preço, liquidez, CENSO (pop por nota), crua e TCGPlayer ID do slab via
+                         PriceCharting (escada de queries + página de resultados + guard de número + cache 1 dia)
 outlook/pricecharting.py tendência best-effort via PriceCharting (--trend-source pricecharting; legado)
 outlook/pricehistory.py  tendência REAL: histórico diário do tcgcsv (.ppmd.7z via py7zr), cache data/cache/tcgcsv_history/
 outlook/history.py       persiste snapshots diários do score (data/snapshots/) → série histórica própria
 outlook/validate.py      calibração transversal do score + backtest longitudinal (usa history)
 outlook/report.py        cenário por era + tabela top-N em markdown
-tests/                   162 testes em 14 arquivos: scoring, sealed, history, validate, pricehistory,
-                         doubleholo, notorious, report, sets, tcgcsv_api,
+tests/                   200 testes em 15 arquivos: scoring, sealed, history, validate, pricehistory,
+                         doubleholo, notorious, report, sets, tcgcsv_api, lowpop,
                          availability, ebay_availability, comc_availability, graded_psa10
 ```
 
 ## Testes e CI
 
 ```bash
-python -m pytest tests/ -q     # 162 testes (nuvem/Linux: python3)
+python -m pytest tests/ -q     # 200 testes (nuvem/Linux: python3)
 ```
 
 No PC do operador: `.venv\Scripts\python.exe -m pytest tests/ -q`.

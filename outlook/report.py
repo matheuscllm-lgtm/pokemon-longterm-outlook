@@ -97,10 +97,26 @@ def _trend_footnote(trend_source: str) -> str:
     return ""
 
 
+def _fmt_pop(c: ScoredCard) -> str:
+    """'PSA10 / total (gem%)' ou n/d — e o motivo quando o censo não vale."""
+    if c.pop_psa is None:
+        return "n/d"
+    gem = c.gem_rate
+    return (f"{c.pop_psa10:,} / {c.pop_total:,}"
+            f" ({gem * 100:.0f}%)" if gem is not None else f"0 / 0")
+
+
 def ranking_markdown(cards: list[ScoredCard], top_n: int,
                      trend_source: str = "", show_dh: bool = False,
-                     graded: bool = False) -> str:
-    ranked = sorted(cards, key=lambda c: (-c.score, -c.market_usd))[:top_n]
+                     graded: bool = False, lowpop: bool = False) -> str:
+    graded = graded or lowpop  # low pop já inclui a leitura do slab
+    # Modo low pop: carta cujo censo não vale (página fina/duplicada, pop n/d)
+    # NÃO disputa o ranking com as medidas — cai no balde "validar manualmente"
+    # no fim (padrão da frota), com o motivo na linha. Sem isso uma Gardevoir
+    # ex 233 com "pop 1/2" empatava no topo (smoke 2026-09-21).
+    unmeasured = [c for c in cards if lowpop and c.pop_issue]
+    measured = [c for c in cards if not (lowpop and c.pop_issue)]
+    ranked = sorted(measured, key=lambda c: (-c.score, -c.market_usd))[:top_n]
     lines = [f"## Top {len(ranked)} — score de longo prazo "
              f"(heurística 0-100; decisão é do operador)", ""]
     # Coluna DH (2ª opinião Double Holo) só entra quando houve --doubleholo.
@@ -108,14 +124,20 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
     dh_sep = "---|" if show_dh else ""
     # Modo graded: o Preço do score é o do slab, então a tabela mostra PSA 10
     # e a liquidez dele (o preço raw vira contexto, não a régua).
-    price_h = ("PSA 10 US$ | Vendas/mês | Raw US$ | " if graded
-               else "Preço US$ | ")
-    price_sep = "---|---|---|" if graded else "---|"
+    if lowpop:
+        price_h = "PSA 10 US$ | Vendas/mês | Pop PSA10 / total (gem) | Prêmio | Raw US$ | "
+        price_sep = "---|---|---|---|---|"
+    elif graded:
+        price_h = "PSA 10 US$ | Vendas/mês | Raw US$ | "
+        price_sep = "---|---|---|"
+    else:
+        price_h = "Preço US$ | "
+        price_sep = "---|"
     lines.append("| # | Score | " + dh_h + "Carta | Set | Raridade | ⭐ | "
                  + price_h + "Idade | Tendência | Notas | Links |")
     lines.append("|---|---|" + dh_sep + "---|---|---|---|" + price_sep
                  + "---|---|---|---|")
-    for i, c in enumerate(ranked, 1):
+    def _row(i: int, c: ScoredCard) -> str:
         star = f"⭐ {c.notorious}" if c.notorious else ""
         notes = "; ".join(c.notes) if c.notes else ""
         carta = _md_escape(c.name)
@@ -134,16 +156,39 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
                    else f"n/d ({c.psa10_status or 'sem consulta'})")
             spm = (f"{c.psa10_sales_per_month:g}"
                    if c.psa10_sales_per_month is not None else "n/d")
-            price_c = f"{p10} | {spm} | {c.market_usd:.2f} | "
+            if lowpop:
+                prem = (f"{c.psa10_premium:.1f}×" if c.psa10_premium is not None
+                        else "n/d")
+                price_c = (f"{p10} | {spm} | {_fmt_pop(c)} | {prem} | "
+                           f"{c.market_usd:.2f} | ")
+            else:
+                price_c = f"{p10} | {spm} | {c.market_usd:.2f} | "
         else:
             price_c = f"{c.market_usd:.2f} | "
-        lines.append(
+        return (
             f"| {i} | **{c.score}** | " + dh_c + f"{carta} | "
             f"{_md_escape(c.set_name)} | {_md_escape(c.rarity)} | "
             f"{star} | " + price_c + f"{c.age_months}m | "
             f"{c.trend or '—'} | {_md_escape(notes)} | "
             f"{links} |")
+
+    header = lines[-2:]  # cabeçalho + separador da tabela, reusado no balde
+    for i, c in enumerate(ranked, 1):
+        lines.append(_row(i, c))
     lines.append("")
+    if unmeasured:
+        lines.append("### ⚠️ Sem censo confiável — validar manualmente")
+        lines.append("")
+        lines.append("_Escassez NÃO medida (censo ausente, página fina/duplicada "
+                     "no PriceCharting, ou mais vendas/mês do que PSA 10 no "
+                     "censo): o score caiu na régua de idade do set e não "
+                     "disputa o ranking acima. Motivo na coluna Notas._")
+        lines.append("")
+        lines.extend(header)
+        for i, c in enumerate(
+                sorted(unmeasured, key=lambda c: (-c.score, -c.market_usd)), 1):
+            lines.append(_row(i, c))
+        lines.append("")
     dh_note = (" DH = 2ª opinião do Double Holo (0-100, 50=neutro: previsão de "
                "preço + sinal IA + ROI de gradação + momentum); é avaliação dos "
                "dados do Double Holo, NÃO entra no score e NÃO é conselho de "
@@ -156,13 +201,28 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
                    "é preço realizável) e a linha ganha nota. Carta com PSA 10 "
                    "'n/d' manteve o Preço da régua raw, com o motivo declarado — "
                    "nunca inventamos preço nem liquidez." if graded else "")
-    lines.append("_Score = Personagem + Raridade + Supply + Preço (0-25 cada, "
+    lowpop_note = (" MODO LOW POP: o score troca Supply e Preço por dois "
+                   "componentes MEDIDOS na página do PriceCharting — "
+                   "**Escassez** = nº de PSA 10 no censo (aba POP Report; "
+                   "censo mensal) e **Demanda** = vendas/mês da PSA 10. "
+                   "Pop = 'PSA 10 / total gradado PSA (taxa gem)'. Prêmio = "
+                   "PSA 10 ÷ carta crua (informativo, não entra no score). "
+                   "Censo ausente ou não confiável (página fina/duplicada, ou "
+                   "mais vendas/mês do que PSA 10 existentes) → Escassez cai "
+                   "pra idade do set, com o motivo na linha; sem vendas "
+                   "publicadas → Demanda cai pra faixa de preço, com nota. "
+                   "Faixas provisórias, a calibrar sobre o universo inteiro."
+                   if lowpop else "")
+    formula = ("Personagem + Raridade + Escassez + Demanda" if lowpop
+               else "Personagem + Raridade + Supply + Preço")
+    lines.append(f"_Score = {formula} (0-25 cada, "
                  "somados) — o detalhamento por componente saiu da tabela a "
                  "pedido; segue heurística de triagem com racional aberto, NÃO "
                  "é previsão nem conselho (a Tendência é informativa e NÃO entra "
                  "no score). eBay = busca da carta por nome, número e coleção, "
                  "sem filtro de graduação; não é anúncio verificado nem cotação. "
                  "PriceCharting = página da carta no PriceCharting (busca), "
-                 "onde fica o histórico visual." + graded_note + dh_note
+                 "onde fica o histórico visual." + lowpop_note
+                 + ("" if lowpop else graded_note) + dh_note
                  + _trend_footnote(trend_source) + "_")
     return "\n".join(lines)

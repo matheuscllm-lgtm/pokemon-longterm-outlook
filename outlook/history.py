@@ -29,6 +29,9 @@ FIELDS = [
     "date", "source", "card_id", "set_id", "set_name", "number", "name",
     "rarity", "series", "release", "market_usd", "notorious", "heavy_reprint",
     "score", "pts_character", "pts_rarity", "pts_supply", "pts_price",
+    # Modo low pop (vazios fora dele): a série que destrava velocidade de pop.
+    "lowpop", "psa10_usd", "psa10_sales_per_month", "pop_psa10", "pop_total",
+    "pts_scarcity", "pts_demand",
 ]
 
 
@@ -58,6 +61,14 @@ def save_snapshot(cards: Iterable[ScoredCard], source: str = "tcgcsv",
                 "score": c.score, "pts_character": c.pts_character,
                 "pts_rarity": c.pts_rarity, "pts_supply": c.pts_supply,
                 "pts_price": c.pts_price,
+                "lowpop": int(c.lowpop),
+                "psa10_usd": (f"{c.psa10_usd:.2f}" if c.psa10_usd is not None else ""),
+                "psa10_sales_per_month": (f"{c.psa10_sales_per_month:g}"
+                                          if c.psa10_sales_per_month is not None else ""),
+                "pop_psa10": c.pop_psa10 if c.pop_psa10 is not None else "",
+                "pop_total": c.pop_total if c.pop_total is not None else "",
+                "pts_scarcity": c.pts_scarcity if c.lowpop else "",
+                "pts_demand": c.pts_demand if c.lowpop else "",
             })
     return path
 
