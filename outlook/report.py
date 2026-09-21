@@ -211,7 +211,8 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
                    "mais vendas/mês do que PSA 10 existentes) → Escassez cai "
                    "pra idade do set, com o motivo na linha; sem vendas "
                    "publicadas → Demanda cai pra faixa de preço, com nota. "
-                   "Faixas provisórias, a calibrar sobre o universo inteiro."
+                   "Faixas calibradas em 2026-09-21 sobre o pool medido "
+                   "(`python -m outlook.lowpop_calibration` recalibra)."
                    if lowpop else "")
     formula = ("Personagem + Raridade + Escassez + Demanda" if lowpop
                else "Personagem + Raridade + Supply + Preço")

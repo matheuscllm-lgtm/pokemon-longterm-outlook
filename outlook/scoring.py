@@ -171,12 +171,20 @@ def price_points_psa10(psa10_usd: float,
 #   Preço  (faixa)         →  DEMANDA   = vendas/mês da PSA 10.
 # Personagem e Raridade continuam. Score segue 4×25 = 100.
 #
-# Faixas PROVISÓRIAS — anotadas pra calibração sobre o universo inteiro (a
-# sonda de 30 cartas só provou a fonte; não calibra corte). Escala log: a
-# diferença que importa é ordem de grandeza (100 vs 1.000 vs 10.000 slabs).
-SCARCITY_POP10_BANDS = ((50, 25), (200, 22), (500, 18), (2000, 12), (10000, 7))
+# Faixas CALIBRADAS em 2026-09-21 sobre o pool medido do run canônico
+# (--eras all --max-price 600 --graded-pool 300: 720 consultas, 300 slabs no
+# teto, 224 com censo confiável). `python -m outlook.lowpop_calibration`
+# reproduz a conta sobre qualquer run. Escala log: a diferença que importa é
+# ordem de grandeza. Fatia do pool por faixa: 17% · 11% · 21% · 21% · 18% · 11%
+# (nas faixas provisórias, 50-200 tinha 3% do pool e 2000-10000 concentrava 39%).
+SCARCITY_POP10_BANDS = ((50, 25), (500, 22), (2000, 18), (5000, 12), (10000, 7))
 SCARCITY_FLOOR = 3
-DEMAND_SALES_BANDS = ((30.0, 25), (10.0, 20), (3.0, 14), (1.0, 8))
+# Vendas/mês chegam DISCRETIZADAS pelo PriceCharting ("N sales per day/week/
+# month/year": 1/dia = 30, 1/semana = 4,3, 1/ano = 0,1) — por isso os cortes
+# ficam ENTRE níveis. ≥60 = 2+/dia (12% do pool) · 30 = 1/dia (33%) · 5-29 =
+# 1-3/semana (21%) · 2-4 = 2 a 8/mês (16%) · <2 (19%). A faixa provisória ≥30
+# juntava 45% do pool num único degrau.
+DEMAND_SALES_BANDS = ((60.0, 25), (30.0, 20), (5.0, 14), (2.0, 8))
 DEMAND_FLOOR = 3
 
 # Guards de página fina/errada (achado da sonda: o PriceCharting tem páginas

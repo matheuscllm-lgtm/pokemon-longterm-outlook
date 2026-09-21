@@ -75,6 +75,7 @@ cd C:\Users\mathe\pokemon-longterm-outlook
 .venv\Scripts\python.exe run_availability.py --top 100 # ONDE cada carta do top está mais barata em NM inglês
 .venv\Scripts\python.exe -m outlook.history            # resumo da série histórica (maiores altas/quedas)
 .venv\Scripts\python.exe -m outlook.validate           # calibração do score + backtest (quando houver história)
+.venv\Scripts\python.exe -m outlook.lowpop_calibration # distribuição pop/vendas do último run --lowpop + fatia por faixa (calibrar faixas com dado)
 ```
 
 Na nuvem/Linux, os mesmos comandos com `python3` (ou `.venv/bin/python`), ex.:
@@ -152,10 +153,10 @@ Neste modo os dois dão lugar a componentes **medidos** na MESMA página do
 PriceCharting que o modo graded já lê (aba *POP Report* + vendas por nota,
 provado em sonda de 30 cartas em 2026-09-21: 29/30 com censo, sem navegador):
 
-| Componente | O que mede | Como pontua (faixas PROVISÓRIAS, a calibrar sobre o universo inteiro) |
+| Componente | O que mede | Como pontua (faixas CALIBRADAS em 2026-09-21 — ver "Calibração das faixas" abaixo) |
 |---|---|---|
-| **Escassez** (substitui Supply) | nº de **PSA 10** no censo PSA | ≤50 = 25 · ≤200 = 22 · ≤500 = 18 · ≤2.000 = 12 · ≤10.000 = 7 · acima = 3 |
-| **Demanda** (substitui Preço) | **vendas/mês** da PSA 10 | ≥30 (1/dia) = 25 · ≥10 = 20 · ≥3 = 14 · ≥1 = 8 · abaixo = 3 |
+| **Escassez** (substitui Supply) | nº de **PSA 10** no censo PSA | ≤50 = 25 · ≤500 = 22 · ≤2.000 = 18 · ≤5.000 = 12 · ≤10.000 = 7 · acima = 3 |
+| **Demanda** (substitui Preço) | **vendas/mês** da PSA 10 | ≥60 (2+/dia) = 25 · ≥30 (1/dia) = 20 · ≥5 (1-3/semana) = 14 · ≥2 = 8 · abaixo = 3 |
 
 Personagem e Raridade não mudam; o score segue 4×25 = 100. Regras duras:
 
@@ -187,6 +188,44 @@ Personagem e Raridade não mudam; o score segue 4×25 = 100. Regras duras:
   O `tcg_product_id` lido da página é a chave de join com o catálogo tcgcsv.
 - O censo é **mensal**; velocidade de pop exige duas leituras — os campos vão
   no snapshot diário (`history.py`) justamente pra isso.
+
+**Calibração das faixas (2026-09-21, com dado — nunca de cabeça):** run
+canônico `--lowpop --eras all --max-price 600 --graded-pool 300` = 720
+consultas ao PriceCharting (698 com preço PSA 10, 665 com censo), **300 slabs
+dentro do teto** no ranking, **224 com censo confiável** (76 no balde "sem
+censo": 40 páginas finas com censo total < 25, 33 sem censo, 3 vendendo mais
+do que existem). `python -m outlook.lowpop_calibration` reproduz tudo abaixo
+sobre qualquer run (`--scarcity`/`--demand` avaliam cortes candidatos).
+
+| Métrica (pool no teto) | n | p5 | p10 | p25 | p50 | p75 | p90 | p95 |
+|---|---|---|---|---|---|---|---|---|
+| Pop PSA 10 (censo confiável) | 224 | 4 | 8 | 346 | 2.068 | 5.863 | 10.667 | 13.648 |
+| Vendas/mês PSA 10 | 252 | 0,2 | 0,3 | 4,3 | 13 | 30 | 60 | 60 |
+| Prêmio PSA 10 ÷ crua (todas as 698 consultas) | 693 | 2,3 | 2,8 | 5,4 | 16,6 | 46,6 | 116 | 193 |
+
+- **Pop é bimodal**: um bloco vintage com 4-8 PSA 10 (ninguém grada: BW/HGSS/
+  DP, medianas de 0,1-0,3 vendas/mês) e o bloco moderno de 1.000-14.000. Nas
+  faixas provisórias, 50-200 tinha **3%** do pool e 2.000-10.000 concentrava
+  **39%** num único degrau. Faixas calibradas → 17% · 11% · 21% · 21% · 18% ·
+  11% (≤50 / ≤500 / ≤2.000 / ≤5.000 / ≤10.000 / acima).
+- **Vendas/mês são discretas** (o PriceCharting escreve "N sales per
+  day/week/month/year": 1/dia = 30, 1/semana = 4,3, 1/ano = 0,1). A faixa
+  provisória ≥30 juntava **45%** do pool no topo. Cortes calibrados ficam
+  ENTRE níveis: ≥60 (2+/dia) 12% · 30 (1/dia) 33% · 5-29 (1-3/semana) 21% ·
+  2-4 16% · <2 19%.
+- **Efeito no top 30** (só cartas com censo confiável): sobreposição 25/30;
+  quem tem 6.000+ PSA 10 vendendo 1/dia desce de 82 pra 77 e quem tem ~1.000
+  PSA 10 vendendo 2-3/dia sobe de 87 pra 93 (era: SWSH 13→10, ME 8→9, BW 0→2).
+  A escada de pontos não mudou — só os cortes.
+- ⚠️ **Achado estrutural, decisão do operador:** Spearman pop10 × vendas/mês
+  = **+0,81** (n=220). Quem tem mais slabs vende mais, então os dois
+  componentes somados se anulam em parte e o score premia o MEIO (pop ~1.000
+  com 60-90 vendas/mês), não "poucas PSA 10 + demanda". Alternativa a decidir:
+  Demanda como **giro** (vendas/mês ÷ pop de PSA 10 — que fração do que existe
+  troca de mão por mês) em vez de vendas absolutas. Não implementado.
+- **Prêmio PSA 10 ÷ crua** (insumo do passo "prêmio entra no score?"): mediana
+  16,6×, p25 5,4×, p5 2,3× — a nota "< 1,5×" quase não dispara; segue
+  informativo até o operador decidir.
 
 A detecção de "reprint forte" mora em `outlook/scoring.py`
 (`HEAVY_REPRINT_SET_IDS` + `SPECIAL_SET_PREFIX_RE`); a lista de notórios em
@@ -304,8 +343,11 @@ no chat.
    componente — mede circularidade; o backtest precisa de snapshots
    acumulados. No `ebay-arbitrage-scanner`, a mesma heurística correlacionou
    +0,43 com o preço e ~0 com o prêmio da PSA 10. Foi isso que motivou o
-   modo low pop (escassez e demanda MEDIDAS); as faixas dele ainda são
-   provisórias e precisam de calibração sobre o universo inteiro.
+   modo low pop (escassez e demanda MEDIDAS). As faixas dele foram calibradas
+   em 2026-09-21 sobre a DISTRIBUIÇÃO do pool medido ("Calibração das
+   faixas") — isso dá discriminação, não prova preditiva: a validação como
+   previsão continua dependendo de snapshots acumulados e de um critério de
+   sucesso fixado pelo operador.
 
 ## Arquitetura
 
@@ -328,16 +370,18 @@ outlook/pricecharting.py tendência best-effort via PriceCharting (--trend-sourc
 outlook/pricehistory.py  tendência REAL: histórico diário do tcgcsv (.ppmd.7z via py7zr), cache data/cache/tcgcsv_history/
 outlook/history.py       persiste snapshots diários do score (data/snapshots/) → série histórica própria
 outlook/validate.py      calibração transversal do score + backtest longitudinal (usa history)
+outlook/lowpop_calibration.py  calibração das FAIXAS do modo low pop: lê snapshot + cache do run, quantis de pop10 e
+                         vendas/mês (pool e por era), fatia do pool por faixa vigente × proposta, efeito no topo
 outlook/report.py        cenário por era + tabela top-N em markdown
-tests/                   200 testes em 15 arquivos: scoring, sealed, history, validate, pricehistory,
-                         doubleholo, notorious, report, sets, tcgcsv_api, lowpop,
+tests/                   228 testes em 16 arquivos: scoring, sealed, history, validate, pricehistory,
+                         doubleholo, notorious, report, sets, tcgcsv_api, lowpop, lowpop_calibration,
                          availability, ebay_availability, comc_availability, graded_psa10
 ```
 
 ## Testes e CI
 
 ```bash
-python -m pytest tests/ -q     # 200 testes (nuvem/Linux: python3)
+python -m pytest tests/ -q     # 228 testes (nuvem/Linux: python3)
 ```
 
 No PC do operador: `.venv\Scripts\python.exe -m pytest tests/ -q`.

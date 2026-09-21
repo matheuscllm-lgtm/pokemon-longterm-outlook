@@ -49,6 +49,13 @@ quantas cartas ficaram fora — se o operador quiser cobertura maior, suba `--gr
 "pop não confiável" ou "vendas/mês n/d" caíram na régua anterior naquele
 componente e dizem isso na coluna Notas — nunca esconda essa nota.
 
+As faixas de Escassez e Demanda foram **calibradas com dado em 2026-09-21**
+(seção "Calibração das faixas" do `CLAUDE.md`). Se o operador pedir pra
+recalibrar (censo é mensal; o pool muda), rode `python -m
+outlook.lowpop_calibration` **depois** de um run `--lowpop` — ele lê o snapshot
+e o cache do run e mostra a fatia do pool por faixa; faixa nova vai pro código
+por PR, nunca de cabeça.
+
 ## A régua anterior (PSA 10 por faixa) — `--graded`, só se ele pedir
 
 **O operador compra exclusivamente carta graduada, foco PSA 10** (decisão dele,
