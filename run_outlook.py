@@ -163,6 +163,11 @@ def main() -> int:
             print(f"  (--doubleholo ignorado: não consegui usar {args.doubleholo}: {e})")
 
     # Modo graded / low pop: remede componentes no slab PSA 10 (PriceCharting).
+    # O card_id só é productId TCGPlayer na fonte tcgcsv (na ptcg é outro id);
+    # é a prova de identidade que o guard de página do psa10 usa.
+    def tcg_pid(c):
+        return c.card_id if args.source == "tcgcsv" else None
+
     if args.lowpop:
         pool_n = args.graded_pool or max(args.top * 2, 50)
         # Candidatos em rodízio por era (ver scoring.lowpop_pool), já sem quem
@@ -182,7 +187,8 @@ def main() -> int:
             if len(kept) >= pool_n or consulted >= budget:
                 break
             consulted += 1
-            r = psa10.fetch_psa10(c.name, c.set_name, c.number)
+            r = psa10.fetch_psa10(c.name, c.set_name, c.number,
+                                  tcg_product_id=tcg_pid(c))
             scoring.apply_lowpop(c, r)
             got += r["usd"] is not None
             got_pop += r.get("pop_psa") is not None
@@ -212,7 +218,8 @@ def main() -> int:
               f"cartas no PriceCharting (~{len(pool) * 1.5 / 60:.0f} min)...")
         got = 0
         for i, c in enumerate(pool, 1):
-            r = psa10.fetch_psa10(c.name, c.set_name, c.number)
+            r = psa10.fetch_psa10(c.name, c.set_name, c.number,
+                                  tcg_product_id=tcg_pid(c))
             scoring.apply_psa10(c, r["usd"], r["sales_per_month"], r["status"])
             if r["usd"] is not None:
                 got += 1

@@ -35,7 +35,7 @@ import re
 import time
 from datetime import date
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, unquote, urlparse
 
 from .availability import _base_name, _clean_number
 from .pricecharting import HEADERS, SEARCH, SLEEP_S, TIMEOUT_S
@@ -86,10 +86,14 @@ CACHE_TTL_DAYS = 1
 
 
 def _money(text: str) -> float | None:
+    """Valor em US$, ou None. "$0.00" é None: o PriceCharting escreve zero
+    quando NÃO há venda naquela nota — ausência de dado, não preço (run de
+    2026-09-21: 5 linhas saíram com "PSA 10 US$ 0.00" e prêmio 0.0×)."""
     try:
-        return float(text.replace(",", "").replace("$", ""))
+        v = float(text.replace(",", "").replace("$", ""))
     except (ValueError, AttributeError):
         return None
+    return v if v > 0 else None
 
 
 def parse_psa10_price(body: str) -> float | None:
@@ -174,21 +178,66 @@ def parse_raw_price(body: str) -> float | None:
     return _money(m.group(1)) if m else None
 
 
-def pick_search_result(body: str, number: str) -> str | None:
+# ── Guard de SET ─────────────────────────────────────────────────────────────
+# O número sozinho NÃO identifica a carta: no run canônico de 2026-09-21, 20 das
+# 278 consultas "ok" aceitaram a página de OUTRO set com o mesmo número (Zapdos
+# ex #116 de FireRed & LeafGreen levou preço/censo do Mega Greninja ex #116 de
+# Chaos Rising). Set + número identifica. O set da página vem do slug da URL
+# (/game/<set>/<carta>); o do catálogo vem do tcgcsv, que enfeita o nome com
+# marcador de era e de subset — esses tokens não existem no PriceCharting.
+_SET_NOISE = {"pokemon", "and", "the", "of", "vs",
+              "xy", "sm", "ex",                      # marcador de era
+              "base", "set",                         # "SV01: … Base Set"
+              "shiny", "vault", "trainer", "gallery", "galarian"}  # subsets
+
+
+def _tokens(text: str) -> set[str]:
+    text = unquote(text).lower().replace("'", "").replace("’", "")
+    return {t for t in re.split(r"[^a-z0-9]+", text) if t}
+
+
+def _set_matches(url: str, set_name: str) -> bool:
+    """A página é do MESMO set do catálogo? (comparação por tokens do slug)
+
+    Igualdade, não subconjunto: "scarlet-&-violet" é subconjunto de "Scarlet &
+    Violet 151" e é OUTRO set, com números que colidem. Qualificador entre
+    parênteses no set ("Base Set (Shadowless)") é variante de impressão e tem
+    que aparecer no slug do set ou da carta — sem ele a página é a unlimited.
+    """
+    parts = urlparse(url).path.split("/")
+    if len(parts) < 4 or parts[1] != "game":
+        return False
+    slug_set, slug_card = _tokens(parts[2]), _tokens(parts[3])
+    qualifier = _tokens(" ".join(re.findall(r"\((.*?)\)", set_name)))
+    cat_set = _tokens(re.sub(r"\(.*?\)", " ", strip_era_prefix(set_name)))
+    core_cat, core_slug = cat_set - _SET_NOISE, slug_set - _SET_NOISE
+    if not core_cat or not core_slug:   # "Base Set": o nome É o ruído
+        core_cat, core_slug = cat_set - {"pokemon"}, slug_set - {"pokemon"}
+    if not core_cat or core_cat != core_slug:
+        return False
+    return qualifier <= (slug_set | slug_card)
+
+
+def pick_search_result(body: str, number: str, set_name: str = "") -> str | None:
     """URL do produto certo numa página de RESULTADOS de busca, ou None.
 
-    Regra: número da carta no título ("#4") E sem qualificador de variante
-    entre colchetes — "[1st Edition]" / "[Shadowless]" são páginas separadas
-    no PriceCharting; a página sem qualificador é a impressão comum
-    (unlimited), que é a que o operador compra. Primeiro que casar vence
-    (a busca já ordena por relevância).
+    Regra: número da carta no título ("#4"), página do mesmo set (quando o set
+    é informado — ver `_set_matches`) E sem qualificador de variante entre
+    colchetes — "[1st Edition]" / "[Shadowless]" são páginas separadas no
+    PriceCharting; a página sem qualificador é a impressão comum (unlimited),
+    que é a que o operador compra. Exceção: quando o PRÓPRIO set do catálogo é
+    a variante ("Base Set (Shadowless)"), a linha certa é a que traz exatamente
+    esse qualificador. Primeiro que casar vence (a busca ordena por relevância).
     """
     if not number:
         return None
     num = number.split("/")[0].strip().lstrip("0") or number
+    qualifier = _tokens(" ".join(re.findall(r"\((.*?)\)", set_name)))
     for url, title in _SEARCH_ROW_RE.findall(body):
         clean = " ".join(html_mod.unescape(re.sub(r"<[^>]+>", " ", title)).split())
-        if "[" in clean:
+        if _tokens(" ".join(re.findall(r"\[(.*?)\]", clean))) != qualifier:
+            continue
+        if set_name and not _set_matches(url, set_name):
             continue
         if re.search(rf"#{re.escape(num)}(?![\w])", clean):
             return url
@@ -200,7 +249,8 @@ def _cache_path(card_name: str, set_name: str, number: str) -> Path:
     return CACHE_DIR / f"{key}.json"
 
 
-def _cache_get(card_name: str, set_name: str, number: str) -> dict | None:
+def _cache_get(card_name: str, set_name: str, number: str,
+               tcg_product_id: str | None = None) -> dict | None:
     p = _cache_path(card_name, set_name, number)
     if not p.exists():
         return None
@@ -208,6 +258,15 @@ def _cache_get(card_name: str, set_name: str, number: str) -> dict | None:
         d = json.loads(p.read_text(encoding="utf-8"))
         age = (date.today() - date.fromisoformat(d["_cached_on"])).days
         if age > CACHE_TTL_DAYS or d.get("status") != "ok":
+            return None
+        # O cache guarda o que o guard DA ÉPOCA aceitou. Revalida com o guard
+        # de hoje: página de outro set ou preço zerado vira miss e é refeita.
+        # Sem o HTML, o número só é conferido pela URL — entrada cujo número
+        # casou apenas pelo <title> vira miss e é refeita (0 casos nas 253
+        # entradas boas do run de 2026-09-21; custo é rede, nunca dado errado).
+        if not d.get("usd") or not _product_matches(
+                d.get("url", ""), "", number, set_name,
+                tcg_product_id, d.get("tcg_product_id")):
             return None
         return d
     except (ValueError, KeyError, OSError):
@@ -240,12 +299,12 @@ def _extract(body: str, url: str) -> dict:
     }
 
 
-def _product_matches(url: str, body: str, number: str) -> bool:
-    """O número da carta precisa aparecer na URL ou no título (precisão > cobertura)."""
+def _number_matches(url: str, body: str, number: str) -> bool:
     if not number:
         return False
     num = number.split("/")[0].strip().lstrip("0") or number
-    if re.search(rf"[-/]{re.escape(num.lower())}(?:[-/]|$)", url.lower()):
+    if re.search(rf"[-/]{re.escape(num.lower())}(?:[-/]|$)",
+                 urlparse(url).path.lower()):
         return True
     # Título: número EXATO ("#4" não pode casar "#46") — mesma regra do
     # pick_search_result; sem isso um redirect pra carta errada seria aceito e
@@ -253,6 +312,25 @@ def _product_matches(url: str, body: str, number: str) -> bool:
     title = re.search(r"<title>(.*?)</title>", body, re.S)
     return bool(title and re.search(rf"#{re.escape(num)}(?![\w])",
                                     title.group(1), re.I))
+
+
+def _product_matches(url: str, body: str, number: str, set_name: str = "",
+                     tcg_product_id: str | None = None,
+                     page_product_id: str | None = None) -> bool:
+    """A página é a da carta? Número E set têm que bater (precisão > cobertura).
+
+    O set é provado de um de dois jeitos: a página declara o MESMO productId
+    TCGPlayer do catálogo (identidade direta — cobre sets que o PriceCharting
+    chama por outro nome, "SM Base Set" → "sun-&-moon"), ou o slug do set casa
+    com o nome do catálogo (`_set_matches`). productId DIFERENTE não reprova
+    sozinho: o PriceCharting às vezes aponta pra impressão irmã da mesma carta.
+    Sem `set_name` (chamada antiga) vale só o número.
+    """
+    if not _number_matches(url, body, number):
+        return False
+    if tcg_product_id and page_product_id and str(tcg_product_id) == str(page_product_id):
+        return True
+    return _set_matches(url, set_name) if set_name else True
 
 
 def search_queries(card_name: str, set_name: str, number: str) -> list[str]:
@@ -281,7 +359,8 @@ def search_queries(card_name: str, set_name: str, number: str) -> list[str]:
 
 
 def fetch_psa10(card_name: str, set_name: str, number: str,
-                use_cache: bool = True) -> dict:
+                use_cache: bool = True,
+                tcg_product_id: str | None = None) -> dict:
     """{'usd', 'sales_per_month', 'raw_usd', 'pop_psa', 'pop_cgc',
         'tcg_product_id', 'url', 'status'} — status é sempre explícito.
 
@@ -292,13 +371,15 @@ def fetch_psa10(card_name: str, set_name: str, number: str,
     Caminho: query específica → o PriceCharting redireciona direto pro produto;
     query ambígua fica na página de resultados, e aí escolhemos a linha certa
     (`pick_search_result`: número no título, sem variante entre colchetes) e
-    abrimos o produto. Em qualquer caso o número da carta tem que casar
-    (`_product_matches`) — precisão > cobertura.
+    abrimos o produto. Em qualquer caso o número E o set da carta têm que casar
+    (`_product_matches`) — precisão > cobertura. `tcg_product_id` é o productId
+    TCGPlayer do catálogo (o card_id da fonte tcgcsv); quando a página declara
+    o mesmo id, a identidade está provada mesmo com nome de set divergente.
     """
     import requests  # local: mantém o módulo importável sem puxar requests
 
     if use_cache:
-        hit = _cache_get(card_name, set_name, number)
+        hit = _cache_get(card_name, set_name, number, tcg_product_id)
         if hit:
             return {k: v for k, v in hit.items() if not k.startswith("_")}
 
@@ -317,7 +398,7 @@ def fetch_psa10(card_name: str, set_name: str, number: str,
             url, body = r.url, r.text
             if "/game/" not in url:
                 # Página de resultados: escolher a linha certa e abrir.
-                pick = pick_search_result(body, number)
+                pick = pick_search_result(body, number, set_name)
                 if not pick:
                     continue
                 r = requests.get(pick, headers=HEADERS, timeout=TIMEOUT_S)
@@ -326,7 +407,8 @@ def fetch_psa10(card_name: str, set_name: str, number: str,
                     last_status = f"HTTP {r.status_code}"
                     continue
                 url, body = r.url, r.text
-            if not _product_matches(url, body, number):
+            if not _product_matches(url, body, number, set_name, tcg_product_id,
+                                    parse_tcgplayer_product_id(body)):
                 last_status = "sem match confiável"  # página veio, carta não bate
                 continue
             out.update(_extract(body, url))
