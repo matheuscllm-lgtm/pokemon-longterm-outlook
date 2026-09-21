@@ -74,16 +74,18 @@ def test_resultado_de_busca_nao_casa_numero_parcial_nem_sem_numero():
 # ── Faixas e guards ──────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("pop10,pts", [
-    (0, 25), (50, 25), (51, 22), (200, 22), (500, 18), (2000, 12),
-    (10000, 7), (10001, 3), (27631, 3),
+    (0, 25), (50, 25), (51, 22), (500, 22), (501, 18), (2000, 18), (2001, 12),
+    (5000, 12), (5001, 7), (10000, 7), (10001, 3), (27631, 3),
 ])
 def test_faixas_de_escassez_sao_log(pop10, pts):
     assert scarcity_points(pop10) == pts
 
 
 @pytest.mark.parametrize("spm,pts", [
-    (90.0, 25), (30.0, 25), (29.9, 20), (10.0, 20), (3.0, 14), (1.0, 8),
-    (0.9, 3), (0.0, 3),
+    # níveis reais do PriceCharting: 180/90/60 (por dia), 30 (1/dia), 13/8.7/4.3
+    # (por semana), 2/1 (por mês), 0.1-0.5 (por ano)
+    (180.0, 25), (60.0, 25), (59.9, 20), (30.0, 20), (29.9, 14), (13.0, 14),
+    (5.0, 14), (4.3, 8), (2.0, 8), (1.9, 3), (1.0, 3), (0.1, 3), (0.0, 3),
 ])
 def test_faixas_de_demanda(spm, pts):
     assert demand_points(spm) == pts
@@ -123,7 +125,7 @@ def test_lowpop_troca_supply_e_preco_por_escassez_e_demanda():
     apply_lowpop(sc, PAGE)
     assert sc.lowpop
     assert sc.pts_scarcity == 3          # 12.647 PSA 10 = nada escasso
-    assert sc.pts_demand == 25           # 1 venda/dia
+    assert sc.pts_demand == 20           # 1 venda/dia (30/mês) = 20; 25 exige 2+/dia
     assert sc.score == (sc.pts_character + sc.pts_rarity
                         + sc.pts_scarcity + sc.pts_demand)
     assert sc.pop_psa10 == 12647 and sc.pop_total == sum(PAGE["pop_psa"])
@@ -137,7 +139,7 @@ def test_lowpop_carta_realmente_escassa_pontua_alto():
     sc = _carta()
     apply_lowpop(sc, {**PAGE, "pop_psa": [0, 0, 0, 0, 1, 2, 4, 20, 60, 45],
                       "sales_per_month": 3.0})
-    assert sc.pts_scarcity == 25 and sc.pts_demand == 14
+    assert sc.pts_scarcity == 25 and sc.pts_demand == 8   # 45 PSA 10; 3 vendas/mês = degrau 2-4
 
 
 def test_lowpop_censo_nao_confiavel_cai_na_idade_com_nota():

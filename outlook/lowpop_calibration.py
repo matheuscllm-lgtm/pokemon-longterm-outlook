@@ -36,7 +36,8 @@ from typing import Iterable, Sequence
 from . import history
 from .psa10 import CACHE_DIR
 from .scoring import (DEMAND_FLOOR, DEMAND_SALES_BANDS, SCARCITY_FLOOR,
-                      SCARCITY_POP10_BANDS, demand_points, scarcity_points)
+                      SCARCITY_POP10_BANDS, demand_points, pop_trust_issue,
+                      scarcity_points)
 from .validate import spearman
 
 NICE_MANTISSAS = (1.0, 1.5, 2.0, 3.0, 5.0, 7.0)
@@ -247,6 +248,16 @@ def rescore(pool: Iterable[dict], sc_bands, sc_floor, dm_bands, dm_floor) -> lis
     return sorted(out, key=lambda t: (-t[0], -(t[1]["market_usd"] or 0)))
 
 
+def census_trusted(pop10: int | None, pop_total: int | None,
+                   spm: float | None) -> bool:
+    """Espelho de `scoring.pop_trust_issue` sobre as colunas do snapshot."""
+    if pop10 is None or pop_total is None:
+        return False
+    issue = pop_trust_issue([0] * 9 + [pop10] if pop_total == pop10
+                            else [pop_total - pop10] + [0] * 8 + [pop10], spm)
+    return issue is None
+
+
 def _pts_le(v, bands, floor):
     for cap, pts in bands:
         if v <= cap:
@@ -269,10 +280,11 @@ def build_report(pool: list[dict], cache: list[dict], n_top: int = 30,
         L.append("_Sem pool low pop no snapshot — rode `run_outlook.py --lowpop` antes._")
         return "\n".join(L)
 
-    # Confiança do censo = mesma regra do scoring (pts_scarcity veio medido).
+    # Confiança do censo = a MESMA regra do scoring (`pop_trust_issue`), refeita
+    # a partir do que o snapshot guarda (pop10 + total). Não dá pra inferir
+    # pela pontuação: Escassez por idade e por censo podem coincidir (25 = 25).
     for r in pool:
-        r["_trusted"] = (r["pop10"] is not None and r["pts_scarcity"] is not None
-                         and r["pts_scarcity"] == scarcity_points(r["pop10"]))
+        r["_trusted"] = census_trusted(r["pop10"], r["pop_total"], r["spm"])
     trusted = [r for r in pool if r["_trusted"]]
     with_spm = [r for r in pool if r["spm"] is not None]
     pop10 = [float(r["pop10"]) for r in trusted]
@@ -335,8 +347,8 @@ def build_report(pool: list[dict], cache: list[dict], n_top: int = 30,
                            band_shares_ge(spm, DEMAND_SALES_BANDS, DEMAND_FLOOR), len(spm))
 
     # Proposta
-    sc_ladder = [p for _, p in SCARCITY_POP10_BANDS]
-    dm_ladder = [p for _, p in DEMAND_SALES_BANDS]
+    sc_ladder = [p for _, p in SCARCITY_POP10_BANDS] + [SCARCITY_FLOOR]
+    dm_ladder = [p for _, p in DEMAND_SALES_BANDS] + [DEMAND_FLOOR]
     if proposed_sc is None and pop10:
         proposed_sc = propose_bands_le(pop10, sc_ladder)
     if proposed_dm is None and spm:
@@ -351,18 +363,19 @@ def build_report(pool: list[dict], cache: list[dict], n_top: int = 30,
         L += _shares_table("Demanda (proposta)",
                            band_shares_ge(spm, proposed_dm, DEMAND_FLOOR), len(spm))
 
-    # Efeito no topo
+    # Efeito no topo — só quem DISPUTA o ranking (censo confiável), como no
+    # report.py: linha com pop não confiável vai pro balde à parte, não pro topo.
     if proposed_sc and proposed_dm:
-        cur = rescore(pool, SCARCITY_POP10_BANDS, SCARCITY_FLOOR,
+        cur = rescore(trusted, SCARCITY_POP10_BANDS, SCARCITY_FLOOR,
                       DEMAND_SALES_BANDS, DEMAND_FLOOR)[:n_top]
-        new = rescore(pool, proposed_sc, SCARCITY_FLOOR, proposed_dm, DEMAND_FLOOR)[:n_top]
+        new = rescore(trusted, proposed_sc, SCARCITY_FLOOR, proposed_dm, DEMAND_FLOOR)[:n_top]
         key = lambda r: (r["name"], r["set_name"], r["number"])
         cur_k = {key(r) for _, r in cur}
         new_k = {key(r) for _, r in new}
         overlap = len(cur_k & new_k)
         eras_cur = _era_mix(cur)
         eras_new = _era_mix(new)
-        L += [f"## Efeito no top {n_top}", "",
+        L += [f"## Efeito no top {n_top} (só cartas com censo confiável, como no ranking)", "",
               f"- Sobreposição vigente × proposta: **{overlap}/{n_top}**",
               f"- Mix de eras (vigente): {eras_cur}",
               f"- Mix de eras (proposta): {eras_new}",
@@ -370,7 +383,7 @@ def build_report(pool: list[dict], cache: list[dict], n_top: int = 30,
               f"proposta {new[0][0]}/{new[-1][0]}", ""]
         L += ["| # | Carta | Era | pop10 | vendas/mês | score vigente → proposta |",
               "|---|---|---|---|---|---|"]
-        cur_score = {key(r): s for s, r in rescore(pool, SCARCITY_POP10_BANDS, SCARCITY_FLOOR,
+        cur_score = {key(r): s for s, r in rescore(trusted, SCARCITY_POP10_BANDS, SCARCITY_FLOOR,
                                                     DEMAND_SALES_BANDS, DEMAND_FLOOR)}
         for i, (s, r) in enumerate(new, 1):
             L.append(f"| {i} | {r['name']} {r['number']} ({r['set_name']}) | {r['series']} | "
@@ -388,6 +401,19 @@ def _era_mix(ranked) -> str:
     return ", ".join(f"{k} {v}" for k, v in sorted(cnt.items(), key=lambda kv: -kv[1]))
 
 
+def parse_cuts(text: str, pts_ladder: Sequence[int]) -> tuple:
+    """'50,500,2000' + escada de pontos → ((50, 25), (500, 22), (2000, 18)).
+
+    Exige exatamente um corte por degrau (o piso fica de fora) — a escada de
+    pontos não muda na calibração, só os cortes.
+    """
+    cuts = [float(x) for x in text.split(",") if x.strip()]
+    if len(cuts) != len(pts_ladder):
+        raise ValueError(f"esperava {len(pts_ladder)} cortes (um por degrau "
+                         f"{list(pts_ladder)}), recebi {len(cuts)}")
+    return tuple(zip(cuts, pts_ladder))
+
+
 def _run_cli() -> None:
     import argparse
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -396,8 +422,17 @@ def _run_cli() -> None:
     ap.add_argument("--top", type=int, default=30, help="tamanho do topo comparado")
     ap.add_argument("-o", "--output", type=Path, default=None,
                     help="grava o markdown também neste caminho")
+    ap.add_argument("--scarcity", default=None,
+                    help="cortes candidatos de Escassez (pop10 ≤ cap), ex. '50,500,2000,5000,10000'; "
+                         "default = proposta automática por quantis")
+    ap.add_argument("--demand", default=None,
+                    help="cortes candidatos de Demanda (vendas/mês ≥ piso), ex. '60,30,5,2'; "
+                         "default = proposta automática por quantis")
     a = ap.parse_args()
-    md = build_report(load_pool(a.snapshot), load_cache(), n_top=a.top)
+    sc = parse_cuts(a.scarcity, [p for _, p in SCARCITY_POP10_BANDS]) if a.scarcity else None
+    dm = parse_cuts(a.demand, [p for _, p in DEMAND_SALES_BANDS]) if a.demand else None
+    md = build_report(load_pool(a.snapshot), load_cache(), n_top=a.top,
+                      proposed_sc=sc, proposed_dm=dm)
     print(md)
     if a.output:
         a.output.parent.mkdir(parents=True, exist_ok=True)

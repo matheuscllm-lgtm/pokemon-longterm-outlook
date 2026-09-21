@@ -28,7 +28,7 @@ def test_nice_log_arredonda_para_numero_redondo_em_escala_log():
 
 
 def test_band_shares_le_cobre_o_pool_inteiro_e_nao_conta_duas_vezes():
-    pop = [10, 50, 51, 200, 201, 500, 501, 2000, 2001, 10000, 10001]
+    pop = [10, 50, 51, 500, 501, 2000, 2001, 5000, 5001, 10000, 10001]
     rows = cal.band_shares_le(pop, SCARCITY_POP10_BANDS, 3)
     assert [n for _, _, n in rows] == [2, 2, 2, 2, 2, 1]
     assert sum(n for _, _, n in rows) == len(pop)
@@ -36,7 +36,7 @@ def test_band_shares_le_cobre_o_pool_inteiro_e_nao_conta_duas_vezes():
 
 
 def test_band_shares_ge_cobre_o_pool_inteiro():
-    spm = [40, 30, 29.9, 10, 9.9, 3, 2.9, 1, 0.5]
+    spm = [90, 60, 59.9, 30, 29.9, 5, 4.9, 2, 1.9]
     rows = cal.band_shares_ge(spm, DEMAND_SALES_BANDS, 3)
     assert [n for _, _, n in rows] == [2, 2, 2, 2, 1]
     assert [p for _, p, _ in rows] == [25, 20, 14, 8, 3]
@@ -126,3 +126,18 @@ def test_load_pool_e_load_cache_leem_os_artefatos_do_run(tmp_path):
     (cache / "c.json").write_text("{corrompido")
     rows = cal.load_cache(cache)
     assert len(rows) == 1 and rows[0]["pop10"] == 30 and rows[0]["pop_total"] == 30
+
+
+def test_parse_cuts_exige_um_corte_por_degrau():
+    import pytest
+    assert cal.parse_cuts("50,500,2000", [25, 22, 18]) == ((50.0, 25), (500.0, 22), (2000.0, 18))
+    with pytest.raises(ValueError):
+        cal.parse_cuts("50,500", [25, 22, 18])
+
+
+def test_census_trusted_espelha_o_guard_do_scoring():
+    assert cal.census_trusted(120, 400, 4.5) is True
+    assert cal.census_trusted(1, 4, None) is False          # censo total < 25 (página fina)
+    assert cal.census_trusted(2, 229, 4.3) is False         # vende mais do que existe
+    assert cal.census_trusted(None, None, 4.3) is False     # pop n/d
+    assert cal.census_trusted(40, 40, 30.0) is True         # tudo PSA 10, vendas ≤ pop
