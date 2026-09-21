@@ -75,6 +75,7 @@ cd C:\Users\mathe\pokemon-longterm-outlook
 .venv\Scripts\python.exe run_availability.py --top 100 # ONDE cada carta do top está mais barata em NM inglês
 .venv\Scripts\python.exe -m outlook.history            # resumo da série histórica (maiores altas/quedas)
 .venv\Scripts\python.exe -m outlook.validate           # calibração do score + backtest (quando houver história)
+.venv\Scripts\python.exe -m outlook.lowpop_calibration # distribuição pop/vendas do último run --lowpop + fatia por faixa (calibrar faixas com dado)
 ```
 
 Na nuvem/Linux, os mesmos comandos com `python3` (ou `.venv/bin/python`), ex.:
@@ -328,16 +329,18 @@ outlook/pricecharting.py tendência best-effort via PriceCharting (--trend-sourc
 outlook/pricehistory.py  tendência REAL: histórico diário do tcgcsv (.ppmd.7z via py7zr), cache data/cache/tcgcsv_history/
 outlook/history.py       persiste snapshots diários do score (data/snapshots/) → série histórica própria
 outlook/validate.py      calibração transversal do score + backtest longitudinal (usa history)
+outlook/lowpop_calibration.py  calibração das FAIXAS do modo low pop: lê snapshot + cache do run, quantis de pop10 e
+                         vendas/mês (pool e por era), fatia do pool por faixa vigente × proposta, efeito no topo
 outlook/report.py        cenário por era + tabela top-N em markdown
-tests/                   200 testes em 15 arquivos: scoring, sealed, history, validate, pricehistory,
-                         doubleholo, notorious, report, sets, tcgcsv_api, lowpop,
+tests/                   215 testes em 16 arquivos: scoring, sealed, history, validate, pricehistory,
+                         doubleholo, notorious, report, sets, tcgcsv_api, lowpop, lowpop_calibration,
                          availability, ebay_availability, comc_availability, graded_psa10
 ```
 
 ## Testes e CI
 
 ```bash
-python -m pytest tests/ -q     # 200 testes (nuvem/Linux: python3)
+python -m pytest tests/ -q     # 215 testes (nuvem/Linux: python3)
 ```
 
 No PC do operador: `.venv\Scripts\python.exe -m pytest tests/ -q`.
