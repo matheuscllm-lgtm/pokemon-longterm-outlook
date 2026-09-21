@@ -163,6 +163,65 @@ def price_points_psa10(psa10_usd: float,
     return pts
 
 
+# ── Modo low pop (escassez + demanda medidas, não presumidas) ────────────────
+# Decisão do operador (2026-09-21): a régua de longo prazo pra quem só compra
+# PSA 10 troca os dois componentes CEGOS por dois MEDIDOS na própria página
+# do PriceCharting (aba POP Report + vendas por nota):
+#   Supply (idade do set)  →  ESCASSEZ  = quantas PSA 10 existem no censo;
+#   Preço  (faixa)         →  DEMANDA   = vendas/mês da PSA 10.
+# Personagem e Raridade continuam. Score segue 4×25 = 100.
+#
+# Faixas PROVISÓRIAS — anotadas pra calibração sobre o universo inteiro (a
+# sonda de 30 cartas só provou a fonte; não calibra corte). Escala log: a
+# diferença que importa é ordem de grandeza (100 vs 1.000 vs 10.000 slabs).
+SCARCITY_POP10_BANDS = ((50, 25), (200, 22), (500, 18), (2000, 12), (10000, 7))
+SCARCITY_FLOOR = 3
+DEMAND_SALES_BANDS = ((30.0, 25), (10.0, 20), (3.0, 14), (1.0, 8))
+DEMAND_FLOOR = 3
+
+# Guards de página fina/errada (achado da sonda: o PriceCharting tem páginas
+# duplicadas com censo quase vazio — Venusaur 15 com pop 4, Gardevoir ex 233
+# com pop 2). Pop baixa ALI é página errada, não escassez; sem o guard viraria
+# o topo do ranking. Regras:
+#   - censo total abaixo de POP_TOTAL_MIN_TRUST → "pop não confiável";
+#   - vendas/mês de PSA 10 MAIORES que o nº de PSA 10 existentes → impossível
+#     (vende mais do que existe) → "pop não confiável".
+POP_TOTAL_MIN_TRUST = 25
+
+# Prêmio PSA 10 sobre a crua abaixo disto = o mercado não paga pela nota
+# (informativo: vira nota na linha; NÃO entra no score até calibrar).
+PSA10_PREMIUM_LOW = 1.5
+
+
+def scarcity_points(pop_psa10: int) -> int:
+    for cap, pts in SCARCITY_POP10_BANDS:
+        if pop_psa10 <= cap:
+            return pts
+    return SCARCITY_FLOOR
+
+
+def demand_points(sales_per_month: float) -> int:
+    for floor, pts in DEMAND_SALES_BANDS:
+        if sales_per_month >= floor:
+            return pts
+    return DEMAND_FLOOR
+
+
+def pop_trust_issue(pop_psa: list[int] | None,
+                    sales_per_month: float | None) -> str | None:
+    """Motivo pra NÃO confiar no censo desta página, ou None se confiável."""
+    if pop_psa is None:
+        return "pop n/d"
+    total = sum(pop_psa)
+    if total < POP_TOTAL_MIN_TRUST:
+        return f"pop não confiável (censo total {total} — página fina/duplicada)"
+    p10 = pop_psa[9]
+    if sales_per_month is not None and sales_per_month > p10:
+        return (f"pop não confiável ({sales_per_month:g} vendas/mês de PSA 10 "
+                f"com só {p10} no censo)")
+    return None
+
+
 @dataclass
 class ScoredCard:
     card_id: str
@@ -189,11 +248,46 @@ class ScoredCard:
     psa10_sales_per_month: float | None = None
     psa10_status: str = ""
     dh_score: int | None = None  # 2ª opinião Double Holo (módulo doubleholo); NÃO entra no score
+    # Modo low pop (--lowpop): escassez e demanda MEDIDAS (ver apply_lowpop).
+    lowpop: bool = False
+    pop_psa: list[int] | None = None      # censo PSA por nota (1..10)
+    pop_cgc: list[int] | None = None
+    raw_pc_usd: float | None = None       # "Ungraded" do PriceCharting (base do prêmio)
+    tcg_product_id: str | None = None     # id TCGPlayer lido do PriceCharting (join)
+    pts_scarcity: int = 0                 # substitui Supply no modo low pop
+    pts_demand: int = 0                   # substitui Preço no modo low pop
+    pop_issue: str | None = None          # motivo do censo não valer (None = confiável)
     notes: list[str] = field(default_factory=list)
 
     @property
     def score(self) -> int:
+        if self.lowpop:
+            return (self.pts_character + self.pts_rarity
+                    + self.pts_scarcity + self.pts_demand)
         return self.pts_character + self.pts_rarity + self.pts_supply + self.pts_price
+
+    @property
+    def pop_psa10(self) -> int | None:
+        return self.pop_psa[9] if self.pop_psa else None
+
+    @property
+    def pop_total(self) -> int | None:
+        return sum(self.pop_psa) if self.pop_psa else None
+
+    @property
+    def gem_rate(self) -> float | None:
+        """PSA 10 / total gradado PSA (0-1). None sem censo ou censo vazio."""
+        tot = self.pop_total
+        if not tot:
+            return None
+        return self.pop_psa[9] / tot
+
+    @property
+    def psa10_premium(self) -> float | None:
+        """Preço PSA 10 / preço da carta crua (PriceCharting). None sem os dois."""
+        if self.psa10_usd is None or not self.raw_pc_usd:
+            return None
+        return self.psa10_usd / self.raw_pc_usd
 
     @property
     def age_months(self) -> int:
@@ -226,6 +320,77 @@ def apply_psa10(sc, psa10_usd: float | None,
         sc.notes.append(
             f"PSA 10 ilíquido ({sales_per_month:g} vendas/mês) — preço de "
             "tabela pode não ser realizável")
+
+
+def apply_lowpop(sc, r: dict) -> None:
+    """Aplica o modo low pop numa carta já pontuada, IN-PLACE, a partir do
+    dict de `psa10.fetch_psa10` (uma página = preço PSA 10 + vendas + censo).
+
+    Ordem: primeiro o graded (preço/liquidez no slab, com as notas de sempre),
+    depois os dois componentes medidos:
+      - ESCASSEZ: pop de PSA 10 no censo → `scarcity_points`. Censo ausente ou
+        não confiável (guards) → cai na régua de Supply por idade, com nota.
+      - DEMANDA: vendas/mês da PSA 10 → `demand_points`. Sem volume publicado
+        → cai no componente de Preço já remedido no slab (ou raw), com nota.
+    Nunca zera, nunca inventa: toda queda de régua é declarada na linha.
+    """
+    apply_psa10(sc, r.get("usd"), r.get("sales_per_month"), r.get("status", ""))
+    sc.lowpop = True
+    sc.pop_psa = r.get("pop_psa")
+    sc.pop_cgc = r.get("pop_cgc")
+    sc.raw_pc_usd = r.get("raw_usd")
+    sc.tcg_product_id = r.get("tcg_product_id")
+    spm = r.get("sales_per_month")
+
+    issue = pop_trust_issue(sc.pop_psa, spm)
+    sc.pop_issue = issue
+    if issue is None:
+        sc.pts_scarcity = scarcity_points(sc.pop_psa[9])
+    else:
+        sc.pts_scarcity = sc.pts_supply
+        sc.notes.append(f"{issue} — Escassez medida por idade do set")
+
+    if spm is not None:
+        sc.pts_demand = demand_points(spm)
+    else:
+        sc.pts_demand = sc.pts_price
+        sc.notes.append("vendas/mês n/d — Demanda medida pela faixa de preço")
+
+    prem = sc.psa10_premium
+    if prem is not None and prem < PSA10_PREMIUM_LOW:
+        sc.notes.append(f"prêmio PSA 10 baixo ({prem:.1f}× a crua)")
+
+
+def lowpop_pool(cards: list, pool_n: int) -> list:
+    """Quem consultar no PriceCharting no modo low pop — round-robin por era.
+
+    Por que não "top-N pelo score cru": o score cru carrega justamente os dois
+    componentes que este modo substitui (Supply por idade, Preço por faixa), e
+    a Raridade é cega a era (o "Holo Rare" de 1999 vale 3 pontos, o SIR de
+    2025 vale 25) — um pool por score cru sai 100% SV e o vintage nunca é
+    medido (visto no smoke de 2026-09-21: 24/24 cartas do pool eram SV). Aqui
+    cada era contribui em rodízio com as suas melhores cartas por Personagem +
+    Raridade (desempate: preço de mercado, proxy de demanda até medir), até
+    fechar o pool. Era com menos cartas que a cota cede a vaga às outras.
+    """
+    by_series: dict[str, list] = {}
+    for c in cards:
+        by_series.setdefault(c.series, []).append(c)
+    queues = [sorted(cs, key=lambda c: (-(c.pts_character + c.pts_rarity),
+                                       -c.market_usd))
+              for _, cs in sorted(by_series.items())]
+    pool: list = []
+    idx = 0
+    while len(pool) < pool_n and any(queues):
+        q = queues[idx % len(queues)]
+        if q:
+            pool.append(q.pop(0))
+        idx += 1
+        if idx % len(queues) == 0:
+            queues = [q for q in queues if q]
+            if not queues:
+                break
+    return pool
 
 
 def score_card(card: dict, set_meta: dict, market_usd: float,

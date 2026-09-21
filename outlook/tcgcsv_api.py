@@ -33,6 +33,75 @@ ERA_PREFIXES = {
     "Sword & Shield": r"^SWSH[0-9: ]",
     "Mega Evolution": r"^ME[0-9: ]",
 }
+# Eras PRÉ-SWSH (vintage e intermediárias): os grupos do tcgcsv não têm prefixo
+# de era no nome, então o mapa é EXPLÍCITO por nome (verificado no /groups em
+# 2026-09-21; 220 grupos). Fora de propósito: Trainer Kits, POP Series, decks
+# de campeonato, jumbo, promos/League — não são sets de booster e distorcem
+# supply/preço. Aliases de linha de comando: "vintage" = as 3 eras WotC/EX/DP…
+# até Sun & Moon; "all" = tudo (ver VINTAGE_ERAS / ALL_ERAS).
+VINTAGE_SETS = {
+    "Wizards of the Coast": (
+        "Base Set", "Base Set (Shadowless)", "Jungle", "Fossil", "Base Set 2",
+        "Team Rocket", "Gym Heroes", "Gym Challenge", "Neo Genesis",
+        "Neo Discovery", "Southern Islands", "Neo Revelation", "Neo Destiny",
+        "Legendary Collection", "Expedition", "Aquapolis", "Skyridge",
+    ),
+    "EX": (
+        "EX Ruby and Sapphire", "EX Sandstorm", "EX Dragon",
+        "EX Team Magma vs Team Aqua", "EX Hidden Legends",
+        "EX FireRed & LeafGreen", "EX Team Rocket Returns", "EX Deoxys",
+        "EX Emerald", "EX Unseen Forces", "EX Delta Species",
+        "EX Legend Maker", "EX Holon Phantoms", "EX Crystal Guardians",
+        "EX Dragon Frontiers", "EX Power Keepers",
+    ),
+    "Diamond & Pearl": (
+        "Diamond and Pearl", "Mysterious Treasures", "Secret Wonders",
+        "Great Encounters", "Majestic Dawn", "Legends Awakened", "Stormfront",
+        "Platinum", "Rising Rivals", "Supreme Victors", "Arceus",
+    ),
+    "HeartGold & SoulSilver": (
+        "HeartGold SoulSilver", "Unleashed", "Undaunted", "Triumphant",
+        "Call of Legends",
+    ),
+    "Black & White": (
+        "Black and White", "Emerging Powers", "Noble Victories",
+        "Next Destinies", "Dark Explorers", "Dragons Exalted", "Dragon Vault",
+        "Boundaries Crossed", "Plasma Storm", "Plasma Freeze", "Plasma Blast",
+        "Legendary Treasures", "Legendary Treasures: Radiant Collection",
+    ),
+    "XY": (
+        "XY Base Set", "XY - Flashfire", "XY - Furious Fists",
+        "XY - Phantom Forces", "XY - Primal Clash", "Double Crisis",
+        "XY - Roaring Skies", "XY - Ancient Origins", "XY - BREAKthrough",
+        "XY - BREAKpoint", "Generations", "Generations: Radiant Collection",
+        "XY - Fates Collide", "XY - Steam Siege", "XY - Evolutions",
+    ),
+    "Sun & Moon": (
+        "SM Base Set", "SM - Guardians Rising", "SM - Burning Shadows",
+        "Shining Legends", "SM - Crimson Invasion", "SM - Ultra Prism",
+        "SM - Forbidden Light", "SM - Celestial Storm", "Dragon Majesty",
+        "SM - Lost Thunder", "SM - Team Up", "Detective Pikachu",
+        "SM - Unbroken Bonds", "SM - Unified Minds", "Hidden Fates",
+        "Hidden Fates: Shiny Vault", "SM - Cosmic Eclipse",
+    ),
+}
+VINTAGE_ERAS = tuple(VINTAGE_SETS)
+ALL_ERAS = VINTAGE_ERAS + tuple(ERA_PREFIXES)
+ERA_ALIASES = {"vintage": VINTAGE_ERAS, "all": ALL_ERAS}
+_SET_TO_VINTAGE_ERA = {name: era for era, names in VINTAGE_SETS.items()
+                       for name in names}
+
+
+def expand_eras(eras: list[str]) -> list[str]:
+    """Resolve aliases ("vintage", "all") preservando ordem e sem duplicar."""
+    out: list[str] = []
+    for e in eras:
+        for x in ERA_ALIASES.get(e.lower(), (e,)):
+            if x not in out:
+                out.append(x)
+    return out
+
+
 # Sets especiais SEM prefixo de era no nome (mapeados à mão → série).
 SPECIAL_SETS = {
     "Shining Fates": "Sword & Shield",
@@ -84,7 +153,7 @@ def fetch_sets(series_list: list[str], today: date | None = None) -> list[dict]:
         name = g.get("name", "")
         if "Promo" in name:
             continue
-        series = SPECIAL_SETS.get(name)
+        series = SPECIAL_SETS.get(name) or _SET_TO_VINTAGE_ERA.get(name)
         if series is None:
             for s, pat in ERA_PREFIXES.items():
                 if s in series_list and re.match(pat, name):
