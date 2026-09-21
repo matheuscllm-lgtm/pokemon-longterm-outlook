@@ -373,7 +373,7 @@ outlook/validate.py      calibração transversal do score + backtest longitudin
 outlook/lowpop_calibration.py  calibração das FAIXAS do modo low pop: lê snapshot + cache do run, quantis de pop10 e
                          vendas/mês (pool e por era), fatia do pool por faixa vigente × proposta, efeito no topo
 outlook/report.py        cenário por era + tabela top-N em markdown
-tests/                   225 testes em 16 arquivos: scoring, sealed, history, validate, pricehistory,
+tests/                   228 testes em 16 arquivos: scoring, sealed, history, validate, pricehistory,
                          doubleholo, notorious, report, sets, tcgcsv_api, lowpop, lowpop_calibration,
                          availability, ebay_availability, comc_availability, graded_psa10
 ```
@@ -381,7 +381,7 @@ tests/                   225 testes em 16 arquivos: scoring, sealed, history, va
 ## Testes e CI
 
 ```bash
-python -m pytest tests/ -q     # 225 testes (nuvem/Linux: python3)
+python -m pytest tests/ -q     # 228 testes (nuvem/Linux: python3)
 ```
 
 No PC do operador: `.venv\Scripts\python.exe -m pytest tests/ -q`.

@@ -188,8 +188,8 @@ def propose_bands_le(values: Sequence[float], pts_ladder: Sequence[int],
     cuts, last = [], None
     for q, pts in zip(qs, pts_ladder):
         c = nice_log(quantile(values, q))
-        if last is not None and c <= last:  # cortes têm que crescer
-            c = nice_log(last * 1.5)
+        if last is not None and c <= last:  # cortes têm que crescer (mesmo de 0)
+            c = nice_log(max(last, 1.0) * 1.5)
         cuts.append((c, pts))
         last = c
     return tuple(cuts)
@@ -204,6 +204,8 @@ def propose_bands_ge(values: Sequence[float], pts_ladder: Sequence[int],
     for q, pts in zip(qs, pts_ladder):
         c = nice_log(quantile(values, q))
         if last is not None and c >= last:  # cortes têm que decrescer
+            if last <= 0:
+                break  # abaixo de zero não há demanda a separar
             c = nice_log(last / 1.5)
         cuts.append((c, pts))
         last = c
@@ -365,7 +367,7 @@ def build_report(pool: list[dict], cache: list[dict], n_top: int = 30,
 
     # Efeito no topo — só quem DISPUTA o ranking (censo confiável), como no
     # report.py: linha com pop não confiável vai pro balde à parte, não pro topo.
-    if proposed_sc and proposed_dm:
+    if proposed_sc and proposed_dm and trusted:
         cur = rescore(trusted, SCARCITY_POP10_BANDS, SCARCITY_FLOOR,
                       DEMAND_SALES_BANDS, DEMAND_FLOOR)[:n_top]
         new = rescore(trusted, proposed_sc, SCARCITY_FLOOR, proposed_dm, DEMAND_FLOOR)[:n_top]
@@ -391,6 +393,9 @@ def build_report(pool: list[dict], cache: list[dict], n_top: int = 30,
                      f"{_fmt(r['spm']) if r['spm'] is not None else '—'} | "
                      f"{cur_score[key(r)]} → {s} |")
         L.append("")
+    elif proposed_sc and proposed_dm:
+        L += ["## Efeito no topo", "",
+              "_Nenhuma carta com censo confiável no pool — não há topo a comparar._", ""]
     return "\n".join(L)
 
 

@@ -187,7 +187,7 @@ def main() -> int:
             got += r["usd"] is not None
             got_pop += r.get("pop_psa") is not None
             print(f"  [{consulted}/{budget}] {c.name} {c.number} ({c.series}): "
-                  f"{'US$ %.2f' % r['usd'] if r['usd'] else r['status']}"
+                  f"{'US$ %.2f' % r['usd'] if r['usd'] is not None else r['status']}"
                   + (f" · pop10 {r['pop_psa'][9]}" if r.get("pop_psa") else ""),
                   file=sys.stderr)
             if c.psa10_usd is not None and c.psa10_usd > args.max_price:
@@ -197,8 +197,10 @@ def main() -> int:
         print(f"PSA 10 obtido em {got}/{consulted} consultas; censo em "
               f"{got_pop}/{consulted}. Ranking low pop = {len(kept)} cartas "
               f"(PSA 10 ≤ US$ {args.max_price:g}); {over_cap} acima do teto "
-              f"saíram; {len(scored) - consulted} cartas do universo não foram "
-              f"consultadas — suba --graded-pool pra cobrir mais.")
+              f"saíram; {len(candidates) - consulted} candidatas não foram "
+              f"consultadas (suba --graded-pool pra cobrir mais) e "
+              f"{len(scored) - len(candidates)} ficaram fora por ter a CRUA "
+              f"acima do teto.")
         # Só o pool consultado entra no ranking: misturar cartas medidas
         # (escassez/demanda) com cartas na régua antiga na MESMA tabela seria
         # comparar réguas diferentes.
@@ -215,7 +217,7 @@ def main() -> int:
             if r["usd"] is not None:
                 got += 1
             print(f"  [{i}/{len(pool)}] {c.name} {c.number}: "
-                  f"{'US$ %.2f' % r['usd'] if r['usd'] else r['status']}",
+                  f"{'US$ %.2f' % r['usd'] if r['usd'] is not None else r['status']}",
                   file=sys.stderr)
         print(f"PSA 10 obtido em {got}/{len(pool)} cartas do pool "
               f"(as demais mantêm o Preço da régua raw, com nota).")

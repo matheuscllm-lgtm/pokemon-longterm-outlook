@@ -5,7 +5,7 @@ from datetime import date
 import pytest
 
 from outlook import tcgcsv_api
-from outlook.psa10 import (parse_pop_report, parse_raw_price,
+from outlook.psa10 import (_product_matches, parse_pop_report, parse_raw_price,
                            parse_tcgplayer_product_id, pick_search_result)
 from outlook.report import ranking_markdown
 from outlook.scoring import (POP_TOTAL_MIN_TRUST, apply_lowpop, demand_points,
@@ -262,3 +262,18 @@ def test_pool_lowpop_era_pequena_cede_vaga():
     ex = [_mk("Rayquaza", "EX", "Holo Rare", 400)]
     pool = lowpop_pool(sv + ex, 6)
     assert len(pool) == 6 and sum(1 for c in pool if c.series == "EX") == 1
+
+
+def test_product_matches_exige_numero_exato_e_ignora_caixa():
+    # "#4" NÃO casa "#46" (revisão 2026-09-21: redirect pra carta errada virava cache "ok")
+    assert not _product_matches("https://www.pricecharting.com/game/pokemon-base-set/charmander-46",
+                                "<title>Charmander #46 Prices</title>", "4")
+    assert _product_matches("https://www.pricecharting.com/game/x/y",
+                            "<title>Charizard #4 Prices | Pokemon Base Set</title>", "4")
+    assert _product_matches("https://www.pricecharting.com/game/x/y",
+                            "<title>Charizard #4/102 Prices</title>", "004/102")
+    # número com letra: URL em minúsculas casa "TG01"; título ignora caixa
+    assert _product_matches("https://www.pricecharting.com/game/swsh/charizard-v-tg01", "", "TG01")
+    assert _product_matches("https://www.pricecharting.com/game/x/y",
+                            "<title>Charizard V #tg01</title>", "TG01")
+    assert not _product_matches("https://www.pricecharting.com/game/x/y", "<title>x</title>", "")

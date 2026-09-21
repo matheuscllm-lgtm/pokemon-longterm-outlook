@@ -245,10 +245,14 @@ def _product_matches(url: str, body: str, number: str) -> bool:
     if not number:
         return False
     num = number.split("/")[0].strip().lstrip("0") or number
-    if re.search(rf"[-/]{re.escape(num)}(?:[-/]|$)", url.lower()):
+    if re.search(rf"[-/]{re.escape(num.lower())}(?:[-/]|$)", url.lower()):
         return True
+    # Título: número EXATO ("#4" não pode casar "#46") — mesma regra do
+    # pick_search_result; sem isso um redirect pra carta errada seria aceito e
+    # ficaria no cache como "ok" (achado da revisão de 2026-09-21).
     title = re.search(r"<title>(.*?)</title>", body, re.S)
-    return bool(title and f"#{num}" in title.group(1))
+    return bool(title and re.search(rf"#{re.escape(num)}(?![\w])",
+                                    title.group(1), re.I))
 
 
 def search_queries(card_name: str, set_name: str, number: str) -> list[str]:
@@ -323,6 +327,7 @@ def fetch_psa10(card_name: str, set_name: str, number: str,
                     continue
                 url, body = r.url, r.text
             if not _product_matches(url, body, number):
+                last_status = "sem match confiável"  # página veio, carta não bate
                 continue
             out.update(_extract(body, url))
             if use_cache and out["status"] == "ok":

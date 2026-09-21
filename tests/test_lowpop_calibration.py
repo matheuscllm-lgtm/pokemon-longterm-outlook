@@ -141,3 +141,22 @@ def test_census_trusted_espelha_o_guard_do_scoring():
     assert cal.census_trusted(2, 229, 4.3) is False         # vende mais do que existe
     assert cal.census_trusted(None, None, 4.3) is False     # pop n/d
     assert cal.census_trusted(40, 40, 30.0) is True         # tudo PSA 10, vendas ≤ pop
+
+
+def test_propostas_continuam_monotonicas_com_quantis_zero():
+    # Pool com maioria pop10 == 0 (vintage sem PSA 10): cortes não podem colapsar em 0,0,0…
+    bands = cal.propose_bands_le([0] * 60 + [5000] * 5, [25, 22, 18, 12, 7, 3])
+    caps = [c for c, _ in bands]
+    assert caps == sorted(caps) and len(set(caps)) == len(caps)
+    bands = cal.propose_bands_ge([0.0] * 60 + [30.0] * 5, [25, 20, 14, 8, 3])
+    floors = [c for c, _ in bands]
+    assert floors == sorted(floors, reverse=True) and len(set(floors)) == len(floors)
+
+
+def test_relatorio_com_cortes_da_cli_e_zero_censo_confiavel_nao_quebra():
+    pool = [_row("A", "SV", 1, 0.5, 25, 3)]
+    pool[0]["pop_total"] = 2  # página fina → censo não confiável → sem topo a comparar
+    sc = cal.parse_cuts("50,500,2000,5000,10000", [25, 22, 18, 12, 7])
+    dm = cal.parse_cuts("60,30,5,2", [25, 20, 14, 8])
+    md = cal.build_report(pool, [], n_top=5, proposed_sc=sc, proposed_dm=dm)
+    assert "Nenhuma carta com censo confiável" in md
