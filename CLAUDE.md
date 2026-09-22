@@ -227,6 +227,35 @@ sobre qualquer run (`--scarcity`/`--demand` avaliam cortes candidatos).
   16,6×, p25 5,4×, p5 2,3× — a nota "< 1,5×" quase não dispara; segue
   informativo até o operador decidir.
 
+### Recalibração sobre dado limpo + decisões fechadas (2026-09-22)
+
+O run de 2026-09-21 tinha **20 páginas de outro set** e **5 preços "$0.00"**
+no pool (guard conferia só o número — corrigido no #29, ver "Limitações"
+item 7). Refeito o run e a calibração sobre o snapshot limpo (300 no teto,
+224 com censo confiável, 246 com vendas):
+
+- **Faixas vigentes se sustentam**: Escassez 18 · 13 · 20 · 20 · 18 · 11%,
+  Demanda 9 · 35 · 20 · 15 · 21% — nenhuma degenerada (<5% ou >35%). A
+  proposta automática do módulo pra Demanda (`30/20/10/1`) cria um degrau com
+  **0%** e é pior. **Nada a mexer.** Spearman pop10 × vendas/mês = **+0,83**.
+- **Giro como Demanda — REJEITADO com dado.** Giro = vendas/mês ÷ pop10 tem
+  Spearman **−0,67** com pop10: vira um SEGUNDO componente de escassez, e o top
+  30 enche de BW/HGSS com pop 4-8 e 0,1-0,4 vendas/mês (Darkrai EX #63: pop 4,
+  0,2 vendas/mês → 87) — exatamente o "pop baixa sem demanda" que a regra do
+  modo exclui. Sobreposição com o top vigente: 14/30. Vendas absolutas ficam.
+- **Prêmio no score — REJEITADO com dado.** Spearman prêmio × pop10 = **−0,51**,
+  prêmio × vendas = **−0,57**: o prêmio é proxy de escassez (alto onde ninguém
+  grada) — entraria contando escassez duas vezes. Segue coluna informativa.
+- **Critério de sucesso (fechado):** em janela **≥ 180 dias**, Spearman(score
+  em t0, retorno do **PSA 10**) > 0 **e** mediana do top-quartil > mediana do
+  bottom-quartil. Implementado em `outlook/validate.py` (`backtest_longitudinal`
+  mede no `psa10_usd` quando a história é low pop e imprime o veredito;
+  `SUCCESS_MIN_DAYS`). 1ª leitura de pop no PC: `snapshot_2026-09-22.csv`
+  (limpo). A 2ª leitura, ≥ 1 mês depois, destrava Δpop10/mês; o veredito do
+  critério só a partir de 2027-03.
+- Reproduzir a análise do giro: `python -m outlook.lowpop_calibration` dá a
+  base; o experimento em si foi ad hoc (script de sessão), números acima.
+
 A detecção de "reprint forte" mora em `outlook/scoring.py`
 (`HEAVY_REPRINT_SET_IDS` + `SPECIAL_SET_PREFIX_RE`); a lista de notórios em
 `outlook/notorious.py` (`NOTORIOUS_POKEMON`, 60 entradas, portada do
@@ -347,7 +376,17 @@ no chat.
    em 2026-09-21 sobre a DISTRIBUIÇÃO do pool medido ("Calibração das
    faixas") — isso dá discriminação, não prova preditiva: a validação como
    previsão continua dependendo de snapshots acumulados e de um critério de
-   sucesso fixado pelo operador.
+   sucesso fixado pelo operador (fechado em 2026-09-22 — ver "Recalibração
+   sobre dado limpo").
+7. **Match carta → página do PriceCharting é por busca de texto**, e o site
+   tem números que colidem entre sets. O guard (`outlook/psa10.py`) exige
+   **número E set** (productId TCGPlayer da página = do catálogo, OU slug do
+   set = nome do catálogo), recusa variante de impressão que o catálogo não
+   pediu (`1st-edition`, `shadowless`, `reverse`) e trata `$0.00` como "sem
+   dado". Achado do run de 2026-09-21: sem isso, 20/278 consultas "ok" eram
+   de outra carta. Cobertura perdida por `&amp;` cru no href da busca (151,
+   DP, FRLG, HGSS…) corrigida no mesmo dia. Se um set inteiro sair "sem
+   match", suspeite do slug (ex.: `fire-red-&-leaf-green`), não da carta.
 
 ## Arquitetura
 

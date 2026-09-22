@@ -189,33 +189,60 @@ _SET_NOISE = {"pokemon", "and", "the", "of", "vs",
               "xy", "sm", "ex",                      # marcador de era
               "base", "set",                         # "SV01: … Base Set"
               "shiny", "vault", "trainer", "gallery", "galarian"}  # subsets
+# Variante de IMPRESSÃO no slug da carta ("charizard-1st-edition-4",
+# "gengar-reverse-holo-27"): página separada, outro censo, outro preço. Só
+# vale quando o próprio set do catálogo pede a variante ("Base Set (Shadowless)").
+_PRINT_VARIANTS = {"1st", "edition", "shadowless", "reverse"}
 
 
 def _tokens(text: str) -> set[str]:
-    text = unquote(text).lower().replace("'", "").replace("’", "")
-    return {t for t in re.split(r"[^a-z0-9]+", text) if t}
+    return set(_token_list(text))
+
+
+def _token_list(text: str) -> list[str]:
+    text = unquote(html_mod.unescape(text)).lower().replace("'", "").replace("’", "")
+    return [t for t in re.split(r"[^a-z0-9]+", text) if t]
 
 
 def _set_matches(url: str, set_name: str) -> bool:
     """A página é do MESMO set do catálogo? (comparação por tokens do slug)
 
     Igualdade, não subconjunto: "scarlet-&-violet" é subconjunto de "Scarlet &
-    Violet 151" e é OUTRO set, com números que colidem. Qualificador entre
+    Violet 151" e é OUTRO set, com números que colidem. O PriceCharting hifeniza
+    dentro da palavra ("fire-red-&-leaf-green" ↔ "FireRed & LeafGreen"), então
+    a igualdade também vale pra sequência de tokens colada. Qualificador entre
     parênteses no set ("Base Set (Shadowless)") é variante de impressão e tem
-    que aparecer no slug do set ou da carta — sem ele a página é a unlimited.
+    que aparecer no slug do set ou da carta — sem ele a página é a unlimited;
+    e variante no slug da carta que o catálogo NÃO pediu reprova.
     """
     parts = urlparse(url).path.split("/")
     if len(parts) < 4 or parts[1] != "game":
         return False
-    slug_set, slug_card = _tokens(parts[2]), _tokens(parts[3])
+    set_list, card_list = _token_list(parts[2]), _token_list(parts[3])
+    slug_set, slug_card = set(set_list), set(card_list)
     qualifier = _tokens(" ".join(re.findall(r"\((.*?)\)", set_name)))
-    cat_set = _tokens(re.sub(r"\(.*?\)", " ", strip_era_prefix(set_name)))
-    core_cat, core_slug = cat_set - _SET_NOISE, slug_set - _SET_NOISE
-    if not core_cat or not core_slug:   # "Base Set": o nome É o ruído
-        core_cat, core_slug = cat_set - {"pokemon"}, slug_set - {"pokemon"}
-    if not core_cat or core_cat != core_slug:
+    cat_list = _token_list(re.sub(r"\(.*?\)", " ", strip_era_prefix(set_name)))
+    noise = _SET_NOISE
+    if not (set(cat_list) - noise) or not (slug_set - noise):
+        noise = {"pokemon"}                 # "Base Set": o nome É o ruído
+    core_cat = [t for t in cat_list if t not in noise]
+    core_slug = [t for t in set_list if t not in noise]
+    if not core_cat:
+        return False
+    if set(core_cat) != set(core_slug) and "".join(core_cat) != "".join(core_slug):
+        return False
+    if _unwanted_print_variant(url, set_name):
         return False
     return qualifier <= (slug_set | slug_card)
+
+
+def _unwanted_print_variant(url: str, set_name: str) -> bool:
+    """Slug da carta traz variante de impressão que o set do catálogo não pediu."""
+    parts = urlparse(url).path.split("/")
+    if len(parts) < 4:
+        return False
+    qualifier = _tokens(" ".join(re.findall(r"\((.*?)\)", set_name)))
+    return bool((_tokens(parts[3]) & _PRINT_VARIANTS) - qualifier)
 
 
 def pick_search_result(body: str, number: str, set_name: str = "") -> str | None:
@@ -240,7 +267,9 @@ def pick_search_result(body: str, number: str, set_name: str = "") -> str | None
         if set_name and not _set_matches(url, set_name):
             continue
         if re.search(rf"#{re.escape(num)}(?![\w])", clean):
-            return url
+            # O href vem HTML-escapado ("…-&amp;-…"); aberto cru, o site não
+            # acha a página e o set inteiro vira "sem match" (151, DP, FRLG…).
+            return html_mod.unescape(url)
     return None
 
 
@@ -324,9 +353,13 @@ def _product_matches(url: str, body: str, number: str, set_name: str = "",
     chama por outro nome, "SM Base Set" → "sun-&-moon"), ou o slug do set casa
     com o nome do catálogo (`_set_matches`). productId DIFERENTE não reprova
     sozinho: o PriceCharting às vezes aponta pra impressão irmã da mesma carta.
-    Sem `set_name` (chamada antiga) vale só o número.
+    Pelo mesmo motivo, productId IGUAL não resgata variante de impressão no
+    slug ("charizard-1st-edition-4" com link pro produto unlimited): é outra
+    página, outro censo. Sem `set_name` (chamada antiga) vale só o número.
     """
     if not _number_matches(url, body, number):
+        return False
+    if set_name and _unwanted_print_variant(url, set_name):
         return False
     if tcg_product_id and page_product_id and str(tcg_product_id) == str(page_product_id):
         return True

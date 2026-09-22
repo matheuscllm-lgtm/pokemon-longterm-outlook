@@ -161,3 +161,56 @@ def test_cache_bom_continua_valendo(tmp_path, monkeypatch):
         "url": PC + "pokemon-evolving-skies/leafeon-vmax-205"})
     hit = psa10._cache_get("Carta", "SWSH07: Evolving Skies", "205")
     assert hit and hit["usd"] == 564.08
+
+
+# ── Cobertura: links com &amp; e slugs com hífen dentro da palavra ───────────
+# Run de 2026-09-21: 27 linhas "sem match confiável" (Charmander #168 do 151,
+# Gengar #27 DP, Ditto #4 FRLG…). Causa: o href da linha de resultado vem
+# HTML-escapado ("pokemon-scarlet-&amp;-violet-151/…") e era aberto cru; e
+# "fire-red-&-leaf-green" não casava token a token com "FireRed & LeafGreen".
+
+SEARCH_AMP = """
+<table id="games_table"><tbody>
+<tr><td class="title"><a href="https://www.pricecharting.com/game/pokemon-scarlet-&amp;-violet-151/charmander-168"> Charmander #168</a></td></tr>
+<tr><td class="title"><a href="https://www.pricecharting.com/game/pokemon-japanese-scarlet-&amp;-violet-151/charmander-168"> Charmander #168</a></td></tr>
+</tbody></table>"""
+
+
+def test_link_da_busca_e_desescapado_antes_de_abrir():
+    assert (pick_search_result(SEARCH_AMP, "168", "SV: Scarlet & Violet 151")
+            == PC + "pokemon-scarlet-&-violet-151/charmander-168")
+
+
+@pytest.mark.parametrize("set_name,number,url", [
+    ("EX FireRed & LeafGreen", "4", PC + "pokemon-fire-red-&-leaf-green/ditto-4"),
+    ("HeartGold SoulSilver", "4", PC + "pokemon-heartgold-&-soulsilver/gyarados-4"),
+    ("Diamond and Pearl", "27", PC + "pokemon-diamond-&-pearl/gengar-27"),
+    ("SV: Scarlet & Violet 151", "168", PC + "pokemon-scarlet-&-violet-151/charmander-168"),
+])
+def test_set_com_hifen_dentro_da_palavra_ou_ampersand_casa(set_name, number, url):
+    assert _product_matches(url, "", number, set_name)
+
+
+def test_edicao_japonesa_ou_coreana_do_mesmo_set_e_recusada():
+    assert not _product_matches(PC + "pokemon-japanese-scarlet-&-violet-151/charmander-168",
+                                "", "168", "SV: Scarlet & Violet 151")
+    assert not _product_matches(PC + "pokemon-korean-jet-black-geist/gengar-27",
+                                "", "27", "Diamond and Pearl")
+
+
+def test_redirect_direto_para_variante_de_impressao_e_recusado():
+    # Nit da revisão do #28: a busca pode redirecionar DIRETO pra página
+    # "[1st Edition]" / "[Reverse Holo]" sem passar pela lista de resultados.
+    # Catálogo sem qualificador = impressão comum; variante no slug reprova.
+    assert not _product_matches(PC + "pokemon-base-set/charizard-1st-edition-4", "", "4", "Base Set")
+    assert not _product_matches(PC + "pokemon-diamond-&-pearl/gengar-reverse-holo-27", "", "27", "Diamond and Pearl")
+    assert _product_matches(PC + "pokemon-base-set/charizard-4", "", "4", "Base Set")
+
+
+def test_product_id_igual_nao_resgata_variante_de_impressao():
+    # Revisão de 2026-09-22: o atalho por productId respondia ANTES do guard de
+    # variante. Página "[1st Edition]" que aponte pro productId da unlimited
+    # continua sendo outra impressão (outro censo, outro preço) — reprova.
+    assert not _product_matches(PC + "pokemon-base-set/charizard-1st-edition-4", "",
+                                "4", "Base Set", tcg_product_id="42382",
+                                page_product_id="42382")
