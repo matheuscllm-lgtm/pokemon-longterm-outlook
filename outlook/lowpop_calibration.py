@@ -71,6 +71,7 @@ def load_pool(snapshot: Path | None = None) -> list[dict]:
                 "spm": _num(r.get("psa10_sales_per_month")),
                 "pop10": _int(r.get("pop_psa10")),
                 "pop_total": _int(r.get("pop_total")),
+                "pop_source": r.get("pop_source") or "",
                 "pts_character": _int(r.get("pts_character")) or 0,
                 "pts_rarity": _int(r.get("pts_rarity")) or 0,
                 "pts_scarcity": _int(r.get("pts_scarcity")),
@@ -251,12 +252,15 @@ def rescore(pool: Iterable[dict], sc_bands, sc_floor, dm_bands, dm_floor) -> lis
 
 
 def census_trusted(pop10: int | None, pop_total: int | None,
-                   spm: float | None) -> bool:
-    """Espelho de `scoring.pop_trust_issue` sobre as colunas do snapshot."""
+                   spm: float | None, pop_source: str | None = None) -> bool:
+    """Espelho de `scoring.pop_trust_issue` sobre as colunas do snapshot.
+    `pop_source="gemrate"` (censo PSA oficial) não tem guard de página fina —
+    censo pequeno é escassez real (achado da revisão de 2026-09-24)."""
     if pop10 is None or pop_total is None:
         return False
     issue = pop_trust_issue([0] * 9 + [pop10] if pop_total == pop10
-                            else [pop_total - pop10] + [0] * 8 + [pop10], spm)
+                            else [pop_total - pop10] + [0] * 8 + [pop10], spm,
+                            source=pop_source or None)
     return issue is None
 
 
@@ -286,7 +290,7 @@ def build_report(pool: list[dict], cache: list[dict], n_top: int = 30,
     # a partir do que o snapshot guarda (pop10 + total). Não dá pra inferir
     # pela pontuação: Escassez por idade e por censo podem coincidir (25 = 25).
     for r in pool:
-        r["_trusted"] = census_trusted(r["pop10"], r["pop_total"], r["spm"])
+        r["_trusted"] = census_trusted(r["pop10"], r["pop_total"], r["spm"], r.get("pop_source"))
     trusted = [r for r in pool if r["_trusted"]]
     with_spm = [r for r in pool if r["spm"] is not None]
     pop10 = [float(r["pop10"]) for r in trusted]

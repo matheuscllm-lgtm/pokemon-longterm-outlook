@@ -160,3 +160,10 @@ def test_relatorio_com_cortes_da_cli_e_zero_censo_confiavel_nao_quebra():
     dm = cal.parse_cuts("60,30,5,2", [25, 20, 14, 8])
     md = cal.build_report(pool, [], n_top=5, proposed_sc=sc, proposed_dm=dm)
     assert "Nenhuma carta com censo confiável" in md
+
+
+def test_census_trusted_respeita_a_fonte_gemrate():
+    # Censo pequeno mas OFICIAL (GemRate) é escassez real, não página fina.
+    assert cal.census_trusted(4, 9, None, "gemrate") is True
+    assert cal.census_trusted(4, 9, None, "pricecharting") is False
+    assert cal.census_trusted(0, 9, None, "gemrate") is False     # nenhuma PSA 10 ainda

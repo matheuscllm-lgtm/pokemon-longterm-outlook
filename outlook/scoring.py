@@ -225,11 +225,26 @@ def demand_points(sales_per_month: float) -> int:
 
 def pop_trust_issue(pop_psa: list[int] | None,
                     sales_per_month: float | None,
-                    age_months: int | None = None) -> str | None:
+                    age_months: int | None = None,
+                    source: str | None = None) -> str | None:
     """Motivo pra NÃO confiar no censo desta página, ou None se confiável.
 
     `age_months` (idade do set) distingue "censo ainda não publicado" (set novo,
-    censo vazio ou ausente) de "página fina/duplicada" (set antigo)."""
+    censo vazio ou ausente) de "página fina/duplicada" (set antigo).
+    `source="gemrate"`: censo oficial e diário — não existe página fina nem
+    atraso mensal; censo pequeno é escassez REAL. O que continua valendo: pop10
+    zero não é "escassez máxima", é "ninguém gradou 10 ainda" (nit do #28), e
+    vender mais PSA 10 por mês do que existem segue impossível."""
+    if source == "gemrate":
+        if pop_psa is None:
+            return "pop n/d"
+        p10, total = pop_psa[9], sum(pop_psa)
+        if p10 == 0:
+            return f"nenhuma PSA 10 no censo ainda ({total} gradada{'s' if total != 1 else ''})"
+        if sales_per_month is not None and sales_per_month > p10:
+            return (f"pop não confiável ({sales_per_month:g} vendas/mês de PSA 10 "
+                    f"com só {p10} no censo)")
+        return None
     if (age_months is not None and age_months < POP_CENSUS_LAG_MONTHS
             and (pop_psa is None or sum(pop_psa) == 0)):
         return (f"censo ainda não publicado (set com {age_months} "
@@ -281,6 +296,13 @@ class ScoredCard:
     pts_scarcity: int = 0                 # substitui Supply no modo low pop
     pts_demand: int = 0                   # substitui Preço no modo low pop
     pop_issue: str | None = None          # motivo do censo não valer (None = confiável)
+    # Fonte do censo (2026-09-24): "gemrate" = pop PSA oficial (diário) via
+    # GemRate; "pricecharting" = foto mensal do PriceCharting (pode atrasar
+    # meses em set moderno — Zoroark 286: 1.046 vs 3.318 reais). None = sem censo.
+    pop_source: str | None = None
+    gr_pop10: int | None = None           # GemRate: nº de PSA 10
+    gr_psa9_plus: int | None = None       # GemRate: PSA 9 + PSA 10
+    gr_total: int | None = None           # GemRate: todas as notas
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -292,10 +314,14 @@ class ScoredCard:
 
     @property
     def pop_psa10(self) -> int | None:
+        if self.pop_source == "gemrate":
+            return self.gr_pop10
         return self.pop_psa[9] if self.pop_psa else None
 
     @property
     def pop_total(self) -> int | None:
+        if self.pop_source == "gemrate":
+            return self.gr_total
         return sum(self.pop_psa) if self.pop_psa else None
 
     @property
@@ -304,7 +330,7 @@ class ScoredCard:
         tot = self.pop_total
         if not tot:
             return None
-        return self.pop_psa[9] / tot
+        return self.pop_psa10 / tot
 
     @property
     def psa10_premium(self) -> float | None:
@@ -369,10 +395,26 @@ def apply_lowpop(sc, r: dict, today: date | None = None) -> None:
     sc.tcg_product_id = r.get("tcg_product_id")
     spm = r.get("sales_per_month")
 
-    issue = pop_trust_issue(sc.pop_psa, spm, sc.months_since_release(today))
+    # Censo: GemRate (pop PSA oficial, diário) quando a carta casou lá; senão
+    # o do PriceCharting, declarado como possivelmente defasado (ver gemrate.py).
+    g = r.get("gemrate")
+    if g is not None:
+        sc.pop_source = "gemrate"
+        sc.gr_pop10, sc.gr_psa9_plus, sc.gr_total = g.pop10, g.psa9_plus, g.total
+        # Lista no formato do guard: só [9] (PSA 10) e a soma (total) importam.
+        pop_for_guard = [max(g.total - g.pop10, 0)] + [0] * 8 + [g.pop10]
+    else:
+        sc.pop_source = "pricecharting" if sc.pop_psa is not None else None
+        pop_for_guard = sc.pop_psa
+        if sc.pop_psa is not None:
+            sc.notes.append("censo do PriceCharting (foto mensal, pode estar "
+                            "defasado) — carta sem registro na GemRate")
+
+    issue = pop_trust_issue(pop_for_guard, spm, sc.months_since_release(today),
+                            source=sc.pop_source)
     sc.pop_issue = issue
     if issue is None:
-        sc.pts_scarcity = scarcity_points(sc.pop_psa[9])
+        sc.pts_scarcity = scarcity_points(sc.pop_psa10)
     else:
         sc.pts_scarcity = sc.pts_supply
         sc.notes.append(f"{issue} — Escassez medida por idade do set")
