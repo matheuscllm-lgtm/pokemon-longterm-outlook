@@ -118,7 +118,7 @@ da frota" acima). O `.md` em `outputs/` é apoio local.
 
 | Componente | O que mede | Como pontua |
 |---|---|---|
-| **Personagem** | demanda perene do Pokémon | notório (lista curada de 60: Charizard, Umbreon, Pikachu...) = 25; resto = 8 |
+| **Personagem** | apelo perene do personagem (Pokémon **ou treinador**) | tier curado de apelo: **S** (ícone de liquidez: Charizard, Umbreon, Pikachu...) = 25 · **A** (fan-favorite forte) = 18 · **B** (segunda onda) = 12 · fora da lista = 8. Inclui **treinadores** (Marnie, Lillie, Cynthia, Iono, Acerola, N...) — SIR/full-art de treinadora valoriza tanto quanto de Pokémon e antes caía em 8 |
 | **Raridade** | tier colecionável | SIR/alt-art 25 · IR 20 · TG/Character/**Mega Attack** 16 · gold/secret/shiny/**Mega Hyper** 14 · ultra/VMAX 12 · ACE SPEC 10 · double rare/Rare Holo V 6 · resto 3 |
 | **Supply** | oferta encolhendo | ≥36 meses = 25 · 24-36m = 22 · 18-24m = 18 · 12-18m = 12 · 6-12m = 7 · <6m = 3; set com **reprint forte** trava em 12 |
 | **Preço** | espaço pra crescer com liquidez | $40-120 = 25 · $15-40 = 20 · $120-300 = 18 · $5-15 = 12 · >$300 = 12 (já precificado) · <$5 = 5 (sem liquidez) |
@@ -228,9 +228,17 @@ sobre qualquer run (`--scarcity`/`--demand` avaliam cortes candidatos).
   informativo até o operador decidir.
 
 A detecção de "reprint forte" mora em `outlook/scoring.py`
-(`HEAVY_REPRINT_SET_IDS` + `SPECIAL_SET_PREFIX_RE`); a lista de notórios em
-`outlook/notorious.py` (`NOTORIOUS_POKEMON`, 60 entradas, portada do
-scanner integrado).
+(`HEAVY_REPRINT_SET_IDS` + `SPECIAL_SET_PREFIX_RE`); os notórios em
+`outlook/notorious.py`: 60 Pokémon (portados do scanner integrado) + 22
+treinadores, em tiers de apelo S/A/B (`POKEMON_S/A/B`, `TRAINER_S/A`). Quando
+dois notórios casam na mesma carta, vence o de **maior tier** (empate → nome
+mais longo): "N's Zoroark ex" → N (S), não Zoroark (B) — decisão de 2026-09-24
+(pendencias#9), porque quem puxa o preço da carta é o treinador. Trocar alguém
+de tier = mover o nome de tupla.
+
+⚠️ **Snapshots de antes de 2026-09-24** têm `pts_character` só em {25, 8}; os
+de depois, em {25, 18, 12, 8}. Backtest que compare Personagem entre as duas
+épocas precisa levar isso em conta.
 
 A tabela do ranking mostra o **score total** (não mais as 4 parcelas em
 colunas — saíram a pedido do operador; o racional dos componentes está acima
@@ -361,7 +369,7 @@ outlook/tcgcsv_api.py    fonte DEFAULT: dumps diários TCGPlayer (cartas + selad
 outlook/ptcg_api.py      cliente pokemontcg.io (sets, cartas, preços TCGPlayer) — fonte alternativa
 outlook/scoring.py       os 4 componentes do score + detecção de reprint forte (HEAVY_REPRINT_SET_IDS / SPECIAL_SET_PREFIX_RE)
 outlook/sealed.py        score de SELADO (ETB/Box/Bundle/Tin): Tipo + Idade + MSRP + Reimpressão
-outlook/notorious.py     lista curada de 60 Pokémon notórios (portada do integrado)
+outlook/notorious.py     personagens notórios em tiers de apelo S/A/B (Pokémon + treinadores)
 outlook/sets.py          helpers puros de nome de set (strip_era_prefix), compartilhados entre report e availability
 outlook/doubleholo.py    coluna DH: nota 0-100 a partir do JSON premium do Double Holo, join por productId
 outlook/psa10.py         modos graded/low pop: preço, liquidez, CENSO (pop por nota), crua e TCGPlayer ID do slab via
