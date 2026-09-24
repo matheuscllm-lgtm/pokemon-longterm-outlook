@@ -218,7 +218,9 @@ def test_irma_no_cache_nao_e_servida_sem_o_mesmo_product_id(tmp_path, monkeypatc
 def test_set_com_menos_de_6_meses_sem_censo_ganha_nota_especifica():
     assert "censo ainda não publicado" in pop_trust_issue([0] * 10, None, age_months=2)
     assert "censo ainda não publicado" in pop_trust_issue(None, None, age_months=5)
-    assert "página fina" in pop_trust_issue([0] * 10, None, age_months=6)
+    # ME03 Perfect Order com 6 meses ainda sem censo (run 2026-09-23).
+    assert "censo ainda não publicado" in pop_trust_issue([0] * 10, None, age_months=6)
+    assert "página fina" in pop_trust_issue([0] * 10, None, age_months=9)
     assert pop_trust_issue(None, None, age_months=12) == "pop n/d"
     assert pop_trust_issue(None, None) == "pop n/d"                # sem idade
     # Censo publicado e fino em set novo continua "página fina".

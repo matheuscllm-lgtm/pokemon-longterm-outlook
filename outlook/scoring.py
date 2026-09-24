@@ -198,7 +198,8 @@ POP_TOTAL_MIN_TRUST = 25
 # Set mais novo que isto com censo vazio/ausente NÃO é página fina: o censo do
 # PriceCharting é mensal e ainda não incorporou o set (run 2026-09-22: ME03/04/
 # 05 e 30th Celebration saíam com "página fina/duplicada" — nota enganosa).
-POP_CENSUS_LAG_MONTHS = 6
+# 9, não 6: ME03 Perfect Order com 6 meses seguia sem censo (run 2026-09-23).
+POP_CENSUS_LAG_MONTHS = 9
 
 # Prêmio PSA 10 sobre a crua abaixo disto = o mercado não paga pela nota
 # (informativo: vira nota na linha; NÃO entra no score até calibrar).

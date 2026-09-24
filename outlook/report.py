@@ -208,7 +208,7 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
                    "censo mensal) e **Demanda** = vendas/mês da PSA 10. "
                    "Pop = 'PSA 10 / total gradado PSA (taxa gem)'. Prêmio = "
                    "PSA 10 ÷ carta crua (informativo, não entra no score). "
-                   "Censo ausente ou não confiável (set com <6 meses sem censo "
+                   "Censo ausente ou não confiável (set com <9 meses sem censo "
                    "publicado, página fina/duplicada, ou mais vendas/mês do "
                    "que PSA 10 existentes) → Escassez cai "
                    "pra idade do set, com o motivo na linha; sem vendas "

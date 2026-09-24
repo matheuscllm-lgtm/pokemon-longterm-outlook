@@ -166,10 +166,10 @@ Personagem e Raridade não mudam; o score segue 4×25 = 100. Regras duras:
   `POP_TOTAL_MIN_TRUST` (25), ou **mais vendas/mês de PSA 10 do que PSA 10
   existentes**, = "pop não confiável": Escassez cai pra idade do set, com o
   motivo na linha. Sem vendas publicadas, Demanda cai pra faixa de preço do
-  slab, com nota. Nunca zera, nunca inventa. Set com **< 6 meses**
+  slab, com nota. Nunca zera, nunca inventa. Set com **< 9 meses**
   (`POP_CENSUS_LAG_MONTHS`) e censo vazio/ausente não é página fina: a nota é
-  "censo ainda não publicado" (o censo é mensal) — ME03/04/05 e 30th
-  Celebration em 2026-09.
+  "censo ainda não publicado" (o censo é mensal e atrasa — ME03 Perfect Order
+  com 6 meses seguia sem censo) — ME03/04/05 e 30th Celebration em 2026-09.
 - **`--max-price` vale sobre o PSA 10** (o operador pediu "tabela até
   US$600" = slab até 600); a crua só passa pelo piso `--min-price`.
 - **Só o pool consultado entra no ranking** (misturar cartas medidas com
