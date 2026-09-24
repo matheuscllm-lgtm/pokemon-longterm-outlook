@@ -203,6 +203,12 @@ POP_TOTAL_MIN_TRUST = 25
 # 05 e 30th Celebration saíam com "página fina/duplicada" — nota enganosa).
 # 9, não 6: ME03 Perfect Order com 6 meses seguia sem censo (run 2026-09-23).
 POP_CENSUS_LAG_MONTHS = 9
+# GemRate (censo diário): set mais novo que isto tem pop real, mas ainda em
+# formação — ninguém teve tempo de gradar (snapshot 2026-09-24: 8 dias →
+# pop10 mediana 1,5; 2 meses → 3; 4 meses → 359; 6 meses → 3.074). "Pop 2"
+# aí é calendário, não escassez → balde, com o motivo. 3, não 9: a GemRate
+# não tem o atraso mensal do PriceCharting.
+GEMRATE_CENSUS_FORMING_MONTHS = 3
 
 # Prêmio PSA 10 sobre a crua abaixo disto = o mercado não paga pela nota
 # (informativo: vira nota na linha; NÃO entra no score até calibrar).
@@ -239,6 +245,10 @@ def pop_trust_issue(pop_psa: list[int] | None,
         if pop_psa is None:
             return "pop n/d"
         p10, total = pop_psa[9], sum(pop_psa)
+        if age_months is not None and age_months < GEMRATE_CENSUS_FORMING_MONTHS:
+            return (f"censo em formação (set com {age_months} "
+                    f"{'mês' if age_months == 1 else 'meses'}; {total} gradada"
+                    f"{'s' if total != 1 else ''} até hoje)")
         if p10 == 0:
             return f"nenhuma PSA 10 no censo ainda ({total} gradada{'s' if total != 1 else ''})"
         if sales_per_month is not None and sales_per_month > p10:

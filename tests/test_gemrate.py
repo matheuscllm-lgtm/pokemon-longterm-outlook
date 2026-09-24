@@ -367,3 +367,25 @@ def test_shiny_holo_rare_do_shiny_vault_e_sempre_foil_e_nao_exige_holo_no_nome()
             _rec(year="2019", set_name="Pokemon Sun & Moon Hidden Fates", name="Full Art/Umbreon GX",
                  card_number="SV69", parallel="Italian", gems=15, total=33)]
     assert match_record(recs, "Umbreon GX", "Hidden Fates: Shiny Vault", "SV69", 2019, "Shiny Holo Rare").pop10 == 7084
+
+
+# ── Censo em formação (run 2026-09-24, 2ª leitura) ───────────────────────────
+# A GemRate passou a ter o 30th Celebration (8 dias: Gengar ex 154 = 2 PSA 10 de
+# 2 gradadas) e o Pitch Black (2 meses: pop mediana 3). "Pop 2" aí não é
+# escassez, é que ninguém teve tempo de gradar — e foi pro #1 do ranking.
+# Dado do snapshot: 8 dias → mediana 1,5; 2 meses → 3; 4 meses → 359; 6 → 3.074.
+
+def test_gemrate_set_com_menos_de_3_meses_e_censo_em_formacao_e_vai_pro_balde():
+    novo = {"id": "me30", "name": "ME: 30th Celebration", "series": "Mega Evolution", "releaseDate": "2026-09-16"}
+    sc = score_card({"id": "1", "name": "Gengar ex", "number": "154", "rarity": "Special Illustration Rare"},
+                    novo, 300.0, today=date(2026, 9, 24))
+    apply_lowpop(sc, {**PC_PAGE, "gemrate": GemratePop(2, 2, 2, _rec(gems=2, total=2))}, today=date(2026, 9, 24))
+    assert sc.pop_source == "gemrate" and sc.pop_psa10 == 2
+    assert sc.pop_issue and "censo em formação" in sc.pop_issue
+    assert sc.pts_scarcity == sc.pts_supply
+
+
+def test_gemrate_set_com_3_meses_ou_mais_confia_no_censo():
+    assert pop_trust_issue([0] * 9 + [359], 30.0, age_months=4, source="gemrate") is None
+    assert "censo em formação" in pop_trust_issue([0] * 9 + [3], 30.0, age_months=2, source="gemrate")
+    assert "censo em formação" in pop_trust_issue([0] * 9 + [2], None, age_months=0, source="gemrate")

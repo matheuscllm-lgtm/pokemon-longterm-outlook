@@ -180,10 +180,11 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
     if unmeasured:
         lines.append("### ⚠️ Sem censo confiável — validar manualmente")
         lines.append("")
-        lines.append("_Escassez NÃO medida (set novo cujo censo mensal ainda "
-                     "não saiu, censo ausente, página fina/duplicada no "
-                     "PriceCharting, ou mais vendas/mês do que PSA 10 no "
-                     "censo): o score caiu na régua de idade do set e não "
+        lines.append("_Escassez NÃO medida (set com menos de 3 meses — censo "
+                     "da PSA ainda em formação; set novo cujo censo mensal do "
+                     "PriceCharting ainda não saiu; censo ausente; página "
+                     "fina/duplicada no PriceCharting; ou mais vendas/mês do "
+                     "que PSA 10 no censo): o score caiu na régua de idade do set e não "
                      "disputa o ranking acima. Motivo na coluna Notas._")
         lines.append("")
         lines.extend(header)
@@ -212,9 +213,10 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
                    "mensal, pode estar meses defasado em set novo — só entra "
                    "quando a carta não casou na GemRate). Prêmio = "
                    "PSA 10 ÷ carta crua (informativo, não entra no score). "
-                   "Censo ausente ou não confiável (set com <9 meses sem censo "
-                   "publicado, página fina/duplicada, ou mais vendas/mês do "
-                   "que PSA 10 existentes) → Escassez cai "
+                   "Censo ausente ou não confiável (set com <3 meses = censo da "
+                   "PSA ainda em formação; set com <9 meses sem censo do "
+                   "PriceCharting publicado; página fina/duplicada; ou mais "
+                   "vendas/mês do que PSA 10 existentes) → Escassez cai "
                    "pra idade do set, com o motivo na linha; sem vendas "
                    "publicadas → Demanda cai pra faixa de preço, com nota. "
                    "Faixas calibradas em 2026-09-21 sobre o pool medido "
