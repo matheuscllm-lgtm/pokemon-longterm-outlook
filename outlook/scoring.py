@@ -334,8 +334,8 @@ def apply_psa10(sc, psa10_usd: float | None,
     sc.psa10_status = status
     if psa10_usd is None:
         if status and status != "ok":
-            sc.notes.append(f"sem preço PSA 10 ({status}) — "
-                            "Preço medido na régua raw")
+            why = "na página" if status == "sem preço PSA 10" else f"({status})"
+            sc.notes.append(f"sem preço PSA 10 {why} — Preço medido na régua raw")
         return
     sc.pts_price = price_points_psa10(psa10_usd, sales_per_month)
     if (sales_per_month is not None
