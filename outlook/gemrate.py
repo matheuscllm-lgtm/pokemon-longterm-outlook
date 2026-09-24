@@ -59,10 +59,19 @@ TIMEOUT_S = 30
 # catálogo, que as traz como prefixo "SWSH07:") e ruído de catálogo.
 _NOISE = {"pokemon", "tcg", "and", "the", "of", "base", "set", "en", "asc"}
 _ERA = {"sword", "shield", "scarlet", "violet", "sun", "moon", "xy", "black",
-        "white", "diamond", "pearl", "heartgold", "soulsilver", "swsh", "sv",
-        "sm", "bw", "dp", "hgss", "ex", "me"}
+        "white", "diamond", "pearl", "platinum", "heartgold", "soulsilver",
+        "swsh", "sv", "sm", "bw", "dp", "hgss", "ex", "me"}
+# Sigla de era do catálogo → palavras que a GemRate usa ("SM Base Set" ↔
+# "Pokemon Sun & Moon"); só entra na comparação de set "só de era".
+_ERA_ALIAS = {"sm": ("sun", "moon"), "swsh": ("sword", "shield"), "bw": ("black", "white"),
+              "dp": ("diamond", "pearl"), "hgss": ("heartgold", "soulsilver"),
+              "sv": ("scarlet", "violet")}
 _ERA_PREFIX_RE = re.compile(r"^[A-Z]{2,4}\d{0,2}\s*[:\-–]\s*")   # "SWSH07: ", "XY - ", "ME: "
-_CATALOG_NUM_QUIRK_RE = re.compile(r"\s+-\d+/\d+\s*$")          # "Mimikyu -160/091"
+# Subconjunto que o catálogo lista como set próprio e a GemRate dobra no set
+# principal (mesma numeração TG##/GG##/SV##): "Hidden Fates: Shiny Vault",
+# "SWSH11: Lost Origin Trainer Gallery", "SWSH: Crown Zenith: Galarian Gallery".
+_SUBSET_SUFFIX_RE = re.compile(r":?\s*\b(shiny vault|trainer gallery|galarian gallery)\s*$", re.I)
+_CATALOG_NUM_QUIRK_RE = re.compile(r"\s+-\s*\d+/\d+")            # "Mimikyu -160/091", "Ditto - 039/113 (…)"
 # Set moderno inglês: "Pokemon Mew EN-151" → "151". Outros idiomas têm a língua
 # no nome ("Pokemon Italian Mew It-151") e são recusados.
 _EN_CODE_RE = re.compile(r"^\s*pokemon\s+\w+\s+EN-(.+)$", re.I)
@@ -73,9 +82,29 @@ _LANG_RE = re.compile(r"\b(italian|french|german|spanish|latin american|japanese
 _SET_OVERRIDES = {
     "base set": "game",
     "base set 2": "game base ii",
+    "team rocket": "rocket",
 }
 # Tokens de paralelo que NÃO mudam a carta (o resto é idioma/promo/theme deck).
 _NEUTRAL_PARALLEL = {"base", "holo"}
+# Rótulo de raridade que a GemRate põe no paralelo e que NÃO bate palavra a
+# palavra com o catálogo: XY chama a secret rare de "Ultra Rare"; SM chama a
+# rainbow/hyper rare de "Secret". Só entra pra ESSAS raridades do catálogo —
+# em SV/ME o paralelo é a raridade exata e continua exigido igual.
+_RARITY_PARALLEL_SYNONYMS = {
+    "secret": {"ultra", "rare", "secret"},
+    "rainbow": {"secret", "rare"},
+    "hyper": {"secret", "rare"},
+}
+# Raridade do catálogo em que a carta PODE ser não-holo: só aqui a regra
+# "holo ↔ -Holo" é estrita (achado da revisão de 2026-09-24). Toda outra
+# raridade (Ultra/Secret/Rainbow/Shiny Holo/Amazing…) é sempre foil e a
+# GemRate a nomeia "-Holo" em EX/DP/PL/HGSS/BW ("Umbreon-Holo" = Prime #86,
+# "Charizard EX-Holo" = ex #105) — exigir "holo" na raridade derrubava 118
+# cartas do run de 2026-09-24 sem ganhar precisão nenhuma.
+_PLAIN_RARITIES = {"common", "uncommon", "rare", "promo"}
+# "Shiny Holo Rare" (SV## do Shiny Vault) tem "holo" no rótulo mas não é essa
+# distinção — a GemRate lista "Full Art/Umbreon GX | Base"; cai no caso
+# sempre-foil (só "Holo Rare" estrito exige o registro "-Holo").
 # Variantes de impressão: só entram quando o set do catálogo as pede.
 _PRINT_VARIANTS = {"1st", "edition", "shadowless", "reverse", "foil"}
 
@@ -169,6 +198,7 @@ def _core(tokens: list[str]) -> list[str]:
 
 def _catalog_set_core(set_name: str) -> list[str]:
     name = _ERA_PREFIX_RE.sub("", set_name or "")
+    name = _SUBSET_SUFFIX_RE.sub("", name)
     name = re.sub(r"\(.*?\)", " ", name)
     key = " ".join(name.lower().split())
     if key in _SET_OVERRIDES:
@@ -186,7 +216,11 @@ def _gemrate_set_core(set_name: str) -> list[str] | None:
 
 
 def _era_tokens(name: str) -> set[str]:
-    return {t for t in _token_list(name) if t in _ERA}
+    out: set[str] = set()
+    for t in _token_list(name):
+        if t in _ERA:
+            out.update(_ERA_ALIAS.get(t, (t,)))
+    return out
 
 
 def _set_matches(catalog_set: str, gemrate_set: str) -> bool:
@@ -213,6 +247,8 @@ def match_record(records: list[dict], card_name: str, set_name: str, number: str
     rarity_tokens = set(_token_list(rarity or ""))
     qualifier = set(_token_list(" ".join(re.findall(r"\((.*?)\)", set_name))))
     allowed_parallel = _NEUTRAL_PARALLEL | rarity_tokens | qualifier
+    for tok in rarity_tokens & _RARITY_PARALLEL_SYNONYMS.keys():
+        allowed_parallel |= _RARITY_PARALLEL_SYNONYMS[tok]
     cands = []
     for r in records:
         if str(r.get("year", "")).strip() != str(release_year):
@@ -240,10 +276,12 @@ def match_record(records: list[dict], card_name: str, set_name: str, number: str
     # A variante holo tem que ser a que a raridade do catálogo pede — sem
     # fallback: "Rare" com só o registro "-Holo" sobrando é OUTRA impressão
     # (achado da revisão de 2026-09-24), e o inverso também.
-    if "holo" in rarity_tokens:
-        cands = [r for r in cands if is_holo(r)]
-    else:
+    if "holo" in rarity_tokens and rarity_tokens <= {"holo", "rare"}:
+        cands = [r for r in cands if is_holo(r)]   # "Holo Rare": só a holo
+    elif rarity_tokens <= _PLAIN_RARITIES:
         cands = [r for r in cands if not is_holo(r)]
+    # Raridade sempre-foil (Ultra/Secret/Rainbow/…): "-Holo" é só o nome que
+    # a GemRate dá à impressão única — não filtra.
     if len(cands) != 1:
         return None
     r = cands[0]

@@ -282,3 +282,88 @@ def test_parse_player_page_barra_escapada_antes_da_aspa_final():
     # Payload termina com "\\" (barra literal) antes da aspa que fecha a string JS.
     html = "var RowData = JSON.parse('[{\"category\": \"TCG\", \"name\": \"x\\\\\"}]');"
     assert parse_player_page(html)[0]["name"] == "x\\"
+
+
+# ── Run canônico de 2026-09-24 (543 GemRate / 167 PC): 3 causas dos 167 ──────
+# Diagnóstico carta a carta (tabela × cache da GemRate): 118 caíram na regra
+# holo estrita em raridade SEMPRE-foil (ex/LV.X/Prime/Legend/Secret vêm como
+# "-Holo" na GemRate e como "Ultra Rare"/"Secret Rare" no catálogo), 60 em
+# nome de set fora do mapa (Platinum, Shiny Vault, Trainer Gallery, Galarian
+# Gallery, "SM Base Set", "Team Rocket"), 10 no quirk "Ditto - 039/113 (…)".
+
+@pytest.mark.parametrize("rarity", ["Ultra Rare", "Secret Rare", "Rainbow Rare",
+                                    "Shiny Holo Rare", "Amazing Rare", "Hyper Rare"])
+def test_raridade_sempre_foil_aceita_o_registro_holo_da_gemrate(rarity):
+    recs = [_rec(year="2010", set_name="Pokemon Heartgold & Soulsilver Undaunted",
+                 name="Umbreon-Holo", card_number="86", gems=83, total=5346),
+            _rec(year="2010", set_name="Pokemon Heartgold & Soulsilver Undaunted",
+                 name="Umbreon-Holo", card_number="86", parallel="Italian", gems=2, total=52)]
+    m = match_record(recs, "Umbreon (Prime)", "Undaunted", "86", 2010, rarity)
+    assert m is not None and m.pop10 == 83
+
+
+def test_raridade_simples_continua_estrita_no_holo():
+    # A regra da revisão (2026-09-24) segue valendo onde a carta PODE ser
+    # não-holo: "Rare"/"Common" com só o registro "-Holo" é outra impressão.
+    so_holo = [_rec(year="2009", set_name="Pokemon Platinum", name="Gardevoir-Holo", card_number="8", gems=8, total=171)]
+    assert match_record(so_holo, "Gardevoir", "Platinum", "8", 2009, "Rare") is None
+    assert match_record(so_holo, "Gardevoir", "Platinum", "8", 2009, "Common") is None
+
+
+def test_paralelo_que_e_rotulo_de_raridade_da_gemrate_nao_reprova():
+    # XY: a GemRate põe a raridade dela no paralelo ("Ultra Rare" pra secret
+    # rare); SM: "Secret" pra rainbow rare. O número já fixa a carta.
+    xy = [_rec(year="2014", set_name="Pokemon XY Flashfire", name="M Charizard EX", card_number="107",
+               parallel="Ultra Rare", gems=79, total=1200),
+          _rec(year="2014", set_name="Pokemon XY Flashfire", name="M Charizard EX", card_number="107",
+               parallel="Italian-Ultra Rare", gems=0, total=3)]
+    assert match_record(xy, "M Charizard EX (Y) (Secret)", "XY - Flashfire", "107", 2014, "Secret Rare").pop10 == 79
+    sm = [_rec(year="2018", set_name="Pokemon Sun & Moon Celestial Storm", name="Full Art/Rayquaza GX",
+               card_number="177", parallel="Secret", gems=546, total=1523),
+          _rec(year="2018", set_name="Pokemon Sun & Moon Celestial Storm", name="Full Art/Rayquaza GX",
+               card_number="177", parallel="French-Secret", gems=4, total=14)]
+    assert match_record(sm, "Rayquaza GX (Secret)", "SM - Celestial Storm", "177", 2018, "Rainbow Rare").pop10 == 546
+
+
+@pytest.mark.parametrize("cat_set,gr_set,year", [
+    ("Rising Rivals", "Pokemon Platinum Rising Rivals", 2009),
+    ("Supreme Victors", "Pokemon Platinum Supreme Victors", 2009),
+    ("Arceus", "Pokemon Platinum Arceus", 2009),
+    ("Platinum", "Pokemon Platinum", 2009),
+    ("Hidden Fates: Shiny Vault", "Pokemon Sun & Moon Hidden Fates", 2019),
+    ("Shining Fates: Shiny Vault", "Pokemon Sword & Shield Shining Fates", 2021),
+    ("SWSH11: Lost Origin Trainer Gallery", "Pokemon Sword & Shield Lost Origin", 2022),
+    ("SWSH09: Brilliant Stars Trainer Gallery", "Pokemon Sword & Shield Brilliant Stars", 2022),
+    ("SWSH: Crown Zenith: Galarian Gallery", "Pokemon Sword and Shield Crown Zenith", 2023),
+    ("SM Base Set", "Pokemon Sun & Moon", 2017),
+    ("Black and White", "Pokemon Black & White", 2011),
+    ("Team Rocket", "Pokemon Rocket", 2000),
+])
+def test_match_mais_nomes_de_set_reais_da_gemrate(cat_set, gr_set, year):
+    recs = [_rec(year=str(year), set_name=gr_set, name="Pikachu", card_number="7")]
+    assert match_record(recs, "Pikachu", cat_set, "7", year, "Rare") is not None
+
+
+def test_subset_nao_casa_com_outro_set_da_mesma_era():
+    recs = [_rec(year="2022", set_name="Pokemon Sword & Shield Silver Tempest", name="Pikachu", card_number="TG05")]
+    assert match_record(recs, "Pikachu", "SWSH11: Lost Origin Trainer Gallery", "TG05", 2022, "Rare") is None
+    assert match_record(recs, "Pikachu", "SM Base Set", "TG05", 2022, "Rare") is None
+
+
+@pytest.mark.parametrize("name,q", [
+    ("Ditto - 039/113 (Pikachu)", "Ditto"),
+    ("Rayquaza - 016/110 (Delta Species)", "Rayquaza"),
+    ("Eevee - 068/113", "Eevee"),
+])
+def test_player_query_tira_o_quirk_numero_com_espaco_e_qualificador(name, q):
+    assert player_query(name) == q
+
+
+def test_shiny_holo_rare_do_shiny_vault_e_sempre_foil_e_nao_exige_holo_no_nome():
+    # "Shiny Holo Rare" (SV##) traz "holo" no rótulo, mas não é a distinção
+    # holo × não-holo do WotC: a GemRate lista "Full Art/Umbreon GX | Base".
+    recs = [_rec(year="2019", set_name="Pokemon Sun & Moon Hidden Fates", name="Full Art/Umbreon GX",
+                 card_number="SV69", gems=7084, total=13257),
+            _rec(year="2019", set_name="Pokemon Sun & Moon Hidden Fates", name="Full Art/Umbreon GX",
+                 card_number="SV69", parallel="Italian", gems=15, total=33)]
+    assert match_record(recs, "Umbreon GX", "Hidden Fates: Shiny Vault", "SV69", 2019, "Shiny Holo Rare").pop10 == 7084
