@@ -195,6 +195,10 @@ DEMAND_FLOOR = 3
 #   - vendas/mês de PSA 10 MAIORES que o nº de PSA 10 existentes → impossível
 #     (vende mais do que existe) → "pop não confiável".
 POP_TOTAL_MIN_TRUST = 25
+# Set mais novo que isto com censo vazio/ausente NÃO é página fina: o censo do
+# PriceCharting é mensal e ainda não incorporou o set (run 2026-09-22: ME03/04/
+# 05 e 30th Celebration saíam com "página fina/duplicada" — nota enganosa).
+POP_CENSUS_LAG_MONTHS = 6
 
 # Prêmio PSA 10 sobre a crua abaixo disto = o mercado não paga pela nota
 # (informativo: vira nota na linha; NÃO entra no score até calibrar).
@@ -216,8 +220,16 @@ def demand_points(sales_per_month: float) -> int:
 
 
 def pop_trust_issue(pop_psa: list[int] | None,
-                    sales_per_month: float | None) -> str | None:
-    """Motivo pra NÃO confiar no censo desta página, ou None se confiável."""
+                    sales_per_month: float | None,
+                    age_months: int | None = None) -> str | None:
+    """Motivo pra NÃO confiar no censo desta página, ou None se confiável.
+
+    `age_months` (idade do set) distingue "censo ainda não publicado" (set novo,
+    censo vazio ou ausente) de "página fina/duplicada" (set antigo)."""
+    if (age_months is not None and age_months < POP_CENSUS_LAG_MONTHS
+            and (pop_psa is None or sum(pop_psa) == 0)):
+        return (f"censo ainda não publicado (set com {age_months} "
+                f"{'mês' if age_months == 1 else 'meses'}; censo é mensal)")
     if pop_psa is None:
         return "pop n/d"
     total = sum(pop_psa)
@@ -299,7 +311,10 @@ class ScoredCard:
 
     @property
     def age_months(self) -> int:
-        t = date.today()
+        return self.months_since_release()
+
+    def months_since_release(self, today: date | None = None) -> int:
+        t = today or date.today()
         return (t.year - self.release.year) * 12 + (t.month - self.release.month)
 
 
@@ -330,7 +345,7 @@ def apply_psa10(sc, psa10_usd: float | None,
             "tabela pode não ser realizável")
 
 
-def apply_lowpop(sc, r: dict) -> None:
+def apply_lowpop(sc, r: dict, today: date | None = None) -> None:
     """Aplica o modo low pop numa carta já pontuada, IN-PLACE, a partir do
     dict de `psa10.fetch_psa10` (uma página = preço PSA 10 + vendas + censo).
 
@@ -350,7 +365,7 @@ def apply_lowpop(sc, r: dict) -> None:
     sc.tcg_product_id = r.get("tcg_product_id")
     spm = r.get("sales_per_month")
 
-    issue = pop_trust_issue(sc.pop_psa, spm)
+    issue = pop_trust_issue(sc.pop_psa, spm, sc.months_since_release(today))
     sc.pop_issue = issue
     if issue is None:
         sc.pts_scarcity = scarcity_points(sc.pop_psa[9])

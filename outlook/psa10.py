@@ -256,21 +256,45 @@ def pick_search_result(body: str, number: str, set_name: str = "") -> str | None
     a variante ("Base Set (Shadowless)"), a linha certa é a que traz exatamente
     esse qualificador. Primeiro que casar vence (a busca ordena por relevância).
     """
+    picks = pick_search_candidates(body, number, set_name)
+    return picks[0][0] if picks and picks[0][1] else None
+
+
+def pick_search_candidates(body: str, number: str,
+                           set_name: str = "") -> list[tuple[str, bool]]:
+    """[(url, impressão_comum?)] das linhas do MESMO set+número, em ordem.
+
+    Primeiro a impressão comum (a regra de `pick_search_result`, no máximo
+    uma); depois as IRMÃS: mesmo set+número com qualificador entre colchetes
+    que não é variante de impressão ("[Holo]", "[Cracked Ice Holo]").
+    Por que existem: pra holo rare de era DP/HGSS/BW o PriceCharting tem duas
+    páginas — a comum é a versão não-holo de theme deck (outro productId, sem
+    preço e sem censo) e a "[Holo]" é a carta do catálogo (sonda 2026-09-23:
+    Gardevoir #8 Platinum, Absol #67 Plasma Freeze). A irmã só é ABERTA quando
+    a comum vem fina, e só é ACEITA quando o productId da página prova a
+    identidade (`fetch_psa10`) — precisão > cobertura.
+    """
     if not number:
-        return None
-    num = number.split("/")[0].strip().lstrip("0") or number
+        return []
+    alt = _number_alt(number)
     qualifier = _tokens(" ".join(re.findall(r"\((.*?)\)", set_name)))
+    exact, siblings = [], []
     for url, title in _SEARCH_ROW_RE.findall(body):
         clean = " ".join(html_mod.unescape(re.sub(r"<[^>]+>", " ", title)).split())
-        if _tokens(" ".join(re.findall(r"\[(.*?)\]", clean))) != qualifier:
-            continue
         if set_name and not _set_matches(url, set_name):
             continue
-        if re.search(rf"#{re.escape(num)}(?![\w])", clean):
-            # O href vem HTML-escapado ("…-&amp;-…"); aberto cru, o site não
-            # acha a página e o set inteiro vira "sem match" (151, DP, FRLG…).
-            return html_mod.unescape(url)
-    return None
+        if not re.search(rf"#{alt}(?![\w])", clean):
+            continue
+        bracket = _tokens(" ".join(re.findall(r"\[(.*?)\]", clean)))
+        # O href vem HTML-escapado ("…-&amp;-…"); aberto cru, o site não
+        # acha a página e o set inteiro vira "sem match" (151, DP, FRLG…).
+        url = html_mod.unescape(url)
+        if bracket == qualifier:
+            if not exact:
+                exact.append((url, True))
+        elif not ((bracket - qualifier) & _PRINT_VARIANTS):
+            siblings.append((url, False))
+    return exact + siblings
 
 
 def _cache_path(card_name: str, set_name: str, number: str) -> Path:
@@ -296,6 +320,12 @@ def _cache_get(card_name: str, set_name: str, number: str,
         if not d.get("usd") or not _product_matches(
                 d.get("url", ""), "", number, set_name,
                 tcg_product_id, d.get("tcg_product_id")):
+            return None
+        # Página irmã ("[Holo]") só entrou no cache porque o productId provou a
+        # identidade; sem o mesmo productId na chamada de hoje (ex.: --source
+        # ptcg) a prova não se refaz → miss (achado da revisão de 2026-09-23).
+        if d.get("_sibling") and not (
+                tcg_product_id and str(tcg_product_id) == str(d.get("tcg_product_id"))):
             return None
         return d
     except (ValueError, KeyError, OSError):
@@ -328,19 +358,36 @@ def _extract(body: str, url: str) -> dict:
     }
 
 
+def _number_forms(number: str) -> list[str]:
+    """Grafias aceitas do número da carta, sem o denominador e sem zero à
+    esquerda. Numeração "H" dos e-Card (Aquapolis/Skyridge): o catálogo escreve
+    `H09`, o PriceCharting `#H9` — o zero DEPOIS da letra também cai (sonda de
+    2026-09-23: a linha "Espeon #H9" estava na busca e o matcher pedia "#H09").
+    `TG16`/`SV49`/`25` não mudam. Nunca solta a letra: "H09" ≠ "9"."""
+    num = number.split("/")[0].strip().lstrip("0") or number
+    forms = [num]
+    m = re.fullmatch(r"([A-Za-z]+)0+(\d+)", num)
+    if m:
+        forms.append(m.group(1) + m.group(2))
+    return forms
+
+
+def _number_alt(number: str) -> str:
+    """Regex (sem âncoras) que casa qualquer grafia aceita do número."""
+    return "(?:" + "|".join(re.escape(f) for f in _number_forms(number)) + ")"
+
+
 def _number_matches(url: str, body: str, number: str) -> bool:
     if not number:
         return False
-    num = number.split("/")[0].strip().lstrip("0") or number
-    if re.search(rf"[-/]{re.escape(num.lower())}(?:[-/]|$)",
-                 urlparse(url).path.lower()):
+    alt = _number_alt(number)
+    if re.search(rf"[-/]{alt}(?:[-/]|$)", urlparse(url).path, re.I):
         return True
     # Título: número EXATO ("#4" não pode casar "#46") — mesma regra do
     # pick_search_result; sem isso um redirect pra carta errada seria aceito e
     # ficaria no cache como "ok" (achado da revisão de 2026-09-21).
     title = re.search(r"<title>(.*?)</title>", body, re.S)
-    return bool(title and re.search(rf"#{re.escape(num)}(?![\w])",
-                                    title.group(1), re.I))
+    return bool(title and re.search(rf"#{alt}(?![\w])", title.group(1), re.I))
 
 
 def _product_matches(url: str, body: str, number: str, set_name: str = "",
@@ -429,25 +476,43 @@ def fetch_psa10(card_name: str, set_name: str, number: str,
                 last_status = f"HTTP {r.status_code}"
                 continue
             url, body = r.url, r.text
-            if "/game/" not in url:
-                # Página de resultados: escolher a linha certa e abrir.
-                pick = pick_search_result(body, number, set_name)
-                if not pick:
+            if "/game/" in url:
+                candidates = [(url, body, True)]
+            else:
+                # Página de resultados: a impressão comum primeiro; as irmãs
+                # "[Holo]" só se a comum vier fina (ver pick_search_candidates).
+                candidates = [(u, None, exact)
+                              for u, exact in pick_search_candidates(body, number, set_name)]
+            thin = None
+            for url, body, exact in candidates:
+                if not exact and thin is None:
+                    break                    # comum não veio fina: irmã não abre
+                if body is None:
+                    r = requests.get(url, headers=HEADERS, timeout=TIMEOUT_S)
+                    time.sleep(SLEEP_S)
+                    if r.status_code != 200:
+                        last_status = f"HTTP {r.status_code}"
+                        continue
+                    url, body = r.url, r.text
+                pid = parse_tcgplayer_product_id(body)
+                if not _product_matches(url, body, number, set_name, tcg_product_id, pid):
+                    last_status = "sem match confiável"  # página veio, carta não bate
                     continue
-                r = requests.get(pick, headers=HEADERS, timeout=TIMEOUT_S)
-                time.sleep(SLEEP_S)
-                if r.status_code != 200:
-                    last_status = f"HTTP {r.status_code}"
+                if not exact and not (tcg_product_id and pid
+                                      and str(pid) == str(tcg_product_id)):
+                    continue                 # irmã só com identidade provada
+                d = _extract(body, url)
+                if exact and d["usd"] is None and not (d["pop_psa"] and sum(d["pop_psa"])):
+                    thin = d                 # fina: sem preço E sem censo → tentar irmã
                     continue
-                url, body = r.url, r.text
-            if not _product_matches(url, body, number, set_name, tcg_product_id,
-                                    parse_tcgplayer_product_id(body)):
-                last_status = "sem match confiável"  # página veio, carta não bate
-                continue
-            out.update(_extract(body, url))
-            if use_cache and out["status"] == "ok":
-                _cache_put(card_name, set_name, number, out)
-            return out
+                out.update(d)
+                if use_cache and out["status"] == "ok":
+                    _cache_put(card_name, set_name, number,
+                               out if exact else {**out, "_sibling": True})
+                return out
+            if thin is not None:
+                out.update(thin)             # n/d honesto, com a página declarada
+                return out
         out["status"] = last_status
         return out
     except requests.RequestException:

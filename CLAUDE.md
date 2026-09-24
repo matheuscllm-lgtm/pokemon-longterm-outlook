@@ -166,7 +166,10 @@ Personagem e Raridade não mudam; o score segue 4×25 = 100. Regras duras:
   `POP_TOTAL_MIN_TRUST` (25), ou **mais vendas/mês de PSA 10 do que PSA 10
   existentes**, = "pop não confiável": Escassez cai pra idade do set, com o
   motivo na linha. Sem vendas publicadas, Demanda cai pra faixa de preço do
-  slab, com nota. Nunca zera, nunca inventa.
+  slab, com nota. Nunca zera, nunca inventa. Set com **< 6 meses**
+  (`POP_CENSUS_LAG_MONTHS`) e censo vazio/ausente não é página fina: a nota é
+  "censo ainda não publicado" (o censo é mensal) — ME03/04/05 e 30th
+  Celebration em 2026-09.
 - **`--max-price` vale sobre o PSA 10** (o operador pediu "tabela até
   US$600" = slab até 600); a crua só passa pelo piso `--min-price`.
 - **Só o pool consultado entra no ranking** (misturar cartas medidas com
@@ -387,6 +390,14 @@ no chat.
    de outra carta. Cobertura perdida por `&amp;` cru no href da busca (151,
    DP, FRLG, HGSS…) corrigida no mesmo dia. Se um set inteiro sair "sem
    match", suspeite do slug (ex.: `fire-red-&-leaf-green`), não da carta.
+   Dois buracos fechados em 2026-09-23 (sonda ao vivo antes de mexer):
+   numeração "H" dos e-Card (`H09` no catálogo = `#H9` no site — o zero
+   depois da letra cai, `_number_forms`; 4 holos de Aquapolis/Skyridge
+   recuperadas) e **página fina/duplicada** de holo rare DP/HGSS/BW (a página
+   comum é a versão não-holo de theme deck, sem preço e sem censo; a carta
+   está na irmã `[Holo]`). A irmã só é aberta quando a comum vem fina e só é
+   aceita quando o productId da página = card_id (`pick_search_candidates`);
+   sem essa prova a carta fica n/d (Lucario #14 CoL, Absol #1 EX Dragon).
 
 ## Arquitetura
 

@@ -179,8 +179,9 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
     if unmeasured:
         lines.append("### ⚠️ Sem censo confiável — validar manualmente")
         lines.append("")
-        lines.append("_Escassez NÃO medida (censo ausente, página fina/duplicada "
-                     "no PriceCharting, ou mais vendas/mês do que PSA 10 no "
+        lines.append("_Escassez NÃO medida (set novo cujo censo mensal ainda "
+                     "não saiu, censo ausente, página fina/duplicada no "
+                     "PriceCharting, ou mais vendas/mês do que PSA 10 no "
                      "censo): o score caiu na régua de idade do set e não "
                      "disputa o ranking acima. Motivo na coluna Notas._")
         lines.append("")
@@ -207,8 +208,9 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
                    "censo mensal) e **Demanda** = vendas/mês da PSA 10. "
                    "Pop = 'PSA 10 / total gradado PSA (taxa gem)'. Prêmio = "
                    "PSA 10 ÷ carta crua (informativo, não entra no score). "
-                   "Censo ausente ou não confiável (página fina/duplicada, ou "
-                   "mais vendas/mês do que PSA 10 existentes) → Escassez cai "
+                   "Censo ausente ou não confiável (set com <6 meses sem censo "
+                   "publicado, página fina/duplicada, ou mais vendas/mês do "
+                   "que PSA 10 existentes) → Escassez cai "
                    "pra idade do set, com o motivo na linha; sem vendas "
                    "publicadas → Demanda cai pra faixa de preço, com nota. "
                    "Faixas calibradas em 2026-09-21 sobre o pool medido "
