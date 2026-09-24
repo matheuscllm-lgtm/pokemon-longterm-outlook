@@ -29,6 +29,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+from datetime import date
 from pathlib import Path
 from statistics import median
 from typing import Iterable, Sequence
@@ -76,8 +77,19 @@ def load_pool(snapshot: Path | None = None) -> list[dict]:
                 "pts_rarity": _int(r.get("pts_rarity")) or 0,
                 "pts_scarcity": _int(r.get("pts_scarcity")),
                 "pts_demand": _int(r.get("pts_demand")),
+                # Idade do set NO DIA do snapshot (mesma conta do scoring):
+                # o guard "censo em formação" da GemRate depende dela.
+                "age_months": _age_months(r.get("release"), r.get("date")),
             })
     return rows
+
+
+def _age_months(release: str | None, when: str | None) -> int | None:
+    try:
+        rel, t = date.fromisoformat(release), date.fromisoformat(when)
+    except (TypeError, ValueError):
+        return None
+    return (t.year - rel.year) * 12 + (t.month - rel.month)
 
 
 def load_cache(cache_dir: Path | None = None) -> list[dict]:
@@ -252,15 +264,17 @@ def rescore(pool: Iterable[dict], sc_bands, sc_floor, dm_bands, dm_floor) -> lis
 
 
 def census_trusted(pop10: int | None, pop_total: int | None,
-                   spm: float | None, pop_source: str | None = None) -> bool:
+                   spm: float | None, pop_source: str | None = None,
+                   age_months: int | None = None) -> bool:
     """Espelho de `scoring.pop_trust_issue` sobre as colunas do snapshot.
     `pop_source="gemrate"` (censo PSA oficial) não tem guard de página fina —
-    censo pequeno é escassez real (achado da revisão de 2026-09-24)."""
+    censo pequeno é escassez real (achado da revisão de 2026-09-24) — mas set
+    com < 3 meses é "censo em formação" (2ª leitura do mesmo dia)."""
     if pop10 is None or pop_total is None:
         return False
     issue = pop_trust_issue([0] * 9 + [pop10] if pop_total == pop10
                             else [pop_total - pop10] + [0] * 8 + [pop10], spm,
-                            source=pop_source or None)
+                            age_months=age_months, source=pop_source or None)
     return issue is None
 
 
@@ -290,7 +304,8 @@ def build_report(pool: list[dict], cache: list[dict], n_top: int = 30,
     # a partir do que o snapshot guarda (pop10 + total). Não dá pra inferir
     # pela pontuação: Escassez por idade e por censo podem coincidir (25 = 25).
     for r in pool:
-        r["_trusted"] = census_trusted(r["pop10"], r["pop_total"], r["spm"], r.get("pop_source"))
+        r["_trusted"] = census_trusted(r["pop10"], r["pop_total"], r["spm"], r.get("pop_source"),
+                                       age_months=r.get("age_months"))
     trusted = [r for r in pool if r["_trusted"]]
     with_spm = [r for r in pool if r["spm"] is not None]
     pop10 = [float(r["pop10"]) for r in trusted]
