@@ -177,6 +177,21 @@ Personagem e Raridade não mudam; o score segue 4×25 = 100. Regras duras:
   Cache 7 dias em `data/cache/gemrate/` (~1,5 s por Pokémon novo). Com fonte
   GemRate não existe "página fina": censo pequeno é escassez real; `pop10 = 0`
   = "nenhuma PSA 10 no censo ainda" → balde de validação (nit do #28).
+  **Regras de match que custaram cobertura** (run 2026-09-24: 543/738 → 725/738
+  após o diagnóstico carta a carta, ver `tests/test_gemrate.py`): raridade
+  sempre-foil (Ultra/Secret/Rainbow/Shiny Holo…) aceita o registro "-Holo"
+  (ex/LV.X/Prime/Legend vêm assim na GemRate) — só "Holo Rare" exige "-Holo"
+  e só Common/Uncommon/Rare/Promo exigem o registro sem holo; XY/SM põem a
+  raridade DELES no paralelo ("Ultra Rare" na secret de XY, "Secret" na
+  rainbow de SM) — sinônimos só pra essas raridades; "platinum" é palavra de
+  era; ": Shiny Vault"/"Trainer Gallery"/"Galarian Gallery" dobram no set
+  principal; "SM Base Set" ↔ "Pokemon Sun & Moon" por alias de sigla; "Team
+  Rocket" ↔ "Pokemon Rocket"; quirk "Ditto - 039/113 (…)" sai da query.
+  **Set com < 3 meses** (`GEMRATE_CENSUS_FORMING_MONTHS`): a GemRate já
+  publica o set, mas ninguém teve tempo de gradar (8 dias → pop10 mediana
+  1,5; 2 meses → 3; 4 meses → 359) — "pop 2" é calendário, não escassez →
+  nota "censo em formação", balde. Ficam n/d honestos: Base Set Pikachu
+  Red/Yellow Cheeks (ambíguo), Flareon Star, Unown [N], Alakazam E4 Lv.X.
 - **Guard de página fina/duplicada** (só para o censo do PriceCharting) (achado da sonda: o PriceCharting tem
   páginas com censo quase vazio — Venusaur 15 com pop 4, Gardevoir ex 233 com
   pop 2). Pop baixa ALI é página errada, não escassez. Censo total <
