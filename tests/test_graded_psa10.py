@@ -212,3 +212,19 @@ def test_tabela_normal_nao_ganha_colunas_do_modo_graded():
     sc.tcg_url = "https://tcg.example/x"
     md = ranking_markdown([sc], 1)
     assert "PSA 10 US$" not in md and "MODO GRADED" not in md
+
+
+def test_nota_sem_preco_nao_repete_o_status():
+    # Auditoria 2026-09-23: saía "sem preço PSA 10 (sem preço PSA 10)".
+    from outlook.scoring import apply_psa10
+    sc = _carta() if "_carta" in globals() else None
+    if sc is None:
+        from datetime import date
+        from outlook.scoring import score_card
+        sc = score_card({"id": "1", "name": "X", "number": "1", "rarity": "Rare"},
+                        {"id": "s", "name": "S", "series": "XY", "releaseDate": "2015-01-01"},
+                        50.0, today=date(2026, 9, 1))
+    apply_psa10(sc, None, None, "sem preço PSA 10")
+    assert any(n.startswith("sem preço PSA 10 na página") for n in sc.notes)
+    apply_psa10(sc, None, None, "sem match confiável")
+    assert any("sem preço PSA 10 (sem match confiável)" in n for n in sc.notes)

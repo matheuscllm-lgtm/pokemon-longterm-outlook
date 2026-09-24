@@ -107,9 +107,30 @@ def calibrate_cross_section(cards: list) -> str:
     return "\n".join(lines)
 
 
+# Critério de sucesso do modo low pop (decisão registrada em 2026-09-22): a
+# régua "acertou" se, numa janela de pelo menos SUCCESS_MIN_DAYS, o PSA 10 das
+# cartas de score alto valorizou mais do que o das de score baixo — Spearman
+# (score em t0, retorno do PSA 10) > 0 E mediana do top-quartil > bottom-quartil.
+# É o retorno do SLAB porque é o slab que o operador compra; a crua é contexto.
+SUCCESS_MIN_DAYS = 180
+
+
+def _price_field(rows: list[dict]) -> str:
+    """'psa10_usd' quando a história é do modo low pop (com preço de slab);
+    'market_usd' (crua) para snapshots da régua antiga."""
+    if any(r.get("lowpop") == "1" and r.get("psa10_usd") for r in rows):
+        return "psa10_usd"
+    return "market_usd"
+
+
 def backtest_longitudinal(min_days: int = 21) -> str:
     rows = history.load_rows()
     head = "## Backtest longitudinal\n\n"
+    field = _price_field(rows)
+    if field == "psa10_usd":
+        # História mista (snapshots da régua antiga antes dos low pop): a
+        # janela low pop começa no 1º snapshot low pop, não no raw.
+        rows = [r for r in rows if r.get("lowpop") == "1"]
     if not rows:
         return (head + "Sem snapshots ainda. Rode run_outlook.py por alguns "
                 "dias/semanas — cada run salva 1 snapshot; com ≥2 datas "
@@ -120,14 +141,15 @@ def backtest_longitudinal(min_days: int = 21) -> str:
                 "medir se score alto → maior valorização.")
     d0, d1 = dates[0], dates[-1]
     span = (date.fromisoformat(d1) - date.fromisoformat(d0)).days
+    label ="PSA 10" if field == "psa10_usd" else "crua"
     first = {r["card_id"]: r for r in rows if r["date"] == d0}
     last = {r["card_id"]: r for r in rows if r["date"] == d1}
     scores, rets = [], []
     for cid, r0 in first.items():
         r1 = last.get(cid)
-        if not r1:
+        if not r1 or not r0.get(field) or not r1.get(field):
             continue
-        p0, p1 = float(r0["market_usd"]), float(r1["market_usd"])
+        p0, p1 = float(r0[field]), float(r1[field])
         if p0 <= 0:
             continue
         scores.append(int(r0["score"]))
@@ -140,14 +162,25 @@ def backtest_longitudinal(min_days: int = 21) -> str:
     low = [r for _, r in paired[:q]]
     high = [r for _, r in paired[-q:]]
     lines = [head.rstrip("\n"), "",
-             f"Janela: {d0} → {d1} ({span} dias), {len(scores)} cartas.", "",
-             f"- Spearman(score em t0, retorno) = **{rho:+.2f}** "
+             f"Janela: {d0} → {d1} ({span} dias), {len(scores)} cartas; "
+             f"retorno medido no preço **{label}**.", "",
+             f"- Spearman(score em t0, retorno {label}) = **{rho:+.2f}** "
              "(>0 = score alto rendeu mais — a hipótese da régua).",
              f"- Mediana de retorno do top-quartil de score: **{median(high):+.1f}%** "
              f"vs bottom-quartil: **{median(low):+.1f}%**."]
     if span < min_days:
         lines.append(f"\n⚠️ Janela curta ({span}d < {min_days}d): sinal ruidoso, "
                      "trate como preliminar.")
+    if field == "psa10_usd":
+        ok = rho > 0 and median(high) > median(low)
+        if span >= SUCCESS_MIN_DAYS:
+            verdict = "**ATINGIDO**" if ok else "**NÃO atingido**"
+        else:
+            verdict = (f"ainda sem veredito — janela de {span}d < "
+                       f"{SUCCESS_MIN_DAYS}d (sinal preliminar: "
+                       f"{'a favor' if ok else 'contra'})")
+        lines.append(f"\n- Critério de sucesso (≥{SUCCESS_MIN_DAYS}d, Spearman > 0 "
+                     f"e top-quartil > bottom-quartil no PSA 10): {verdict}.")
     return "\n".join(lines)
 
 
