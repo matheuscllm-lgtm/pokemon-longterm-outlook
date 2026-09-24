@@ -37,3 +37,15 @@ def test_set_com_e_comercial_fica_utilizavel():
     url = ebay_psa10_url("Snorlax VMAX", "SWSH01: Sword & Shield Base Set", "206")
     assert "sword" in _q(url)["_nkw"][0].lower()
     assert "&_sacat=" in url                # o "&" do set nao quebrou a querystring
+
+
+def test_numero_h_do_ecard_busca_as_duas_grafias():
+    # Catálogo "H09", mercado/eBay "H9" (auditoria da entrega de 2026-09-22: o
+    # link saía só com H09). Sintaxe OR do eBay: "(H09,H9)" casa as duas.
+    from outlook.availability import ebay_url
+    for fn in (ebay_url, ebay_psa10_url):
+        nkw = _q(fn("Espeon (H9)", "Aquapolis", "H09"))["_nkw"][0]
+        assert "(H09,H9)" in nkw and "espeon" in nkw.lower()
+    # Número sem letra ou sem zero depois da letra não ganha parêntese.
+    for num in ("223", "TG16", "072/078"):
+        assert "(" not in _q(ebay_psa10_url("X", "Y", num))["_nkw"][0]

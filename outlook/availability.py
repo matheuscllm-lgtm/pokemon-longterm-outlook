@@ -31,6 +31,7 @@ pra conferência manual, explicitamente.
 from __future__ import annotations
 
 import os
+import re
 import time
 import unicodedata
 from pathlib import Path
@@ -359,13 +360,22 @@ class CTAvailability:
 
 
 # ── Links de busca direta (plataformas sem coleta automatizada) ──────────────
+def _ebay_number(number: str) -> str:
+    """Número da carta pra query do eBay. Numeração "H" dos e-Card: catálogo
+    "H09", vendedores "H9" — sintaxe OR do eBay "(H09,H9)" casa as duas
+    (auditoria de 2026-09-23). Sem zero depois da letra, é o número limpo."""
+    num = _clean_number(number)
+    m = re.fullmatch(r"([A-Za-z]+)0+(\d+)", num)
+    return f"({num},{m.group(1)}{m.group(2)})" if m else num
+
+
 def ebay_url(name: str, set_name: str, number: str) -> str:
     """Busca da carta no eBay, sem exigir graduação ou consultar a API.
 
     Nome base, número e coleção identificam a carta; qualificadores de catálogo
     como '(Alternate Full Art)' saem porque nem todo vendedor os usa no título.
     """
-    card_number = _clean_number(number) if number and number.strip() else ""
+    card_number = _ebay_number(number) if number and number.strip() else ""
     q = quote_plus(" ".join(
         f"pokemon {_base_name(name)} {card_number} "
         f"{_strip_era_prefix(set_name)}".split()))
@@ -396,7 +406,7 @@ def ebay_psa10_url(name: str, set_name: str, number: str) -> str:
     conferência final é no anúncio.
     """
     q = quote_plus(" ".join(
-        f"pokemon {_base_name(name)} {_clean_number(number)} "
+        f"pokemon {_base_name(name)} {_ebay_number(number)} "
         f"{_strip_era_prefix(set_name)} psa 10".split()))
     return (f"https://www.ebay.com/sch/i.html?_nkw={q}"
             f"&_sacat={EBAY_CCG_SINGLES_CATEGORY}&LH_BIN=1&_sop=15")
