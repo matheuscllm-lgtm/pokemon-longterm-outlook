@@ -26,7 +26,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-from outlook import (doubleholo, history, pricehistory, psa10, ptcg_api,
+from outlook import (doubleholo, gemrate, history, pricehistory, psa10, ptcg_api,
                      scoring, sealed, tcgcsv_api)
 from outlook.pricecharting import fetch_trend
 from outlook.report import ranking_markdown, scenario_markdown
@@ -182,26 +182,32 @@ def main() -> int:
         print(f"Modo low pop: até {budget} consultas ao PriceCharting pra "
               f"encher {pool_n} vagas com PSA 10 ≤ US$ {args.max_price:g} "
               f"(~{budget * 3 / 60:.0f} min sem cache)...")
-        kept, over_cap, consulted, got, got_pop = [], 0, 0, 0, 0
+        kept, over_cap, consulted, got, got_pop, got_gr = [], 0, 0, 0, 0, 0
         for c in candidates:
             if len(kept) >= pool_n or consulted >= budget:
                 break
             consulted += 1
             r = psa10.fetch_psa10(c.name, c.set_name, c.number,
                                   tcg_product_id=tcg_pid(c))
+            # Censo PSA oficial (GemRate); None = cai no do PriceCharting, declarado.
+            r["gemrate"] = gemrate.lookup(c.name, c.set_name, c.number,
+                                          c.release.year, c.rarity)
             scoring.apply_lowpop(c, r)
             got += r["usd"] is not None
-            got_pop += r.get("pop_psa") is not None
+            got_pop += c.pop_source is not None
+            got_gr += c.pop_source == "gemrate"
             print(f"  [{consulted}/{budget}] {c.name} {c.number} ({c.series}): "
                   f"{'US$ %.2f' % r['usd'] if r['usd'] is not None else r['status']}"
-                  + (f" · pop10 {r['pop_psa'][9]}" if r.get("pop_psa") else ""),
+                  + (f" · pop10 {c.pop_psa10} ({'PSA' if c.pop_source == 'gemrate' else 'PC'})"
+                     if c.pop_psa10 is not None else ""),
                   file=sys.stderr)
             if c.psa10_usd is not None and c.psa10_usd > args.max_price:
                 over_cap += 1
                 continue
             kept.append(c)  # dentro do teto, ou PSA 10 n/d (fica, com nota)
         print(f"PSA 10 obtido em {got}/{consulted} consultas; censo em "
-              f"{got_pop}/{consulted}. Ranking low pop = {len(kept)} cartas "
+              f"{got_pop}/{consulted} (PSA oficial via GemRate: {got_gr}; "
+              f"PriceCharting: {got_pop - got_gr}). Ranking low pop = {len(kept)} cartas "
               f"(PSA 10 ≤ US$ {args.max_price:g}); {over_cap} acima do teto "
               f"saíram; {len(candidates) - consulted} candidatas não foram "
               f"consultadas (suba --graded-pool pra cobrir mais) e "

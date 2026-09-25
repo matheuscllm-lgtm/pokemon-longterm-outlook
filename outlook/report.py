@@ -99,11 +99,12 @@ def _trend_footnote(trend_source: str) -> str:
 
 def _fmt_pop(c: ScoredCard) -> str:
     """'PSA10 / total (gem%)' ou n/d — e o motivo quando o censo não vale."""
-    if c.pop_psa is None:
+    if c.pop_psa10 is None or c.pop_total is None:
         return "n/d"
     gem = c.gem_rate
+    src = {"gemrate": " PSA", "pricecharting": " PC"}.get(c.pop_source or "", "")
     return (f"{c.pop_psa10:,} / {c.pop_total:,}"
-            f" ({gem * 100:.0f}%)" if gem is not None else f"0 / 0")
+            f" ({gem * 100:.0f}%)" if gem is not None else "0 / 0") + src
 
 
 def ranking_markdown(cards: list[ScoredCard], top_n: int,
@@ -179,10 +180,11 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
     if unmeasured:
         lines.append("### ⚠️ Sem censo confiável — validar manualmente")
         lines.append("")
-        lines.append("_Escassez NÃO medida (set novo cujo censo mensal ainda "
-                     "não saiu, censo ausente, página fina/duplicada no "
-                     "PriceCharting, ou mais vendas/mês do que PSA 10 no "
-                     "censo): o score caiu na régua de idade do set e não "
+        lines.append("_Escassez NÃO medida (set com menos de 3 meses — censo "
+                     "da PSA ainda em formação; set novo cujo censo mensal do "
+                     "PriceCharting ainda não saiu; censo ausente; página "
+                     "fina/duplicada no PriceCharting; ou mais vendas/mês do "
+                     "que PSA 10 no censo): o score caiu na régua de idade do set e não "
                      "disputa o ranking acima. Motivo na coluna Notas._")
         lines.append("")
         lines.extend(header)
@@ -204,13 +206,17 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
                    "nunca inventamos preço nem liquidez." if graded else "")
     lowpop_note = (" MODO LOW POP: o score troca Supply e Preço por dois "
                    "componentes MEDIDOS na página do PriceCharting — "
-                   "**Escassez** = nº de PSA 10 no censo (aba POP Report; "
-                   "censo mensal) e **Demanda** = vendas/mês da PSA 10. "
-                   "Pop = 'PSA 10 / total gradado PSA (taxa gem)'. Prêmio = "
+                   "**Escassez** = nº de PSA 10 no censo e **Demanda** = "
+                   "vendas/mês da PSA 10. Pop = 'PSA 10 / total gradado PSA "
+                   "(taxa gem)' + fonte: **PSA** = pop oficial da PSA via "
+                   "GemRate (diário); **PC** = censo do PriceCharting (foto "
+                   "mensal, pode estar meses defasado em set novo — só entra "
+                   "quando a carta não casou na GemRate). Prêmio = "
                    "PSA 10 ÷ carta crua (informativo, não entra no score). "
-                   "Censo ausente ou não confiável (set com <9 meses sem censo "
-                   "publicado, página fina/duplicada, ou mais vendas/mês do "
-                   "que PSA 10 existentes) → Escassez cai "
+                   "Censo ausente ou não confiável (set com <3 meses = censo da "
+                   "PSA ainda em formação; set com <9 meses sem censo do "
+                   "PriceCharting publicado; página fina/duplicada; ou mais "
+                   "vendas/mês do que PSA 10 existentes) → Escassez cai "
                    "pra idade do set, com o motivo na linha; sem vendas "
                    "publicadas → Demanda cai pra faixa de preço, com nota. "
                    "Faixas calibradas em 2026-09-21 sobre o pool medido "

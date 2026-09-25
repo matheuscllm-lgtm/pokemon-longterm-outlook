@@ -160,3 +160,36 @@ def test_relatorio_com_cortes_da_cli_e_zero_censo_confiavel_nao_quebra():
     dm = cal.parse_cuts("60,30,5,2", [25, 20, 14, 8])
     md = cal.build_report(pool, [], n_top=5, proposed_sc=sc, proposed_dm=dm)
     assert "Nenhuma carta com censo confiável" in md
+
+
+def test_census_trusted_respeita_a_fonte_gemrate():
+    # Censo pequeno mas OFICIAL (GemRate) é escassez real, não página fina.
+    assert cal.census_trusted(4, 9, None, "gemrate") is True
+    assert cal.census_trusted(4, 9, None, "pricecharting") is False
+    assert cal.census_trusted(0, 9, None, "gemrate") is False     # nenhuma PSA 10 ainda
+
+
+def test_census_trusted_gemrate_set_com_menos_de_3_meses_e_censo_em_formacao():
+    # Espelho do guard novo do scoring (2026-09-24, 2ª leitura): a GemRate já
+    # publica o set, mas ninguém gradou ainda — "pop 2" é calendário.
+    assert cal.census_trusted(2, 2, None, "gemrate", age_months=0) is False
+    assert cal.census_trusted(3, 9, None, "gemrate", age_months=2) is False
+    assert cal.census_trusted(359, 800, 30.0, "gemrate", age_months=4) is True
+
+
+def test_load_pool_le_a_idade_do_set_e_o_topo_exclui_censo_em_formacao(tmp_path):
+    from datetime import date as _d
+    snap = tmp_path / "snapshot_2026-09-24.csv"
+    hdr = ("date,source,card_id,set_id,set_name,number,name,rarity,series,release,market_usd,notorious,"
+           "heavy_reprint,score,pts_character,pts_rarity,pts_supply,pts_price,lowpop,psa10_usd,"
+           "psa10_sales_per_month,pop_psa10,pop_total,pts_scarcity,pts_demand,pop_source\n")
+    novo = ("2026-09-24,tcgcsv,1,s1,ME: 30th Celebration,154,Gengar ex,Special Illustration Rare,Mega Evolution,"
+            "2026-09-16,133.6,Gengar,0,71,25,21,25,0,1,,,2,2,25,0,gemrate\n")
+    velho = ("2026-09-24,tcgcsv,2,s2,SWSH07: Evolving Skies,184,Sylveon V,Ultra Rare,Sword & Shield,"
+             "2021-08-27,199.1,,0,60,15,15,7,0,1,399.57,30,7163,13906,7,20,gemrate\n")
+    snap.write_text(hdr + novo + velho, encoding="utf-8")
+    pool = cal.load_pool(snap)
+    assert {r["name"]: r["age_months"] for r in pool} == {"Gengar ex": 0, "Sylveon V": 61}
+    md = cal.build_report(pool, [], n_top=5)
+    assert "censo confiável: **1**" in md
+    assert "Gengar ex" not in md.split("## Efeito no top")[1]

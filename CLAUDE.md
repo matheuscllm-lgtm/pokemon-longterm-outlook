@@ -54,7 +54,7 @@ compra/venda — é triagem de longo prazo. O que **SE aplica**:
 
 ```bash
 python -m venv .venv
-.venv/bin/pip install -r requirements.txt   # requests, pytest, py7zr
+.venv/bin/pip install -r requirements.txt   # requests, pytest, py7zr, curl_cffi
 ```
 
 `py7zr` é opcional em runtime (lê os dumps `.ppmd.7z` do histórico de preço;
@@ -155,12 +155,44 @@ provado em sonda de 30 cartas em 2026-09-21: 29/30 com censo, sem navegador):
 
 | Componente | O que mede | Como pontua (faixas CALIBRADAS em 2026-09-21 — ver "Calibração das faixas" abaixo) |
 |---|---|---|
-| **Escassez** (substitui Supply) | nº de **PSA 10** no censo PSA | ≤50 = 25 · ≤500 = 22 · ≤2.000 = 18 · ≤5.000 = 12 · ≤10.000 = 7 · acima = 3 |
+| **Escassez** (substitui Supply) | nº de **PSA 10** no censo PSA — fonte **GemRate** (pop oficial da PSA, diário; `outlook/gemrate.py`), PriceCharting só como reserva declarada | ≤50 = 25 · ≤500 = 22 · ≤2.000 = 18 · ≤5.000 = 12 · ≤10.000 = 7 · acima = 3 |
 | **Demanda** (substitui Preço) | **vendas/mês** da PSA 10 | ≥60 (2+/dia) = 25 · ≥30 (1/dia) = 20 · ≥5 (1-3/semana) = 14 · ≥2 = 8 · abaixo = 3 |
 
 Personagem e Raridade não mudam; o score segue 4×25 = 100. Regras duras:
 
-- **Guard de página fina/duplicada** (achado da sonda: o PriceCharting tem
+- **Censo = pop oficial da PSA via GemRate (2026-09-24).** O censo embutido
+  no PriceCharting (`VGPC.pop_data`) é uma foto mensal que atrasa MESES em
+  set moderno: N's Zoroark ex #286 saía com 1.046 PSA 10 quando a PSA tinha
+  3.318 (3,2×); Mega Gengar ex #269 com 1.722 vs 17.360 (10×); Sylveon V
+  #184 com 1/6 vs 7.163/13.906. Pop Report da PSA exige login e a API
+  pública responde 403 "approved customers" — a GemRate (gemrate.com) publica
+  o pop da PSA por carta, sem login, diário, e o número bate com o oficial.
+  `outlook/gemrate.py` lê a página por Pokémon (`/player?grader=psa`), casa o
+  registro por **número + ano + set + nome + paralelo** (nomes reais da
+  GemRate: "Pokemon Game" = Base Set, "Pokemon Asc EN-Ascended Heroes",
+  paralelo = raridade em SV/ME, idiomas recusados) e devolve `pop10`
+  (`gems`), `psa9_plus`, `total`. Sem match (set que a GemRate ainda não tem,
+  ambiguidade) → censo do PriceCharting **com nota "pode estar defasado"**;
+  a coluna Pop diz a fonte (`PSA` / `PC`) e o snapshot grava `pop_source`.
+  Cache 7 dias em `data/cache/gemrate/` (~1,5 s por Pokémon novo). Com fonte
+  GemRate não existe "página fina": censo pequeno é escassez real; `pop10 = 0`
+  = "nenhuma PSA 10 no censo ainda" → balde de validação (nit do #28).
+  **Regras de match que custaram cobertura** (run 2026-09-24: 543/738 → 725/738
+  após o diagnóstico carta a carta, ver `tests/test_gemrate.py`): raridade
+  sempre-foil (Ultra/Secret/Rainbow/Shiny Holo…) aceita o registro "-Holo"
+  (ex/LV.X/Prime/Legend vêm assim na GemRate) — só "Holo Rare" exige "-Holo"
+  e só Common/Uncommon/Rare/Promo exigem o registro sem holo; XY/SM põem a
+  raridade DELES no paralelo ("Ultra Rare" na secret de XY, "Secret" na
+  rainbow de SM) — sinônimos só pra essas raridades; "platinum" é palavra de
+  era; ": Shiny Vault"/"Trainer Gallery"/"Galarian Gallery" dobram no set
+  principal; "SM Base Set" ↔ "Pokemon Sun & Moon" por alias de sigla; "Team
+  Rocket" ↔ "Pokemon Rocket"; quirk "Ditto - 039/113 (…)" sai da query.
+  **Set com < 3 meses** (`GEMRATE_CENSUS_FORMING_MONTHS`): a GemRate já
+  publica o set, mas ninguém teve tempo de gradar (8 dias → pop10 mediana
+  1,5; 2 meses → 3; 4 meses → 359) — "pop 2" é calendário, não escassez →
+  nota "censo em formação", balde. Ficam n/d honestos: Base Set Pikachu
+  Red/Yellow Cheeks (ambíguo), Flareon Star, Unown [N], Alakazam E4 Lv.X.
+- **Guard de página fina/duplicada** (só para o censo do PriceCharting) (achado da sonda: o PriceCharting tem
   páginas com censo quase vazio — Venusaur 15 com pop 4, Gardevoir ex 233 com
   pop 2). Pop baixa ALI é página errada, não escassez. Censo total <
   `POP_TOTAL_MIN_TRUST` (25), ou **mais vendas/mês de PSA 10 do que PSA 10
@@ -422,8 +454,10 @@ outlook/sealed.py        score de SELADO (ETB/Box/Bundle/Tin): Tipo + Idade + MS
 outlook/notorious.py     personagens notórios em tiers de apelo S/A/B (Pokémon + treinadores)
 outlook/sets.py          helpers puros de nome de set (strip_era_prefix), compartilhados entre report e availability
 outlook/doubleholo.py    coluna DH: nota 0-100 a partir do JSON premium do Double Holo, join por productId
-outlook/psa10.py         modos graded/low pop: preço, liquidez, CENSO (pop por nota), crua e TCGPlayer ID do slab via
+outlook/psa10.py         modos graded/low pop: preço, liquidez, censo de RESERVA (pop por nota), crua e TCGPlayer ID do slab via
                          PriceCharting (escada de queries + página de resultados + guard de número + cache 1 dia)
+outlook/gemrate.py       modo low pop: CENSO PSA oficial por carta via GemRate (página por Pokémon, match nº+ano+set+nome+paralelo,
+                         cache 7 dias); pop10 = gems
 outlook/pricecharting.py tendência best-effort via PriceCharting (--trend-source pricecharting; legado)
 outlook/pricehistory.py  tendência REAL: histórico diário do tcgcsv (.ppmd.7z via py7zr), cache data/cache/tcgcsv_history/
 outlook/history.py       persiste snapshots diários do score (data/snapshots/) → série histórica própria
@@ -431,16 +465,16 @@ outlook/validate.py      calibração transversal do score + backtest longitudin
 outlook/lowpop_calibration.py  calibração das FAIXAS do modo low pop: lê snapshot + cache do run, quantis de pop10 e
                          vendas/mês (pool e por era), fatia do pool por faixa vigente × proposta, efeito no topo
 outlook/report.py        cenário por era + tabela top-N em markdown
-tests/                   281 testes em 19 arquivos: scoring, sealed, history, validate, pricehistory,
+tests/                   315 testes em 20 arquivos: scoring, sealed, history, validate, pricehistory,
                          doubleholo, notorious, report, sets, tcgcsv_api, lowpop, lowpop_calibration,
                          availability, ebay_availability, ebay_psa10_url, comc_availability, graded_psa10,
-                         psa10_guard_set, psa10_cobertura_h_e_irma
+                         psa10_guard_set, psa10_cobertura_h_e_irma, gemrate
 ```
 
 ## Testes e CI
 
 ```bash
-python -m pytest tests/ -q     # 281 testes (nuvem/Linux: python3)
+python -m pytest tests/ -q     # 315 testes (nuvem/Linux: python3)
 ```
 
 No PC do operador: `.venv\Scripts\python.exe -m pytest tests/ -q`.

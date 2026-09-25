@@ -4,3 +4,6 @@ pytest>=8.0
 # --trend). O filtro PPMd não é suportado por zipfile/lzma da stdlib. É opcional
 # em runtime (sem ele a tendência cai pra "n/d"), mas recomendado.
 py7zr>=0.21
+# curl_cffi: TLS de Chrome sem navegador — a GemRate (censo PSA oficial do modo
+# --lowpop) responde 200 com ele; requests puro pode cair no desafio Cloudflare.
+curl_cffi>=0.7
