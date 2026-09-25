@@ -193,3 +193,100 @@ def test_load_pool_le_a_idade_do_set_e_o_topo_exclui_censo_em_formacao(tmp_path)
     md = cal.build_report(pool, [], n_top=5)
     assert "censo confiável: **1**" in md
     assert "Gengar ex" not in md.split("## Efeito no top")[1]
+
+
+# ── Candidatos de calibração (2026-09-25): só análise, nada muda no score ────
+
+def test_pontos_relativos_a_mediana_da_era_escassez():
+    # pop10 ÷ mediana da era em degraus de ÷2: ≤¼ 25 · ≤½ 22 · ≤1× 18 · ≤2× 12 · ≤4× 7 · resto 3
+    med = 1000.0
+    assert cal.relative_scarcity_points(250, med) == 25
+    assert cal.relative_scarcity_points(251, med) == 22
+    assert cal.relative_scarcity_points(1000, med) == 18
+    assert cal.relative_scarcity_points(2000, med) == 12
+    assert cal.relative_scarcity_points(4000, med) == 7
+    assert cal.relative_scarcity_points(4001, med) == 3
+    assert cal.relative_scarcity_points(0, med) == 25
+
+
+def test_pontos_relativos_a_mediana_da_era_demanda_em_log():
+    # vendas/mês ÷ mediana da era em degraus de ×2: ≥4× 25 · ≥2× 20 · ≥1× 14 · ≥½ 8 · resto 3
+    med = 8.0
+    assert cal.relative_demand_points(32.0, med) == 25
+    assert cal.relative_demand_points(16.0, med) == 20
+    assert cal.relative_demand_points(8.0, med) == 14
+    assert cal.relative_demand_points(4.0, med) == 8
+    assert cal.relative_demand_points(3.9, med) == 3
+    assert cal.relative_demand_points(0.0, med) == 3
+
+
+def test_mediana_por_era_cai_na_global_quando_a_era_e_pequena():
+    pool = [_row(f"S{i}", "SV", 1000 * (i + 1), 10.0 * (i + 1), 3, 3) for i in range(6)]
+    pool += [_row("E1", "EX", 10, 0.5, 25, 3), _row("E2", "EX", 20, 1.0, 25, 3)]
+    for r in pool:
+        r["_trusted"] = True
+    meds = cal.era_medians(pool, "pop10", min_n=5)
+    assert meds["SV"] == 3500          # mediana de 1000..6000
+    assert "EX" not in meds            # 2 cartas < 5 → sem mediana própria
+    g = cal.global_median(pool, "pop10")
+    assert g == cal.quantile([1000, 2000, 3000, 4000, 5000, 6000, 10, 20], 0.5)
+
+
+def test_candidato_gate_exclui_quem_vende_menos_de_2_por_mes_e_tira_a_demanda_do_score():
+    pool = [_row("Liquida", "SV", 100, 30.0, 22, 20),
+            _row("Parada", "SV", 10, 1.0, 25, 3),
+            _row("SemVenda", "SV", 10, None, 25, 3)]
+    for r in pool:
+        r["_trusted"] = True
+    ranked, gated = cal.rescore_candidate(pool, "gate")
+    assert [r["name"] for _, r in ranked] == ["Liquida"]
+    assert sorted(r["name"] for r in gated) == ["Parada", "SemVenda"]
+    assert ranked[0][0] == 25 + 25 + 22     # sem Demanda: máximo 75
+
+
+def test_candidato_escassez_relativa_premia_o_raro_da_propria_era():
+    # Vintage: pop 40 é o normal da era (18); moderno: pop 4000 é o normal da era (18).
+    pool = [_row(f"V{i}", "WotC", 40, 1.0, 22, 3) for i in range(5)]
+    pool += [_row(f"M{i}", "SV", 4000, 30.0, 12, 20) for i in range(5)]
+    pool += [_row("Vraro", "WotC", 5, 1.0, 25, 3), _row("Mraro", "SV", 500, 30.0, 22, 20)]
+    for r in pool:
+        r["_trusted"] = True
+    ranked, gated = cal.rescore_candidate(pool, "scarcity_era")
+    pts = {r["name"]: s - r["pts_character"] - r["pts_rarity"] - r["pts_demand"] for s, r in ranked}
+    assert pts["Vraro"] == 25 and pts["Mraro"] == 25
+    assert pts["V0"] == 18 and pts["M0"] == 18
+    assert gated == []
+
+
+def test_candidato_demanda_por_era_mantem_escassez_vigente():
+    pool = [_row(f"V{i}", "WotC", 40, 1.0, 22, 3) for i in range(5)]
+    pool += [_row("Vquente", "WotC", 40, 4.3, 22, 8)]
+    for r in pool:
+        r["_trusted"] = True
+    ranked, _ = cal.rescore_candidate(pool, "demand_era")
+    pts = {r["name"]: s - r["pts_character"] - r["pts_rarity"] - 22 for s, r in ranked}
+    assert pts["Vquente"] == 25           # 4,3 ÷ 1 ≥ 4× a mediana da era
+    assert pts["V0"] == 14                # = mediana
+
+
+def test_relatorio_de_candidatos_traz_entra_sai_e_spearman_por_candidato():
+    pool = []
+    for i in range(1, 41):
+        pop10, spm = i * 30, 40 / i
+        pool.append(_row(f"C{i}", "SV" if i % 2 else "XY", pop10, spm,
+                         cal.scarcity_points(pop10), cal.demand_points(spm)))
+    md = cal.candidates_report(pool, n_top=10)
+    for needle in ("# Candidatos de calibração", "## Vigente",
+                   "## A. Demanda em log por era", "## B. Escassez relativa à era",
+                   "## C. Gate ≥2 vendas/mês", "Sobreposição com o top 10 vigente",
+                   "**Entra**", "**Sai**", "Spearman Escassez × Demanda (pontos)",
+                   "| # | Carta | Era | pop10 | vendas/mês | Esc | Dem | score vigente → candidato |"):
+        assert needle in md, needle
+    assert "não disputa" in md            # gate reporta quantas cartas ficaram de fora
+
+
+def test_relatorio_de_candidatos_sem_censo_confiavel_avisa():
+    pool = [_row("A", "SV", 1, 0.5, 25, 3)]
+    pool[0]["pop_total"] = 2
+    md = cal.candidates_report(pool, n_top=5)
+    assert "Nenhuma carta com censo confiável" in md
