@@ -290,3 +290,13 @@ def test_relatorio_de_candidatos_sem_censo_confiavel_avisa():
     pool[0]["pop_total"] = 2
     md = cal.candidates_report(pool, n_top=5)
     assert "Nenhuma carta com censo confiável" in md
+
+
+def test_tabela_de_medianas_avisa_fallback_global_em_cada_coluna():
+    # 6 cartas com censo (sem aviso no pop) mas só 2 com vendas → a coluna de
+    # vendas tem que avisar "usa global", igual ao que rescore_candidate faz.
+    pool = [_row(f"S{i}", "SV", 1000, None, 18, 3) for i in range(4)]
+    pool += [_row("S4", "SV", 1000, 30.0, 18, 20), _row("S5", "SV", 1000, 30.0, 18, 20)]
+    md = cal.candidates_report(pool, n_top=5)
+    linha = next(l for l in md.splitlines() if l.startswith("| SV |"))
+    assert linha == "| SV | 6 | 1000 | 2 (<5: usa global) | 30 |"

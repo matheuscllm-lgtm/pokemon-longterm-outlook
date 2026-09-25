@@ -580,10 +580,13 @@ def candidates_report(pool: list[dict], n_top: int = 30) -> str:
         np_[era] = np_.get(era, 0) + 1
     for era, _ in _measured(trusted, "spm"):
         ns[era] = ns.get(era, 0) + 1
+    def _flag(n: int) -> str:   # cada coluna avisa o SEU fallback (pop e vendas são contagens distintas)
+        return "" if n >= ERA_MIN_N else f" (<{ERA_MIN_N}: usa global)"
     for era in sorted(set(mp) | set(ms)):
-        flag = "" if np_.get(era, 0) >= ERA_MIN_N else f" (<{ERA_MIN_N}: usa global)"
-        L.append(f"| {era} | {np_.get(era, 0)}{flag} | {_fmt(mp[era]) if era in mp else '—'} | "
-                 f"{ns.get(era, 0)} | {_fmt(round(ms[era], 1)) if era in ms else '—'} |")
+        L.append(f"| {era} | {np_.get(era, 0)}{_flag(np_.get(era, 0))} | "
+                 f"{_fmt(mp[era]) if era in mp else '—'} | "
+                 f"{ns.get(era, 0)}{_flag(ns.get(era, 0))} | "
+                 f"{_fmt(round(ms[era], 1)) if era in ms else '—'} |")
     L.append("")
 
     L += [f"## Vigente (top {n_top})", "", f"- Mix de eras: {_era_mix(cur_top)}",
