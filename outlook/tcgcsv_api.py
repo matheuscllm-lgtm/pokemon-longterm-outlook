@@ -217,6 +217,7 @@ def fetch_cards_with_prices(group_id: str) -> list[dict]:
             "id": str(prod["productId"]),
             "name": _strip_number_suffix(prod.get("name", ""), raw_number),
             "number": number,
+            "number_full": raw_number,  # "286/217" — só exibição; o match usa `number`
             "rarity": rarity,
             "_market_usd": pair[0] if pair else None,
             "_low_usd": pair[1] if pair else None,

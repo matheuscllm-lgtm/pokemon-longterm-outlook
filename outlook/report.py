@@ -98,13 +98,28 @@ def _trend_footnote(trend_source: str) -> str:
 
 
 def _fmt_pop(c: ScoredCard) -> str:
-    """'PSA10 / total (gem%)' ou n/d — e o motivo quando o censo não vale."""
+    """'PSA10 / total' + fonte, ou n/d."""
     if c.pop_psa10 is None or c.pop_total is None:
         return "n/d"
-    gem = c.gem_rate
     src = {"gemrate": " PSA", "pricecharting": " PC"}.get(c.pop_source or "", "")
-    return (f"{c.pop_psa10:,} / {c.pop_total:,}"
-            f" ({gem * 100:.0f}%)" if gem is not None else "0 / 0") + src
+    return f"{c.pop_psa10:,} / {c.pop_total:,}" + src
+
+
+def _fmt_gem_premium(c: ScoredCard) -> str:
+    """'gem% · prêmio×' lado a lado (pedido do operador, 2026-10-17): os dois
+    juntos dizem quanto a PSA 10 sai fácil e quanto ela vale sobre a crua."""
+    gem = f"{c.gem_rate * 100:.0f}%" if c.gem_rate is not None else "n/d"
+    prem = f"{c.psa10_premium:.1f}×" if c.psa10_premium is not None else "n/d"
+    return f"{gem} · {prem}"
+
+
+def _fmt_card(c: ScoredCard) -> str:
+    """'Nome #286/217 · Set' numa célula só (pedido do operador, 2026-10-17)."""
+    out = _md_escape(c.name)
+    num = c.number_full or c.number
+    if num:
+        out += f" #{_md_escape(num)}"
+    return f"{out} · {_md_escape(c.set_name)}"
 
 
 def ranking_markdown(cards: list[ScoredCard], top_n: int,
@@ -126,7 +141,7 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
     # Modo graded: o Preço do score é o do slab, então a tabela mostra PSA 10
     # e a liquidez dele (o preço raw vira contexto, não a régua).
     if lowpop:
-        price_h = "PSA 10 US$ | Vendas/mês | Pop PSA10 / total (gem) | Prêmio | Raw US$ | "
+        price_h = "PSA 10 US$ | Vendas/mês | Pop PSA10 / total | Gem · Prêmio | Raw US$ | "
         price_sep = "---|---|---|---|---|"
     elif graded:
         price_h = "PSA 10 US$ | Vendas/mês | Raw US$ | "
@@ -134,16 +149,13 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
     else:
         price_h = "Preço US$ | "
         price_sep = "---|"
-    lines.append("| # | Score | " + dh_h + "Carta | Set | Raridade | ⭐ | "
+    lines.append("| # | Score | " + dh_h + "Carta · nº · set | Raridade | ⭐ | "
                  + price_h + "Idade | Tendência | Notas | Links |")
-    lines.append("|---|---|" + dh_sep + "---|---|---|---|" + price_sep
+    lines.append("|---|---|" + dh_sep + "---|---|---|" + price_sep
                  + "---|---|---|---|")
     def _row(i: int, c: ScoredCard) -> str:
         star = f"⭐ {c.notorious}" if c.notorious else ""
         notes = "; ".join(c.notes) if c.notes else ""
-        carta = _md_escape(c.name)
-        if c.number:
-            carta += f" #{_md_escape(c.number)}"
         pc_url = _pricecharting_search_url(c.name, c.set_name, c.number)
         links = " · ".join((
             _md_link('eBay (busca)', ebay_url(c.name, c.set_name, c.number)),
@@ -158,17 +170,15 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
             spm = (f"{c.psa10_sales_per_month:g}"
                    if c.psa10_sales_per_month is not None else "n/d")
             if lowpop:
-                prem = (f"{c.psa10_premium:.1f}×" if c.psa10_premium is not None
-                        else "n/d")
-                price_c = (f"{p10} | {spm} | {_fmt_pop(c)} | {prem} | "
-                           f"{c.market_usd:.2f} | ")
+                price_c = (f"{p10} | {spm} | {_fmt_pop(c)} | "
+                           f"{_fmt_gem_premium(c)} | {c.market_usd:.2f} | ")
             else:
                 price_c = f"{p10} | {spm} | {c.market_usd:.2f} | "
         else:
             price_c = f"{c.market_usd:.2f} | "
         return (
-            f"| {i} | **{c.score}** | " + dh_c + f"{carta} | "
-            f"{_md_escape(c.set_name)} | {_md_escape(c.rarity)} | "
+            f"| {i} | **{c.score}** | " + dh_c + f"{_fmt_card(c)} | "
+            f"{_md_escape(c.rarity)} | "
             f"{star} | " + price_c + f"{c.age_months}m | "
             f"{c.trend or '—'} | {_md_escape(notes)} | "
             f"{links} |")
@@ -207,12 +217,13 @@ def ranking_markdown(cards: list[ScoredCard], top_n: int,
     lowpop_note = (" MODO LOW POP: o score troca Supply e Preço por dois "
                    "componentes MEDIDOS na página do PriceCharting — "
                    "**Escassez** = nº de PSA 10 no censo e **Demanda** = "
-                   "vendas/mês da PSA 10. Pop = 'PSA 10 / total gradado PSA "
-                   "(taxa gem)' + fonte: **PSA** = pop oficial da PSA via "
+                   "vendas/mês da PSA 10. Pop = 'PSA 10 / total gradado PSA' "
+                   "+ fonte: **PSA** = pop oficial da PSA via "
                    "GemRate (diário); **PC** = censo do PriceCharting (foto "
                    "mensal, pode estar meses defasado em set novo — só entra "
-                   "quando a carta não casou na GemRate). Prêmio = "
-                   "PSA 10 ÷ carta crua (informativo, não entra no score). "
+                   "quando a carta não casou na GemRate). Gem · Prêmio = taxa "
+                   "gem (PSA 10 ÷ total gradado) · PSA 10 ÷ carta crua "
+                   "(informativos, não entram no score). "
                    "Censo ausente ou não confiável (set com <3 meses = censo da "
                    "PSA ainda em formação; set com <9 meses sem censo do "
                    "PriceCharting publicado; página fina/duplicada; ou mais "
