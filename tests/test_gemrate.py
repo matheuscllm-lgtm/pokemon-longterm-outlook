@@ -207,7 +207,8 @@ def test_tabela_mostra_a_fonte_do_censo():
     apply_lowpop(a, {**PC_PAGE, "gemrate": GemratePop(7163, 12523, 13906, _rec())})
     apply_lowpop(b, {**PC_PAGE, "gemrate": None})
     md = ranking_markdown([a, b], 10, lowpop=True)
-    assert "7,163 / 13,906 (52%) PSA" in md and "1 / 6 (17%) PC" in md
+    assert "7,163 / 13,906 PSA" in md and "1 / 6 PC" in md
+    assert "| 52% · " in md and "| 17% · " in md
 
 
 # ── Nomenclatura REAL da GemRate (sonda 2026-09-24) ──────────────────────────

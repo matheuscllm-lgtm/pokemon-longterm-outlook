@@ -289,6 +289,7 @@ class ScoredCard:
     pts_supply: int = 0
     pts_price: int = 0
     tcg_url: str = ""
+    number_full: str = ""     # "286/217" como impresso (só exibição; o match usa `number`)
     low_usd: float | None = None  # menor anúncio TCGPlayer (condição NÃO filtrada; usado pelo run_availability)
     trend: str = ""           # preenchido (opcional) pelo módulo pricecharting
     # Modo graded (--graded): preço e liquidez do slab PSA 10 (módulo psa10).
@@ -487,6 +488,7 @@ def score_card(card: dict, set_meta: dict, market_usd: float,
         set_name=set_meta.get("name", ""),
         set_id=set_meta.get("id", ""),
         number=card.get("number", ""),
+        number_full=card.get("number_full", ""),
         rarity=card.get("rarity", "") or "?",
         series=set_meta.get("series", ""),
         release=release,

@@ -32,9 +32,21 @@ def _header(md: str) -> str:
     return next(l for l in md.splitlines() if l.startswith("| # |"))
 
 
-def test_card_name_carries_number():
+def test_card_name_carries_number_and_set():
     md = ranking_markdown([_card()], 10)
-    assert "Mew V (Alternate Full Art) #251" in md
+    assert "| Mew V (Alternate Full Art) #251 · SWSH08: Fusion Strike |" in md
+
+
+def test_card_shows_printed_number_with_set_total():
+    # Pedido do operador (2026-10-17): nº como impresso ("251/264"), junto do set.
+    md = ranking_markdown([_card(number_full="251/264")], 10)
+    assert "| Mew V (Alternate Full Art) #251/264 · SWSH08: Fusion Strike |" in md
+
+
+def test_set_column_merged_into_card_column():
+    header = _header(ranking_markdown([_card()], 10))
+    assert "| Carta · nº · set |" in header
+    assert "| Set |" not in header
 
 
 def test_component_columns_and_number_column_dropped_from_header():
@@ -85,7 +97,7 @@ def test_pricecharting_url_strips_era_prefix_and_keeps_number():
 def test_card_without_number_has_no_dangling_hash():
     md = ranking_markdown([_card(number="")], 10)
     assert "Mew V (Alternate Full Art) #" not in md
-    assert "Mew V (Alternate Full Art)" in md
+    assert "Mew V (Alternate Full Art) · SWSH08: Fusion Strike" in md
 
 
 def test_md_link_encodes_table_breaking_chars():

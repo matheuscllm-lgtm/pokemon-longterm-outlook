@@ -71,3 +71,17 @@ def test_best_prices_ignores_reverse_none_subtype_and_priceless():
 
 def test_best_prices_empty_input():
     assert _best_prices_by_pid([]) == {}
+
+
+def test_fetch_cards_keeps_printed_number_for_display(monkeypatch):
+    # `number` (só o nº, sem total) segue sendo a chave de match; `number_full`
+    # ("286/217") só vai pra tabela.
+    from outlook import tcgcsv_api
+    prod = {"productId": 1, "name": "N's Zoroark ex - 286/217", "url": "u",
+            "extendedData": [{"name": "Rarity", "value": "Special Illustration Rare"},
+                             {"name": "Number", "value": "286/217"}]}
+    monkeypatch.setattr(tcgcsv_api, "_get_json", lambda url: {
+        "results": [prod] if url.endswith("/products") else []})
+    card, = tcgcsv_api.fetch_cards_with_prices("1")
+    assert card["number"] == "286" and card["number_full"] == "286/217"
+    assert card["name"] == "N's Zoroark ex"

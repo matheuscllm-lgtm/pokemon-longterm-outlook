@@ -180,9 +180,9 @@ def test_tabela_lowpop_mostra_pop_gem_premio_e_declara_a_regua():
     sc = _carta()
     apply_lowpop(sc, PAGE)
     md = ranking_markdown([sc], 10, lowpop=True)
-    assert "Pop PSA10 / total (gem)" in md and "Prêmio" in md
-    assert "12,647 / 54,455 (23%)" in md
-    assert "7.0×" in md
+    assert "Pop PSA10 / total" in md and "Gem · Prêmio" in md
+    assert "12,647 / 54,455" in md
+    assert "| 23% · 7.0× |" in md          # gem e prêmio lado a lado
     assert "Escassez + Demanda" in md and "MODO LOW POP" in md
     assert "[eBay (busca)]" in md and "PriceCharting" in md
 
@@ -197,7 +197,7 @@ def test_tabela_lowpop_separa_censo_nao_confiavel_em_balde_proprio():
     md = ranking_markdown([fino, ok], 10, lowpop=True)
     top, _, bucket = md.partition("### ⚠️ Sem censo confiável")
     assert "Charizard ex" in top and "Gardevoir ex" not in top
-    assert "Gardevoir ex" in bucket and "1 / 2 (50%)" in bucket
+    assert "Gardevoir ex" in bucket and "1 / 2" in bucket and "50% ·" in bucket
     assert "Top 1 —" in top
 
 

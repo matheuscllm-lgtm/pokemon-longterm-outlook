@@ -218,8 +218,13 @@ Personagem e Raridade não mudam; o score segue 4×25 = 100. Regras duras:
   explícito por nome em `outlook/tcgcsv_api.py::VINTAGE_SETS`, sem kits/POP/
   decks) e `--eras all`. No PriceCharting, 1st Edition/Shadowless são páginas
   separadas; a sem qualificador (unlimited) é a que o scanner escolhe.
-- Colunas novas na tabela: `Pop PSA10 / total (gem)` e `Prêmio` (PSA 10 ÷
-  crua — informativo, **não entra no score** até calibrar; < 1,5× vira nota).
+- Colunas do modo: `Pop PSA10 / total` (+ fonte PSA/PC) e `Gem · Prêmio`
+  (taxa gem · PSA 10 ÷ crua, lado a lado a pedido do operador em 2026-10-17 —
+  informativos, **não entram no score**; prêmio < 1,5× vira nota). Dado do
+  run de 2026-10-17 (n=264, censo PC): Spearman gem × prêmio = **−0,63** (andam
+  em sentido oposto, então "gem alto E prêmio alto" é raro); o produto
+  gem × prêmio tem Spearman +0,06 com pop10 e +0,04 com vendas/mês — não
+  repete Escassez nem Demanda. Se entra no score é decisão do operador.
   O `tcg_product_id` lido da página é a chave de join com o catálogo tcgcsv.
 - O censo é **mensal**; velocidade de pop exige duas leituras — os campos vão
   no snapshot diário (`history.py`) justamente pra isso.
@@ -326,8 +331,9 @@ de depois, em {25, 18, 12, 8}. Backtest que compare Personagem entre as duas
 
 A tabela do ranking mostra o **score total** (não mais as 4 parcelas em
 colunas — saíram a pedido do operador; o racional dos componentes está acima
-e na coluna **Notas**). Cada linha traz o **número junto ao nome** da carta
-("Mew V (Alternate Full Art) #251") e a coluna **Links**, no padrão MYP:
+e na coluna **Notas**). A coluna **Carta · nº · set** junta nome, número como
+impresso e set ("Mew V (Alternate Full Art) #251/264 · SWSH08: Fusion
+Strike" — `number_full` só exibe; o match usa `number`) e a coluna **Links**, no padrão MYP:
 **eBay (busca) · TCG · PriceCharting**. O eBay está presente em todas as
 linhas, inclusive com `--graded` ou `--doubleholo`, sem precisar de chaves
 de API. Abre a busca da carta por nome base, número e coleção na categoria
@@ -485,7 +491,7 @@ outlook/validate.py      calibração transversal do score + backtest longitudin
 outlook/lowpop_calibration.py  calibração das FAIXAS do modo low pop: lê snapshot + cache do run, quantis de pop10 e
                          vendas/mês (pool e por era), fatia do pool por faixa vigente × proposta, efeito no topo
 outlook/report.py        cenário por era + tabela top-N em markdown
-tests/                   315 testes em 20 arquivos: scoring, sealed, history, validate, pricehistory,
+tests/                   371 testes em 20 arquivos: scoring, sealed, history, validate, pricehistory,
                          doubleholo, notorious, report, sets, tcgcsv_api, lowpop, lowpop_calibration,
                          availability, ebay_availability, ebay_psa10_url, comc_availability, graded_psa10,
                          psa10_guard_set, psa10_cobertura_h_e_irma, gemrate
@@ -494,7 +500,7 @@ tests/                   315 testes em 20 arquivos: scoring, sealed, history, va
 ## Testes e CI
 
 ```bash
-python -m pytest tests/ -q     # 315 testes (nuvem/Linux: python3)
+python -m pytest tests/ -q     # 371 testes (nuvem/Linux: python3)
 ```
 
 No PC do operador: `.venv\Scripts\python.exe -m pytest tests/ -q`.
