@@ -291,6 +291,26 @@ item 7). Refeito o run e a calibração sobre o snapshot limpo (300 no teto,
 - Reproduzir a análise do giro: `python -m outlook.lowpop_calibration` dá a
   base; o experimento em si foi ad hoc (script de sessão), números acima.
 
+### Candidatos testados com dado (2026-09-25) — nada mudou no score
+
+Com o censo real (GemRate), Spearman pop10 × vendas/mês = **+0,89** e os
+PONTOS de Escassez × Demanda no top vigente dão **−0,82**: quem ganha numa
+perde na outra, o par se anula e o score premia "o meio". Os 3 candidatos do
+handoff foram medidos por `python -m outlook.lowpop_calibration --candidates`
+(só análise; relatório em `outputs/candidatos_lowpop_<dia>.md`), sobre o
+snapshot de 2026-09-24 (pool 300, censo confiável 285):
+
+| Candidato | Regra | Sobreposição top 30 | Spearman Esc×Dem (pts) | Efeito |
+|---|---|---|---|---|
+| A. Demanda em log por era | vendas/mês ÷ mediana da era, degraus ×2 (≥4× 25 · ≥2× 20 · ≥1× 14 · ≥½ 8 · piso 3) | 21/30 | −0,33 | vintage entra (BW 4, HGSS 3, WotC 2): 1 venda/mês numa era de mediana 0,1 vira Demanda 25 |
+| B. Escassez relativa à era | pop10 ÷ mediana da era, degraus ÷2 (≤¼ 25 · ≤½ 22 · ≤1× 18 · ≤2× 12 · ≤4× 7 · piso 3) | 26/30 | −0,40 | vintage some do topo (SV 16 · ME 8 · SWSH 6); pop 6.425 vira "escasso" porque a era tem mediana 6.538 |
+| C. Gate ≥2 vendas/mês | Demanda sai do score (máx. 75); < 2 vendas/mês ou sem venda não disputa | 22/30 | — | 63 cartas fora; Garchomp/Gardevoir ex (pop > 11k, demanda 90/60) caem por perder os 25 de Demanda |
+
+Era com < 5 cartas medidas usa a mediana global (`ERA_MIN_N`). Linha sem
+vendas publicadas mantém `pts_demand` da régua de preço, como no ranking.
+Decisão do operador pendente; qualquer mudança de faixa vai por PR com a
+tabela "quem entra/sai" colada aqui.
+
 A detecção de "reprint forte" mora em `outlook/scoring.py`
 (`HEAVY_REPRINT_SET_IDS` + `SPECIAL_SET_PREFIX_RE`); os notórios em
 `outlook/notorious.py`: 60 Pokémon (portados do scanner integrado) + 22
